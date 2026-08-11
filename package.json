@@ -91,6 +91,8 @@
       "packages/twenty-docs",
       "packages/twenty-e2e-testing",
       "packages/twenty-shared",
+      "packages/pashx-mab-contract",
+      "packages/twenty-apps/pashx-mab",
       "packages/twenty-sdk",
       "packages/twenty-front-component-renderer",
       "packages/twenty-client-sdk",

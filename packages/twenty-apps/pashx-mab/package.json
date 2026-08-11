@@ -1,0 +1,35 @@
+{
+  "name": "pashx-mab",
+  "version": "0.1.2",
+  "private": true,
+  "license": "UNLICENSED",
+  "sideEffects": false,
+  "engines": {
+    "node": "^24.5.0",
+    "npm": "please-use-yarn",
+    "yarn": ">=4.0.2",
+    "twenty": ">=2.27.0"
+  },
+  "keywords": [
+    "twenty-app",
+    "pashx",
+    "mab",
+    "procurement"
+  ],
+  "scripts": {
+    "lint": "oxlint -c .oxlintrc.json src",
+    "twenty": "twenty",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "pashx-mab-contract": "workspace:*",
+    "react": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "oxlint": "^1.51.0",
+    "twenty-client-sdk": "workspace:*",
+    "twenty-sdk": "workspace:*",
+    "typescript": "^5.9.3"
+  }
+}

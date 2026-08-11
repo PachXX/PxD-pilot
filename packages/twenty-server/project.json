@@ -56,6 +56,24 @@
     "typecheck": {
       "dependsOn": ["^build"]
     },
+    "typecheck:ci": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/src/**/*.ts",
+        "{projectRoot}/tsconfig*.json",
+        "{projectRoot}/scripts/typecheck-ci.sh",
+        "{workspaceRoot}/tsconfig.base.json",
+        "{workspaceRoot}/packages/twenty-shared/src/**/*.ts",
+        "{workspaceRoot}/packages/twenty-emails/src/**/*.{ts,tsx}",
+        "{workspaceRoot}/packages/twenty-client-sdk/src/**/*.ts",
+        "{workspaceRoot}/packages/pashx-mab-contract/src/**/*.ts"
+      ],
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "bash packages/twenty-server/scripts/typecheck-ci.sh"
+      }
+    },
     "start": {
       "executor": "nx:run-commands",
       "cache": false,

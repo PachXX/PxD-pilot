@@ -80,11 +80,13 @@ jobs:
         uses: ./.github/actions/yarn-install
       - name: Build twenty-shared
         run: npx nx build twenty-shared
-      - name: Server / Run lint, typecheck & lingui extract
+      - name: Server / Run lint & lingui extract
         uses: ./.github/actions/nx-affected
         with:
           tag: scope:backend
-          tasks: lint,typecheck,lingui:extract
+          tasks: lint,lingui:extract
+      - name: Server / Run standalone TypeScript typecheck
+        run: npx nx run twenty-server:typecheck:ci
       # Separate step so compile never races extract on the .po files.
       - name: Server / Run lingui compile
         uses: ./.github/actions/nx-affected
@@ -185,6 +187,18 @@ jobs:
           done
           echo "Server did not become healthy in time" >&2
           exit 1
+      - name: Server / PashX guarded route boot smoke
+        run: |
+          RESPONSE_CODE=$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+            --header 'Content-Type: application/json' \
+            --request POST \
+            --data '{}' \
+            http://localhost:3000/rest/pashx-mab/vendor-purchase-orders)
+
+          if [ "$RESPONSE_CODE" != "401" ]; then
+            echo "Expected the unauthenticated PashX route to return 401; received $RESPONSE_CODE" >&2
+            exit 1
+          fi
       - name: Server / Check for Pending Migrations
         run: |
           npx nx database:migrate:generate twenty-server -- --name pending-migration-check || true

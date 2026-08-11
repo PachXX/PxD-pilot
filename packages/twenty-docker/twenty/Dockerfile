@@ -33,8 +33,11 @@ COPY ./packages/twenty-server/package.json /app/packages/twenty-server/
 COPY ./packages/twenty-server/patches /app/packages/twenty-server/patches
 COPY ./packages/twenty-shared/package.json /app/packages/twenty-shared/
 COPY ./packages/twenty-client-sdk/package.json /app/packages/twenty-client-sdk/
+# twenty-server declares "pashx-mab-contract": "workspace:*", so its manifest must be present
+# before `yarn workspaces focus` or resolution fails with "Workspace not found".
+COPY ./packages/pashx-mab-contract/package.json /app/packages/pashx-mab-contract/
 
-RUN yarn workspaces focus twenty twenty-server twenty-emails twenty-shared twenty-client-sdk && yarn cache clean && npx nx reset
+RUN yarn workspaces focus twenty twenty-server twenty-emails twenty-shared twenty-client-sdk pashx-mab-contract && yarn cache clean && npx nx reset
 
 
 FROM server-deps AS twenty-server-build
@@ -42,6 +45,9 @@ FROM server-deps AS twenty-server-build
 COPY ./packages/twenty-emails /app/packages/twenty-emails
 COPY ./packages/twenty-shared /app/packages/twenty-shared
 COPY ./packages/twenty-client-sdk /app/packages/twenty-client-sdk
+# Source, not just the manifest: nx build targetDefaults set dependsOn ["^build"], so
+# `nx run twenty-server:build` builds this dependency first and emits {projectRoot}/dist.
+COPY ./packages/pashx-mab-contract /app/packages/pashx-mab-contract
 COPY ./packages/twenty-server /app/packages/twenty-server
 
 RUN npx nx run twenty-server:lingui:extract && \
@@ -56,7 +62,7 @@ RUN npx nx run twenty-server:build
 RUN find /app/packages/twenty-server/dist -name '*.d.ts' -delete \
  && rm -rf /app/packages/twenty-server/dist/packages/twenty-server/test
 
-RUN yarn workspaces focus --production twenty-emails twenty-shared twenty-client-sdk twenty-server
+RUN yarn workspaces focus --production twenty-emails twenty-shared twenty-client-sdk twenty-server pashx-mab-contract
 
 
 FROM front-deps AS twenty-front-build
@@ -128,6 +134,10 @@ COPY --chown=1000 --from=twenty-server-build /app/packages/twenty-emails/package
 COPY --chown=1000 --from=twenty-server-build /app/packages/twenty-emails/dist /app/packages/twenty-emails/dist
 COPY --chown=1000 --from=twenty-server-build /app/packages/twenty-client-sdk/package.json /app/packages/twenty-client-sdk/
 COPY --chown=1000 --from=twenty-server-build /app/packages/twenty-client-sdk/dist /app/packages/twenty-client-sdk/dist
+# pashx-mab-contract declares "main": "dist/index.js"; without dist at runtime the failure moves
+# from build time to container start, where it is much harder to attribute.
+COPY --chown=1000 --from=twenty-server-build /app/packages/pashx-mab-contract/package.json /app/packages/pashx-mab-contract/
+COPY --chown=1000 --from=twenty-server-build /app/packages/pashx-mab-contract/dist /app/packages/pashx-mab-contract/dist
 
 LABEL org.opencontainers.image.source=https://github.com/twentyhq/twenty
 LABEL org.opencontainers.image.description="Twenty server image (no frontend)."
