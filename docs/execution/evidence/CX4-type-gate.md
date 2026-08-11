@@ -1,10 +1,10 @@
 # CX4 — Twenty Server Type Gate Evidence
 
 - Owner: Codex
-- Node: CX4-a
+- Node: CX4
 - Parent node: CX4
-- State: CX4-a and CX4-b complete; CX4-c implemented, full-app CI execution pending; parent CX4 active
-- Updated: 2026-08-11 14:24 CEST
+- State: CX4-a, CX4-b, and CX4-d complete; CX4-c CI expectation repaired and rerun pending; parent CX4 review
+- Updated: 2026-08-11 16:48 CEST
 - Infrastructure consumer: Claude Code CL2/CL3
 
 ## Outcome
@@ -54,9 +54,12 @@ the production compile boundary.
 | PashX app typecheck | passed | `corepack yarn workspace pashx-mab typecheck` exited zero. |
 | Unexpected-error logging unit test | passed | 2/2; Error message/stack retained and arbitrary thrown payload objects not serialized. |
 | Isolated PashX Nest module smoke | passed | 2/2; required imports asserted and guarded controller resolved without Redis/database connections. |
-| Full-app throwaway-Postgres boot smoke | implemented, CI pending | `server-validation` now asserts the live guarded PashX route returns 401 after full server boot. Local Docker daemon is unavailable, so this exact CI service test was not claimed as run. |
+| Full-app throwaway-Postgres boot smoke | boot passed; assertion repaired, CI rerun pending | The first GitHub execution booted PostgreSQL, Redis, Twenty, and `PashxMabModule`, then returned the framework-correct 403 from `JwtAuthGuard`. The smoke incorrectly expected 401; it now requires 403 and will rerun on the follow-up commit. |
 | Real Cloud SQL invariants | not run here | Owned by Claude CL2; do not duplicate from the Codex lane. |
-| Server boot smoke | pending | CX4-c, after CX4-b logging review. |
+| Tarball publish interruption regression | passed | 1/1 focused Jest test; a failed first file-store attempt leaves `latestAvailableVersion` null and does not call manifest finalization. |
+| Docker entrypoint syntax | passed | `sh -n packages/twenty-docker/twenty/entrypoint.sh`. Bootstrap now checks `to_regclass('core.workspace')`, so an empty `core` schema triggers initialization. |
+| CX4-d focused lint and format | passed | 2 TypeScript files; 0 warnings/errors and formatting clean. |
+| CX4-d production type gate | passed | `npx nx run twenty-server:typecheck:ci`. |
 
 ## CX4-b — diagnostic unexpected-error logging
 
@@ -71,8 +74,21 @@ The fast smoke asserts the real `PashxMabModule` dependency metadata, replaces
 external infrastructure modules explicitly, and compiles the guarded controller.
 The full CI smoke uses the existing throwaway PostgreSQL and Redis services,
 boots Twenty Server, and then requires the unauthenticated PashX route to return
-401. A missing module, controller, or guard fails that check.
+403. Nest maps a guard returning `false` to Forbidden; a missing module,
+controller, or guard fails that check.
 
-CX4 remains active only until the full-app CI smoke executes. CX3 remains ready
-and unclaimed; Claude may consume CX4-a and CX4-b immediately without waiting for
-that CI run.
+## CX4-d — interrupted-bootstrap and publish recovery
+
+Database initialization now probes the canonical `core.workspace` table rather
+than the `core` schema. An interrupted first boot that created only the schema
+therefore runs `database:init:prod` on the next start instead of entering a
+permanent partial state.
+
+New tarball registrations persist with no available version until the tarball
+is durably stored. Manifest finalization then records the file and version
+together at the existing service boundary. If storage fails, re-publishing the
+same version remains valid; the failed attempt no longer poisons version
+progression.
+
+CX4 remains in review only until the corrected full-app CI smoke passes. CX2 is
+still blocked by Claude's CL2 and CL3 cloud evidence.

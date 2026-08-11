@@ -195,8 +195,8 @@ jobs:
             --data '{}' \
             http://localhost:3000/rest/pashx-mab/vendor-purchase-orders)
 
-          if [ "$RESPONSE_CODE" != "401" ]; then
-            echo "Expected the unauthenticated PashX route to return 401; received $RESPONSE_CODE" >&2
+          if [ "$RESPONSE_CODE" != "403" ]; then
+            echo "Expected the unauthenticated PashX route to be forbidden with 403; received $RESPONSE_CODE" >&2
             exit 1
           fi
       - name: Server / Check for Pending Migrations
