@@ -56,6 +56,10 @@ export const handleDuplicateKeyError = async (
     TwentyORMExceptionCode.DUPLICATE_ENTRY_DETECTED,
     {
       userFriendlyMessage,
+      // Preserve only the sanitized column identifier. The raw driver error also contains the
+      // conflicting value and must not cross the ORM boundary, while callers still need enough
+      // information to translate a duplicate into the correct domain conflict.
+      conflictingFieldName: parsedError.columnName,
     },
   );
 

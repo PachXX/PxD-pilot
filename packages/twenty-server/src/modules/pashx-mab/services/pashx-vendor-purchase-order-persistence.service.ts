@@ -18,6 +18,10 @@ import { FieldActorSource } from 'twenty-shared/types';
 import { POSTGRESQL_ERROR_CODES } from 'src/engine/api/graphql/workspace-query-runner/constants/postgres-error-codes.constants';
 import { getWorkspaceAuthContext } from 'src/engine/core-modules/auth/storage/workspace-auth-context.storage';
 import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import {
+  TwentyORMException,
+  TwentyORMExceptionCode,
+} from 'src/engine/twenty-orm/exceptions/twenty-orm.exception';
 import { type WorkspaceQueryRunner } from 'src/engine/twenty-orm/query-runner/workspace-query-runner';
 import { type WorkspaceRepository } from 'src/engine/twenty-orm/repository/workspace.repository';
 import { PashxMabException } from 'src/modules/pashx-mab/pashx-mab.exception';
@@ -45,6 +49,13 @@ type PostgresQueryFailedError = QueryFailedError &
   }>;
 
 const getUniqueViolationColumn = (error: unknown): string | undefined => {
+  if (
+    error instanceof TwentyORMException &&
+    error.code === TwentyORMExceptionCode.DUPLICATE_ENTRY_DETECTED
+  ) {
+    return error.conflictingFieldName;
+  }
+
   if (!(error instanceof QueryFailedError)) {
     return undefined;
   }
@@ -235,6 +246,17 @@ export class PashxVendorPurchaseOrderPersistenceService {
       if (conflictingColumn === 'name') {
         throw new PashxMabException(
           PASHX_COMMAND_EXCEPTION_CODES.numberConflict,
+        );
+      }
+
+      if (
+        error instanceof TwentyORMException &&
+        error.code === TwentyORMExceptionCode.DUPLICATE_ENTRY_DETECTED
+      ) {
+        // A duplicate is always a non-retryable 409. If legacy or malformed ORM metadata omits
+        // the field, keep the failure typed without guessing that it was the document number.
+        throw new PashxMabException(
+          PASHX_COMMAND_EXCEPTION_CODES.recordConflict,
         );
       }
 

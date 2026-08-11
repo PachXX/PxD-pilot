@@ -8,6 +8,10 @@ import {
 import { MetricsService } from 'src/engine/core-modules/metrics/metrics.service';
 import { MetricsKeys } from 'src/engine/core-modules/metrics/types/metrics-keys.type';
 import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import {
+  TwentyORMException,
+  TwentyORMExceptionCode,
+} from 'src/engine/twenty-orm/exceptions/twenty-orm.exception';
 import { type WorkspaceQueryRunner } from 'src/engine/twenty-orm/query-runner/workspace-query-runner';
 import { PASHX_FINANCIAL_COMMAND_DURATION_MS_BUCKET_BOUNDARIES } from 'src/modules/pashx-mab/constants/pashx-financial-command-duration-ms-bucket-boundaries.constant';
 import { PashxMabException } from 'src/modules/pashx-mab/pashx-mab.exception';
@@ -96,6 +100,17 @@ export class PashxVendorPurchaseOrderService {
       replayed = commandResult.replayed;
 
       return commandResult;
+    } catch (error) {
+      if (
+        error instanceof TwentyORMException &&
+        error.code === TwentyORMExceptionCode.QUERY_READ_TIMEOUT
+      ) {
+        throw new PashxMabException(
+          PASHX_COMMAND_EXCEPTION_CODES.storageFailure,
+        );
+      }
+
+      throw error;
     } finally {
       this.metricsService.recordHistogram({
         key: MetricsKeys.PashxFinancialCommandInternalDurationMs,
