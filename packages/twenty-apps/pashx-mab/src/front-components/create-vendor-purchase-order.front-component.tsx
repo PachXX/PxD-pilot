@@ -1,5 +1,5 @@
 import { type ReactElement, useRef, useState } from 'react';
-import { RestApiClient } from 'twenty-client-sdk/rest';
+import { RestApiClient, RestApiClientError } from 'twenty-client-sdk/rest';
 import { defineFrontComponent } from 'twenty-sdk/define';
 import {
   closeSidePanel,
@@ -9,6 +9,7 @@ import {
 } from 'twenty-sdk/front-component';
 import {
   PASHX_MAB_CONTRACT_VERSION,
+  PASHX_COMMAND_ERROR_DEFINITIONS,
   PASHX_MAB_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS,
   getPashxCommandErrorMessage,
   type PashxCommandError,
@@ -20,6 +21,32 @@ import { createVendorPurchaseOrderCopy } from './create-vendor-purchase-order.co
 import { createVendorPurchaseOrderStyles as styles } from './create-vendor-purchase-order.styles';
 import { useVendorPurchaseOrderData } from './use-vendor-purchase-order-data';
 import { VendorPurchaseOrderFields } from './vendor-purchase-order-fields';
+
+const PASHX_COMMAND_TIMEOUT_MS = 30_000;
+
+const getThrownCommandError = (
+  error: unknown,
+): PashxCommandError | undefined => {
+  if (!(error instanceof RestApiClientError)) {
+    return undefined;
+  }
+
+  const body = error.body;
+
+  if (
+    typeof body !== 'object' ||
+    body === null ||
+    !('ok' in body) ||
+    body.ok !== false ||
+    !('code' in body) ||
+    typeof body.code !== 'string' ||
+    !(body.code in PASHX_COMMAND_ERROR_DEFINITIONS)
+  ) {
+    return undefined;
+  }
+
+  return body as PashxCommandError;
+};
 
 const CreateVendorPurchaseOrder = (): ReactElement => {
   const locale = globalThis.navigator?.language.startsWith('ar') ? 'ar' : 'en';
@@ -34,6 +61,7 @@ const CreateVendorPurchaseOrder = (): ReactElement => {
   const [currency, setCurrency] = useState('SAR');
   const [vendorReference, setVendorReference] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [submissionFailed, setSubmissionFailed] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const { companies, expectedVersion, loading, loadStatus } =
     useVendorPurchaseOrderData({
@@ -49,8 +77,10 @@ const CreateVendorPurchaseOrder = (): ReactElement => {
       }>
     | undefined
   >(undefined);
+  const activeSubmission = useRef<AbortController | undefined>(undefined);
 
   const close = (): void => {
+    activeSubmission.current?.abort();
     unmountFrontComponent();
     closeSidePanel();
   };
@@ -69,6 +99,7 @@ const CreateVendorPurchaseOrder = (): ReactElement => {
     }
 
     setSubmitting(true);
+    setSubmissionFailed(false);
     setStatusMessage(text.creating);
     const signature = JSON.stringify({
       procurementCaseRecordId,
@@ -102,27 +133,48 @@ const CreateVendorPurchaseOrder = (): ReactElement => {
       },
     };
 
+    const abortController = new AbortController();
+    const timeoutId = globalThis.setTimeout(
+      () => abortController.abort(),
+      PASHX_COMMAND_TIMEOUT_MS,
+    );
+
+    activeSubmission.current = abortController;
+
     try {
       const response = await new RestApiClient().post<
-        | PashxCommandSuccess<PashxVendorPurchaseOrderResult>
-        | PashxCommandError
-      >('/rest/pashx-mab/vendor-purchase-orders', request);
+        PashxCommandSuccess<PashxVendorPurchaseOrderResult> | PashxCommandError
+      >('/rest/pashx-mab/vendor-purchase-orders', request, {
+        signal: abortController.signal,
+      });
 
       if (!response.ok) {
-        setStatusMessage(
-          getPashxCommandErrorMessage(response.code, locale),
-        );
+        setSubmissionFailed(true);
+        setStatusMessage(getPashxCommandErrorMessage(response.code, locale));
         return;
       }
 
       await enqueueSnackbar({
-        message: `${response.result.documentNumber} created as a draft.`,
+        message: `${response.result.documentNumber} ${text.successSuffix}`,
         variant: 'success',
       });
       close();
-    } catch {
-      setStatusMessage(text.loadError);
+    } catch (error) {
+      const commandError = getThrownCommandError(error);
+
+      setSubmissionFailed(true);
+      setStatusMessage(
+        commandError !== undefined
+          ? getPashxCommandErrorMessage(commandError.code, locale)
+          : abortController.signal.aborted
+            ? text.timeoutError
+            : text.submitError,
+      );
     } finally {
+      globalThis.clearTimeout(timeoutId);
+      if (activeSubmission.current === abortController) {
+        activeSubmission.current = undefined;
+      }
       setSubmitting(false);
     }
   };
@@ -165,7 +217,6 @@ const CreateVendorPurchaseOrder = (): ReactElement => {
           type="button"
           style={{ ...styles.button, ...styles.secondaryButton }}
           onClick={close}
-          disabled={submitting}
         >
           {text.cancel}
         </button>
@@ -181,7 +232,11 @@ const CreateVendorPurchaseOrder = (): ReactElement => {
           disabled={!canSubmit}
           aria-describedby="pashx-command-status"
         >
-          {submitting ? text.creating : text.create}
+          {submitting
+            ? text.creating
+            : submissionFailed
+              ? text.retry
+              : text.create}
         </button>
       </footer>
       <span id="pashx-command-status" hidden>

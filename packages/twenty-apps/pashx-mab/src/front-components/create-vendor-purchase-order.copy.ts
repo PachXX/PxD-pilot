@@ -11,9 +11,14 @@ export const createVendorPurchaseOrderCopy = {
     chooseSupplier: 'Choose a supplier',
     cancel: 'Cancel',
     create: 'Create draft',
+    retry: 'Retry creation',
     creating: 'Creating…',
     loading: 'Loading case and suppliers…',
     loadError: 'Could not load the case and supplier list.',
+    submitError: 'Could not create the draft. Try again.',
+    timeoutError:
+      'The request took too long. Check your connection and retry safely.',
+    successSuffix: 'created as a draft.',
     selectionError: 'Select exactly one procurement case.',
   },
   ar: {
@@ -28,9 +33,13 @@ export const createVendorPurchaseOrderCopy = {
     chooseSupplier: 'اختر مورداً',
     cancel: 'إلغاء',
     create: 'إنشاء المسودة',
+    retry: 'إعادة محاولة الإنشاء',
     creating: 'جارٍ الإنشاء…',
     loading: 'جارٍ تحميل الحالة والموردين…',
     loadError: 'تعذر تحميل الحالة وقائمة الموردين.',
+    submitError: 'تعذر إنشاء المسودة. حاول مرة أخرى.',
+    timeoutError: 'استغرق الطلب وقتاً طويلاً. تحقق من الاتصال وأعد المحاولة بأمان.',
+    successSuffix: 'تم إنشاؤه كمسودة.',
     selectionError: 'حدد حالة مشتريات واحدة فقط.',
   },
 } as const;
