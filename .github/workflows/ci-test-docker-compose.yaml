@@ -120,6 +120,13 @@ jobs:
             -f packages/twenty-docker/twenty/Dockerfile \
             -t twenty-app-dev-ci \
             .
+      - name: Verify PashX runtime contract packaging
+        run: |
+          docker run --rm \
+            --entrypoint node \
+            --workdir /app/packages/twenty-server \
+            twenty-app-dev-ci \
+            -e "require.resolve('pashx-mab-contract'); require('pashx-mab-contract')"
       - name: Start container
         run: |
           docker run -d --name twenty-app-dev \

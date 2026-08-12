@@ -268,6 +268,8 @@ COPY --from=twenty-server-build /app/packages/twenty-emails/package.json /app/pa
 COPY --from=twenty-server-build /app/packages/twenty-emails/dist /app/packages/twenty-emails/dist
 COPY --from=twenty-server-build /app/packages/twenty-client-sdk/package.json /app/packages/twenty-client-sdk/
 COPY --from=twenty-server-build /app/packages/twenty-client-sdk/dist /app/packages/twenty-client-sdk/dist
+COPY --from=twenty-server-build /app/packages/pashx-mab-contract/package.json /app/packages/pashx-mab-contract/
+COPY --from=twenty-server-build /app/packages/pashx-mab-contract/dist /app/packages/pashx-mab-contract/dist
 
 # Frontend static build
 COPY --from=twenty-front-build /app/packages/twenty-front/build /app/packages/twenty-server/dist/front
