@@ -13,6 +13,10 @@ export const PASHX_COMMAND_NAMES = [
   'delivery.record',
   'correction.create',
   'compliance.queue',
+  'approval.request',
+  'approval.approve',
+  'approval.reject',
+  'approval.cancel',
 ] as const;
 
 export type PashxCommandName = (typeof PASHX_COMMAND_NAMES)[number];

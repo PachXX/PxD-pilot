@@ -7,6 +7,10 @@ export const PASHX_MAB_CAPABILITY_UNIVERSAL_IDENTIFIERS = {
   pilotAdmin: 'cd920e7c-3e07-4ec1-8118-a6d06c6ecc19',
   importRun: '3c4635c3-601d-4dfd-9ab2-a317c9bb948a',
   complianceManage: 'e4be95f6-1e87-46e2-b031-0f9a8dade5ea',
+  approvalRequest: 'e32fca10-d0c7-4d40-acc7-d678be88a7d8',
+  approvalDecide: '55aeb009-8116-4df3-a9e1-f5407f168444',
+  insightGenerate: '977dc149-37f3-45e4-b394-776894454925',
+  emailIntakeReview: '2a411491-155c-482e-9392-b89110ca6749',
 } as const;
 
 export const PASHX_MAB_CAPABILITIES = {
@@ -18,6 +22,10 @@ export const PASHX_MAB_CAPABILITIES = {
   pilotAdmin: 'pashx.pilot.admin',
   importRun: 'pashx.import.run',
   complianceManage: 'pashx.compliance.manage',
+  approvalRequest: 'pashx.approval.request',
+  approvalDecide: 'pashx.approval.decide',
+  insightGenerate: 'pashx.insight.generate',
+  emailIntakeReview: 'pashx.email.intake.review',
 } as const;
 
 export type PashxMabCapabilityName = keyof typeof PASHX_MAB_CAPABILITIES;
@@ -33,6 +41,7 @@ export const PASHX_MAB_ROLE_KEYS = [
   'operator',
   'finance',
   'viewer',
+  'evidenceAgent',
 ] as const;
 
 export type PashxMabRoleKey = (typeof PASHX_MAB_ROLE_KEYS)[number];
@@ -46,13 +55,18 @@ export const PASHX_MAB_ROLE_CAPABILITIES = {
     PASHX_MAB_CAPABILITIES.documentEdit,
     PASHX_MAB_CAPABILITIES.procurementIssue,
     PASHX_MAB_CAPABILITIES.deliveryRecord,
+    PASHX_MAB_CAPABILITIES.approvalRequest,
+    PASHX_MAB_CAPABILITIES.emailIntakeReview,
   ],
   finance: [
     PASHX_MAB_CAPABILITIES.documentEdit,
     PASHX_MAB_CAPABILITIES.financePost,
     PASHX_MAB_CAPABILITIES.complianceManage,
+    PASHX_MAB_CAPABILITIES.approvalRequest,
+    PASHX_MAB_CAPABILITIES.approvalDecide,
   ],
   viewer: [],
+  evidenceAgent: [],
 } as const satisfies Record<PashxMabRoleKey, readonly PashxMabCapability[]>;
 
 const capabilityUniversalIdentifierByValue = Object.fromEntries(
@@ -72,6 +86,7 @@ export const PASHX_MAB_ROLE_CAPABILITY_UNIVERSAL_IDENTIFIERS = Object.freeze({
   operator: getCapabilityUniversalIdentifiers('operator'),
   finance: getCapabilityUniversalIdentifiers('finance'),
   viewer: getCapabilityUniversalIdentifiers('viewer'),
+  evidenceAgent: getCapabilityUniversalIdentifiers('evidenceAgent'),
 } satisfies Record<PashxMabRoleKey, readonly string[]>);
 
 const pashxMabCapabilitySet = new Set<PashxMabCapability>(

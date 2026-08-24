@@ -10,14 +10,17 @@ import {
   PASHX_MAB_APPLICATION_UNIVERSAL_IDENTIFIER,
   PASHX_MAB_CAPABILITY_NAMES,
   PASHX_MAB_CAPABILITY_UNIVERSAL_IDENTIFIERS,
+  PASHX_MAB_AGENT_UNIVERSAL_IDENTIFIERS,
   PASHX_MAB_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIERS,
   PASHX_MAB_CONTRACT_VERSION,
   PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS,
   PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS,
   PASHX_MAB_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS,
+  PASHX_MAB_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS,
   PASHX_MAB_OBJECT_NAMES,
   PASHX_MAB_LABEL_FIELD_UNIVERSAL_IDENTIFIERS,
   PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS,
+  PASHX_MAB_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS,
   PASHX_MAB_ROLE_CAPABILITY_UNIVERSAL_IDENTIFIERS,
   PASHX_MAB_ROLE_CAPABILITIES,
   PASHX_MAB_ROLE_KEYS,
@@ -48,8 +51,11 @@ test('object and capability identifiers are valid and unique', () => {
     ...leafValues(PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS),
     ...leafValues(PASHX_MAB_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS),
     ...leafValues(PASHX_MAB_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIERS),
+    ...leafValues(PASHX_MAB_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS),
+    ...leafValues(PASHX_MAB_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS),
     ...Object.values(PASHX_MAB_CAPABILITY_UNIVERSAL_IDENTIFIERS),
     ...Object.values(PASHX_MAB_ROLE_UNIVERSAL_IDENTIFIERS),
+    ...Object.values(PASHX_MAB_AGENT_UNIVERSAL_IDENTIFIERS),
   ];
 
   assert.equal(
@@ -62,6 +68,8 @@ test('object and capability identifiers are valid and unique', () => {
     'commercialDocument',
     'documentLine',
     'expense',
+    'approvalRequest',
+    'operationalInsight',
   ]);
 });
 
@@ -83,12 +91,17 @@ test('the Twenty app consumes contract identifiers without duplicating UUIDs', (
     .map((file) => readFileSync(new URL(file, appSourceUrl), 'utf8'))
     .join('\n');
   const roleFiles = appFiles.filter((file) => file.endsWith('.role.ts'));
+  const agentFiles = appFiles.filter((file) => file.endsWith('.agent.ts'));
   const permissionFlagFiles = appFiles.filter((file) =>
     file.endsWith('.permission-flag.ts'),
   );
 
   assert.equal(objectFiles.length, PASHX_MAB_OBJECT_NAMES.length);
   assert.equal(roleFiles.length, PASHX_MAB_ROLE_KEYS.length);
+  assert.equal(
+    agentFiles.length,
+    Object.keys(PASHX_MAB_AGENT_UNIVERSAL_IDENTIFIERS).length,
+  );
   assert.equal(permissionFlagFiles.length, PASHX_MAB_CAPABILITY_NAMES.length);
   assert.equal(UUID_V4_PATTERN.test(source), false);
   assert.match(source, /PASHX_MAB_APPLICATION_UNIVERSAL_IDENTIFIER/);
@@ -96,7 +109,17 @@ test('the Twenty app consumes contract identifiers without duplicating UUIDs', (
   assert.match(source, /PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS/);
   assert.match(source, /PASHX_MAB_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS/);
   assert.match(source, /PASHX_MAB_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIERS/);
+  assert.match(source, /PASHX_MAB_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS/);
+  assert.match(source, /PASHX_MAB_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS/);
   assert.match(source, /PASHX_MAB_ROLE_UNIVERSAL_IDENTIFIERS\.viewer/);
+  assert.match(
+    source,
+    /PASHX_MAB_AGENT_UNIVERSAL_IDENTIFIERS\.evidenceAnalyst/,
+  );
+  assert.match(
+    source,
+    /PASHX_MAB_AGENT_UNIVERSAL_IDENTIFIERS\.procurementTriage/,
+  );
 
   for (const objectName of PASHX_MAB_OBJECT_NAMES) {
     assert.match(
@@ -204,6 +227,24 @@ test('role capability mappings are valid and least-privileged', () => {
       PASHX_MAB_CAPABILITIES.procurementIssue,
     ),
     false,
+  );
+  assert.equal(
+    PASHX_MAB_ROLE_CAPABILITIES.operator.includes(
+      PASHX_MAB_CAPABILITIES.approvalRequest,
+    ),
+    true,
+  );
+  assert.equal(
+    PASHX_MAB_ROLE_CAPABILITIES.operator.includes(
+      PASHX_MAB_CAPABILITIES.approvalDecide,
+    ),
+    false,
+  );
+  assert.equal(
+    PASHX_MAB_ROLE_CAPABILITIES.finance.includes(
+      PASHX_MAB_CAPABILITIES.approvalDecide,
+    ),
+    true,
   );
 });
 

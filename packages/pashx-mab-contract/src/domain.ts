@@ -9,6 +9,8 @@ export const PASHX_COMMERCIAL_DOCUMENT_TYPES = [
   'vendorPurchaseOrder',
   'deliveryNote',
   'customerInvoice',
+  'customerCreditNote',
+  'vendorCreditNote',
   'creditNote',
   'debitNote',
 ] as const;
