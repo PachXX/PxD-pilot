@@ -30,6 +30,10 @@ export const commandCentreStyles = `
   }
   .pxd-command *, .pxd-command *::before, .pxd-command *::after { box-sizing: border-box; }
   .pxd-command__header { align-items: flex-start; display: flex; gap: 32px; justify-content: space-between; margin: 0 auto 40px; max-width: 1440px; }
+  .pxd-command__tenant-brand { align-items: center; display: flex; gap: 14px; margin: 0 0 22px; }
+  .pxd-command__tenant-logo { background: #fff; border: 1px solid var(--pxd-border); display: block; flex: 0 0 auto; height: 60px; overflow: hidden; position: relative; width: 132px; }
+  .pxd-command__tenant-logo img { height: auto; left: 50%; max-width: none; position: absolute; top: 50%; transform: translate(-50%, -50%); width: 142%; }
+  .pxd-command__welcome { font-size: 16px; font-weight: 600; margin: 0; }
   .pxd-command__eyebrow { color: var(--pxd-muted); font-size: 14px; font-weight: 600; margin: 0 0 8px; }
   .pxd-command__title { font-size: clamp(32px, 4vw, 48px); letter-spacing: -.045em; line-height: 1.05; margin: 0; }
   .pxd-command__subtitle { color: var(--pxd-muted); font-size: 18px; margin: 10px 0 0; max-width: 760px; }
@@ -115,6 +119,7 @@ export const commandCentreStyles = `
     .pxd-command__summary-item { min-height: 108px; }
   }
   @media (max-width: 560px) {
+    .pxd-command__tenant-brand { align-items: flex-start; flex-direction: column; }
     .pxd-command__summary { grid-template-columns: 1fr; }
     .pxd-command__summary-item { min-height: 96px; padding: 18px; }
     .pxd-command__section-header { display: block; }

@@ -223,6 +223,9 @@ const CommandCentre = () => {
     useState<CommandCentreLocale | null>(null);
   const locale = localeOverride ?? toCommandCentreLocale(hostLocale);
   const copy = commandCentreCopy[locale];
+  const mabIndusSolutionsLogoUrl = getPublicAssetUrl(
+    'brand/mab-indus-solutions-logo.jpg',
+  );
   const [result, setResult] =
     useState<PashxOperationalCommandCentreResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -291,6 +294,12 @@ const CommandCentre = () => {
       <style>{`${fontStyles}\n${commandCentreStyles}`}</style>
       <header className="pxd-command__header">
         <div>
+          <div className="pxd-command__tenant-brand">
+            <span aria-hidden="true" className="pxd-command__tenant-logo">
+              <img alt="" src={mabIndusSolutionsLogoUrl} />
+            </span>
+            <p className="pxd-command__welcome">{copy.welcomeTitle}</p>
+          </div>
           <p className="pxd-command__eyebrow">{copy.eyebrow}</p>
           <h1 className="pxd-command__title">{copy.title}</h1>
           <p className="pxd-command__subtitle">{copy.subtitle}</p>

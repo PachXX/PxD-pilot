@@ -9,6 +9,7 @@ import type {
 export type CommandCentreLocale = 'en' | 'ar';
 
 export type CommandCentreCopy = Readonly<{
+  welcomeTitle: string;
   languageName: string;
   languageButtonLabel: string;
   dashboardLabel: string;
@@ -71,6 +72,7 @@ export type CommandCentreCopy = Readonly<{
 }>;
 
 const english: CommandCentreCopy = {
+  welcomeTitle: 'Welcome, MAB Indus Solutions',
   languageName: 'العربية',
   languageButtonLabel: 'Switch to Arabic',
   dashboardLabel: 'PxD Command centre',
@@ -184,6 +186,7 @@ const english: CommandCentreCopy = {
 };
 
 const arabic: CommandCentreCopy = {
+  welcomeTitle: 'مرحبًا بكم في MAB Indus Solutions',
   languageName: 'English',
   languageButtonLabel: 'التبديل إلى الإنجليزية',
   dashboardLabel: 'مركز قيادة PxD',
