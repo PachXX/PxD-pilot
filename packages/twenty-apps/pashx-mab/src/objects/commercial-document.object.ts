@@ -39,36 +39,92 @@ export default defineObject({
       defaultValue: `'VENDOR_PURCHASE_ORDER'`,
       options: [
         {
-          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
-            .commercialDocument.documentType.vendorPurchaseOrder,
-          value: 'VENDOR_PURCHASE_ORDER',
-          label: 'Vendor purchase order',
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .documentType.customerRfq,
+          value: 'CUSTOMER_RFQ',
+          label: 'Customer RFQ',
           color: 'blue',
           position: 0,
         },
         {
-          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
-            .commercialDocument.documentType.customerInvoice,
-          value: 'CUSTOMER_INVOICE',
-          label: 'Customer invoice',
-          color: 'green',
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .documentType.supplierRfq,
+          value: 'SUPPLIER_RFQ',
+          label: 'Supplier RFQ',
+          color: 'blue',
           position: 1,
         },
         {
-          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
-            .commercialDocument.documentType.customerCreditNote,
-          value: 'CUSTOMER_CREDIT_NOTE',
-          label: 'Customer credit note',
-          color: 'orange',
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .documentType.vendorQuote,
+          value: 'VENDOR_QUOTE',
+          label: 'Vendor quotation',
+          color: 'cyan',
           position: 2,
         },
         {
-          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
-            .commercialDocument.documentType.vendorCreditNote,
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .documentType.customerQuote,
+          value: 'CUSTOMER_QUOTE',
+          label: 'Customer quotation',
+          color: 'cyan',
+          position: 3,
+        },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .documentType.customerPurchaseOrder,
+          value: 'CUSTOMER_PURCHASE_ORDER',
+          label: 'Customer purchase order',
+          color: 'purple',
+          position: 4,
+        },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .documentType.vendorPurchaseOrder,
+          value: 'VENDOR_PURCHASE_ORDER',
+          label: 'Vendor purchase order',
+          color: 'blue',
+          position: 5,
+        },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .documentType.deliveryNote,
+          value: 'DELIVERY_NOTE',
+          label: 'Delivery note',
+          color: 'yellow',
+          position: 6,
+        },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .documentType.vendorInvoice,
+          value: 'VENDOR_INVOICE',
+          label: 'Vendor invoice',
+          color: 'orange',
+          position: 7,
+        },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .documentType.customerInvoice,
+          value: 'CUSTOMER_INVOICE',
+          label: 'Customer invoice',
+          color: 'green',
+          position: 8,
+        },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .documentType.customerCreditNote,
+          value: 'CUSTOMER_CREDIT_NOTE',
+          label: 'Customer credit note',
+          color: 'orange',
+          position: 9,
+        },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .documentType.vendorCreditNote,
           value: 'VENDOR_CREDIT_NOTE',
           label: 'Vendor credit note',
           color: 'yellow',
-          position: 3,
+          position: 10,
         },
       ],
     },
@@ -84,32 +140,32 @@ export default defineObject({
       defaultValue: `'DRAFT'`,
       options: [
         {
-          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
-            .commercialDocument.lifecycleStatus.draft,
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .lifecycleStatus.draft,
           value: 'DRAFT',
           label: 'Draft',
           color: 'gray',
           position: 0,
         },
         {
-          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
-            .commercialDocument.lifecycleStatus.finalized,
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .lifecycleStatus.finalized,
           value: 'FINALIZED',
           label: 'Finalized',
           color: 'green',
           position: 1,
         },
         {
-          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
-            .commercialDocument.lifecycleStatus.cancelled,
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .lifecycleStatus.cancelled,
           value: 'CANCELLED',
           label: 'Cancelled',
           color: 'red',
           position: 2,
         },
         {
-          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
-            .commercialDocument.lifecycleStatus.credited,
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .lifecycleStatus.credited,
           value: 'CREDITED',
           label: 'Credited',
           color: 'gray',
@@ -154,7 +210,7 @@ export default defineObject({
       type: FieldType.DATE,
       name: 'issueDate',
       label: 'Issue date',
-      description: 'Business issue date of the purchase order.',
+      description: 'Business issue date of the document.',
       icon: 'IconCalendar',
     },
     {
@@ -190,32 +246,32 @@ export default defineObject({
       defaultValue: `'NOT_REQUIRED'`,
       options: [
         {
-          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
-            .commercialDocument.complianceStatus.notRequired,
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .complianceStatus.notRequired,
           value: 'NOT_REQUIRED',
           label: 'Not required',
           color: 'gray',
           position: 0,
         },
         {
-          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
-            .commercialDocument.complianceStatus.pending,
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .complianceStatus.pending,
           value: 'PENDING',
           label: 'Pending',
           color: 'yellow',
           position: 1,
         },
         {
-          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
-            .commercialDocument.complianceStatus.cleared,
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .complianceStatus.cleared,
           value: 'CLEARED',
           label: 'Cleared',
           color: 'green',
           position: 2,
         },
         {
-          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
-            .commercialDocument.complianceStatus.rejected,
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.commercialDocument
+            .complianceStatus.rejected,
           value: 'REJECTED',
           label: 'Rejected',
           color: 'red',

@@ -141,7 +141,14 @@ export const PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS = {
   },
   commercialDocument: {
     documentType: {
+      customerRfq: '7f00d684-e588-46ac-9d46-bd7952d2be5d',
+      supplierRfq: 'afde2c55-fe52-4fc9-8f77-c84cefea3bfe',
+      vendorQuote: '978945af-0859-444d-bedb-9b0f5a196ae0',
+      customerQuote: '6f44519e-dec2-43c6-be0a-14ff13e4d48a',
+      customerPurchaseOrder: 'a56c673a-4d76-4c6b-946d-6b2b7b21ea7a',
       vendorPurchaseOrder: '7b3a1a60-43a4-4e27-bd48-511c40bc5e08',
+      deliveryNote: '8242001d-1a51-443b-8a70-d533cc7b1576',
+      vendorInvoice: '27d47f26-245b-4b70-a9e6-38126de1bcd8',
       customerInvoice: '69261c93-2f10-467b-932b-38b02ae2570f',
       customerCreditNote: '742bdbd1-a7c4-4464-9756-49ebc01fdeff',
       vendorCreditNote: '0a47c04c-951c-40fc-a090-014aa9c9e6c4',

@@ -8,4 +8,5 @@ export * from './metadata.js';
 export * from './money.js';
 export * from './operational-command-centre.js';
 export * from './ocr.js';
+export * from './operating-workflow.js';
 export * from './version.js';

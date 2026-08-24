@@ -24,11 +24,14 @@ export const PASHX_DOCUMENT_TYPE_MANIFEST_VALUES: Record<
   string
 > = {
   rfq: 'RFQ',
+  customerRfq: 'CUSTOMER_RFQ',
+  supplierRfq: 'SUPPLIER_RFQ',
   vendorQuote: 'VENDOR_QUOTE',
   customerQuote: 'CUSTOMER_QUOTE',
   customerPurchaseOrder: 'CUSTOMER_PURCHASE_ORDER',
   vendorPurchaseOrder: 'VENDOR_PURCHASE_ORDER',
   deliveryNote: 'DELIVERY_NOTE',
+  vendorInvoice: 'VENDOR_INVOICE',
   customerInvoice: 'CUSTOMER_INVOICE',
   customerCreditNote: 'CUSTOMER_CREDIT_NOTE',
   vendorCreditNote: 'VENDOR_CREDIT_NOTE',

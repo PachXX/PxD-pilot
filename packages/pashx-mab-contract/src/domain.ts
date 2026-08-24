@@ -3,11 +3,14 @@ export type PashxPartyRole = (typeof PASHX_PARTY_ROLES)[number];
 
 export const PASHX_COMMERCIAL_DOCUMENT_TYPES = [
   'rfq',
+  'customerRfq',
+  'supplierRfq',
   'vendorQuote',
   'customerQuote',
   'customerPurchaseOrder',
   'vendorPurchaseOrder',
   'deliveryNote',
+  'vendorInvoice',
   'customerInvoice',
   'customerCreditNote',
   'vendorCreditNote',
