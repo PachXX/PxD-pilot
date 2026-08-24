@@ -48,6 +48,9 @@ const navigationSource = readFileSync(
   ),
   'utf8',
 );
+const mabIndusSolutionsLogo = readFileSync(
+  new URL('../public/brand/mab-indus-solutions-logo.jpg', import.meta.url),
+);
 
 const commandItem = (
   signal: PashxCommandCentreItem['signal'],
@@ -259,6 +262,11 @@ test('English and Arabic copy exhaust every signal, reason, stage, insight type,
     }
   }
   assert.match(commandCentreCopy.ar.title, /\p{Script=Arabic}/u);
+  assert.equal(
+    commandCentreCopy.en.welcomeTitle,
+    'Welcome, MAB Indus Solutions',
+  );
+  assert.match(commandCentreCopy.ar.welcomeTitle, /\p{Script=Arabic}/u);
   assert.equal(toCommandCentreLocale('ar-SA'), 'ar');
   assert.equal(toCommandCentreLocale('en-GB'), 'en');
 });
@@ -296,6 +304,9 @@ test('native page is source-only, evidence-linked, and exposes complete runtime 
     /copy\.unavailableState/,
     /copy\.emailUnavailableReason/,
     /copy\.ocrUnavailableReason/,
+    /getPublicAssetUrl\(\s*'brand\/mab-indus-solutions-logo\.jpg'/,
+    /copy\.welcomeTitle/,
+    /alt=""/,
   ]) {
     assert.match(componentSource, pattern);
   }
@@ -309,6 +320,10 @@ test('native page is source-only, evidence-linked, and exposes complete runtime 
   assert.match(pageLayoutSource, /PageLayoutType\.STANDALONE_PAGE/);
   assert.match(navigationSource, /NavigationMenuItemType\.PAGE_LAYOUT/);
   assert.match(navigationSource, /position: 0/);
+});
+
+test('MAB Indus Solutions tenant logo is bundled as a non-empty app asset', () => {
+  assert.ok(mabIndusSolutionsLogo.byteLength > 100_000);
 });
 
 test('styles preserve keyboard, touch, RTL, dark-theme, reduced-motion, and zoom foundations', () => {

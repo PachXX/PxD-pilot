@@ -192,15 +192,16 @@ test('navigation item targets a standalone page layout accepted by Twenty', () =
   assert.doesNotMatch(pageLayoutSource, /PageLayoutType\.DASHBOARD/);
 });
 
-test('application branding is PxD and bundles its logo', () => {
+test('application branding is PxD and uses the bundled MAB tenant logo', () => {
   assert.match(applicationConfigSource, /displayName: 'PxD'/);
   assert.match(
     applicationConfigSource,
-    /logo: 'public\/brand\/pxd-logo-512\.png'/,
+    /logo: 'public\/brand\/mab-indus-solutions-logo\.jpg'/,
   );
   assert.ok(
-    readFileSync(new URL('../public/brand/pxd-logo-512.png', import.meta.url))
-      .byteLength > 10_000,
+    readFileSync(
+      new URL('../public/brand/mab-indus-solutions-logo.jpg', import.meta.url),
+    ).byteLength > 10_000,
   );
 });
 

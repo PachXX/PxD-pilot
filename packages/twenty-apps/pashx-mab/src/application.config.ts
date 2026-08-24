@@ -6,5 +6,5 @@ export default defineApplication({
   displayName: 'PxD',
   description:
     'MAB procurement command centre and read-only operational profitability.',
-  logo: 'public/brand/pxd-logo-512.png',
+  logo: 'public/brand/mab-indus-solutions-logo.jpg',
 });
