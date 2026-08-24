@@ -14,6 +14,8 @@ import { PashxMabException } from 'src/modules/pashx-mab/pashx-mab.exception';
 
 type PashxCommandReceiptRow = Readonly<{
   request_hash: string;
+  aggregate_id: string;
+  aggregate_version: number;
   result_json: unknown;
 }>;
 
@@ -133,6 +135,102 @@ export class PashxCommandSupportService {
     }
 
     return receipt.result_json;
+  }
+
+  // Generic receipt lookup for the workflow commands (case.transition,
+  // document.finalize, document.cancel, delivery.record). The caller validates
+  // the result shape, so one lookup serves every command without duplicating
+  // the hash-reuse conflict check.
+  async findCommandReplay({
+    queryRunner,
+    schema,
+    idempotencyKey,
+    requestHash,
+  }: {
+    queryRunner: WorkspaceQueryRunner;
+    schema: string;
+    idempotencyKey: string;
+    requestHash: string;
+  }): Promise<
+    | Readonly<{
+        aggregateId: string;
+        aggregateVersion: number;
+        result: unknown;
+      }>
+    | undefined
+  > {
+    const receipt = firstRow<PashxCommandReceiptRow>(
+      await queryRunner.query(
+        `SELECT request_hash, aggregate_id, aggregate_version, result_json FROM ${schema}.pashx_command_receipt WHERE idempotency_key = $1`,
+        [idempotencyKey],
+      ),
+    );
+
+    if (receipt === undefined) return undefined;
+    if (receipt.request_hash !== requestHash) {
+      throw new PashxMabException(
+        PASHX_COMMAND_EXCEPTION_CODES.idempotencyKeyReused,
+      );
+    }
+
+    return {
+      aggregateId: receipt.aggregate_id,
+      aggregateVersion: receipt.aggregate_version,
+      result: receipt.result_json,
+    };
+  }
+
+  async persistCommandReceiptAndAudit({
+    queryRunner,
+    schema,
+    idempotencyKey,
+    requestHash,
+    commandName,
+    aggregateId,
+    aggregateVersion,
+    result,
+    actorId,
+    correlationId,
+    payload,
+  }: {
+    queryRunner: WorkspaceQueryRunner;
+    schema: string;
+    idempotencyKey: string;
+    requestHash: string;
+    commandName: PashxCommandName;
+    aggregateId: string;
+    aggregateVersion: number;
+    result: unknown;
+    actorId: string;
+    correlationId: string;
+    payload: unknown;
+  }): Promise<void> {
+    await queryRunner.query(
+      `INSERT INTO ${schema}.pashx_command_receipt
+        (idempotency_key, request_hash, aggregate_id, aggregate_version, result_json)
+       VALUES ($1, $2, $3, $4, $5::jsonb)`,
+      [
+        idempotencyKey,
+        requestHash,
+        aggregateId,
+        aggregateVersion,
+        JSON.stringify(result),
+      ],
+    );
+    await queryRunner.query(
+      `INSERT INTO ${schema}.pashx_audit_event
+        (id, correlation_id, actor_id, command_name, aggregate_id, aggregate_version, payload)
+       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)`,
+      [
+        randomUUID(),
+        correlationId,
+        actorId,
+        commandName,
+        aggregateId,
+        aggregateVersion,
+        JSON.stringify(payload),
+      ],
+    );
   }
 
   async persistApprovalReceiptAndAudit({

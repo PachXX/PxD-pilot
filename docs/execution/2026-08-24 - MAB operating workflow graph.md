@@ -49,10 +49,38 @@ flowchart LR
 |---|---|---|---|
 | **WF0** | Shahil + Codex | Accept the seven-stage workflow as product truth. | **complete 2026-08-24** |
 | **WF1** | Codex | Typed document/transition contract for RFQ, supplier RFQ, quotation, client PO, vendor PO, delivery note and invoice. | **complete 2026-08-24 — source only** |
-| **WF2** | Codex | Idempotent commands, human approval, audit and transition tests. | **ready** |
-| **WF3** | Codex | Native case timeline, price comparison, delivery and invoice-readiness UI matching the approved mockups. | blocked on WF2 |
-| **WF4** | Claude | Publish/install and live data/permission/rollback QA. | blocked on WF3 |
+| **WF2** | Codex (executed via DeepSeek harness) | Idempotent commands, human approval, audit and transition tests. | **complete in source 2026-08-24 — 14/14 integration suites, 109/109 assertions** |
+| **WF3** | Codex (executed via DeepSeek harness) | Native case timeline, price comparison, delivery and invoice-readiness UI matching the approved mockups. | **in progress** |
+| **WF4** | Claude | Publish/install and live data/permission/rollback QA. | **assigned to Claude 2026-08-24 — blocked on WF3** |
 | **WF5** | Codex + Claude | End-to-end bilingual acceptance using one disposable case plus verified MAB evidence. | blocked on WF4 |
+
+## WF4 handoff to Claude (assigned 2026-08-24)
+
+Claude owns publish/install and live QA only; DeepSeek delivers WF2+WF3 source and signals WF3
+ready before WF4 begins. WF4 must not begin merely because source tests pass.
+
+**What WF4 will publish (app version after 0.2.10, exact bump at publish time):**
+
+- WF1 metadata: nine workflow document roles (`customerRfq`, `supplierRfq`, `vendorQuote`,
+  `customerQuote`, `customerPurchaseOrder`, `vendorPurchaseOrder`, `deliveryNote`, `vendorInvoice`,
+  `customerInvoice`) and the frozen transition contract — currently source-only.
+- WF2 metadata: new `procurementCase` fields `deliveryStatus` (`NOT_STARTED`/`PARTIAL`/`FULL`) and
+  `deliveryDueAt`; install applies this workspace metadata migration.
+- WF2 REST command endpoints (all capability-gated, fail closed without a PashX role):
+  - `POST /rest/pashx-mab/procurement-cases/:id/transitions` — `caseEdit`
+  - `POST /rest/pashx-mab/commercial-documents/:id/finalize` and `/cancel` — `documentEdit`
+  - `POST /rest/pashx-mab/procurement-cases/:id/delivery` — `deliveryRecord`
+  - The WF2 integration suites (11–14) remain the pre-deploy verification; no live command writes.
+
+**Live QA expectations (mirror DS5 conventions):**
+
+- Publish/install the new app version under the unchanged application identity; record manifest
+  shasum, host digest, `/healthz`, and keep `0.2.10` as the rollback target.
+- Verify the four new endpoints fail closed for viewer/evidence-agent principals and do not mutate
+  live data; any disposable fixtures must be deleted by captured ID and verified absent.
+- Do not send/delete email, finalize financial documents, approve/reject on behalf of a human, or
+  change compliance state. Live data/permission findings are Claude's repair; source regressions
+  return to DeepSeek with evidence.
 
 OCR and synchronized email intake remain separate gated inputs. They may create review drafts only;
 they cannot approve, send/delete email, finalize documents, or change compliance state.

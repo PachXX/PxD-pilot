@@ -202,6 +202,49 @@ export const readProcurementCaseVersion = async (
   return row?.aggregateVersion;
 };
 
+export const readProcurementCaseStage = async (
+  id: string,
+): Promise<string | undefined> => {
+  const row = await pashxQueryOne<{ stage: string }>(
+    `SELECT "stage" FROM ${pashxTable('procurementCase')} WHERE id = $1`,
+    [id],
+  );
+
+  return row?.stage;
+};
+
+export const readProcurementCaseDelivery = async (
+  id: string,
+): Promise<
+  { deliveryStatus: string | null; deliveryDueAt: Date | null } | undefined
+> =>
+  pashxQueryOne(
+    `SELECT "deliveryStatus", "deliveryDueAt" FROM ${pashxTable('procurementCase')} WHERE id = $1`,
+    [id],
+  );
+
+export const readCommercialDocumentState = async (
+  id: string,
+): Promise<
+  | {
+      id: string;
+      documentType: string;
+      lifecycleStatus: string;
+      aggregateVersion: number;
+      procurementCaseRecordId: string | null;
+      supplierRecordId: string | null;
+      totalAmountMicros: string | null;
+    }
+  | undefined
+> =>
+  pashxQueryOne(
+    `SELECT id, "documentType", "lifecycleStatus", "aggregateVersion",
+            "procurementCaseRecordId", "supplierRecordId",
+            "totalAmountAmountMicros"::text AS "totalAmountMicros"
+     FROM ${pashxTable('commercialDocument')} WHERE id = $1`,
+    [id],
+  );
+
 // --- Preconditions ------------------------------------------------------------
 
 /**
@@ -245,6 +288,33 @@ export const assertPashxAppInstalled = async (): Promise<void> => {
   }
 };
 
+/**
+ * The WF2 workflow columns (`deliveryStatus`, `deliveryDueAt`) arrive through the application
+ * manifest, so a stale installed app fails these suites deep inside a command with an opaque 500.
+ * This guard names the refresh step directly instead.
+ */
+export const assertPashxWorkflowColumnsInstalled = async (): Promise<void> => {
+  const schema = getWorkspaceSchemaName(PASHX_TEST_WORKSPACE_ID);
+  const row = await pashxQueryOne<{ count: string }>(
+    `SELECT count(*)::text AS count
+     FROM information_schema.columns
+     WHERE table_schema = $1
+       AND table_name = '_procurementCase'
+       AND column_name IN ('deliveryStatus', 'deliveryDueAt')`,
+    [schema],
+  );
+
+  if (Number(row?.count ?? '0') !== 2) {
+    throw new Error(
+      [
+        `PashX MAB workflow columns are missing in workspace ${PASHX_TEST_WORKSPACE_ID}.`,
+        'Sync the application source into this workspace (twenty dev . -r cl2-local)',
+        'and retry before running the WF2 suites.',
+      ].join(' '),
+    );
+  }
+};
+
 // --- Seeding ------------------------------------------------------------------
 
 /**
@@ -255,9 +325,11 @@ export const assertPashxAppInstalled = async (): Promise<void> => {
 export const seedProcurementCase = async ({
   id,
   aggregateVersion = 0,
+  stage,
 }: {
   id: string;
   aggregateVersion?: number;
+  stage?: string;
 }): Promise<void> => {
   // `createdByName` and `updatedByName` are NOT NULL with no database default on every workspace
   // record table. A raw INSERT bypasses the pipeline that normally fills the ACTOR composite, so
@@ -265,12 +337,74 @@ export const seedProcurementCase = async ({
   //   null value in column "createdByName" of relation "_procurementCase"
   // This is the same defect class as finding 29 in the production persistence service — the fix
   // there was to set both actors explicitly, and a test fixture needs to do exactly the same.
+  const stageColumn = stage === undefined ? '' : ', "stage"';
+  const stageValue = stage === undefined ? '' : ', $4';
+
   await pashxQuery(
     `INSERT INTO ${pashxTable('procurementCase')}
-       (id, name, "aggregateVersion", "createdBySource", "createdByName", "updatedBySource", "updatedByName")
-     VALUES ($1, $2, $3, 'API', 'CL2 harness', 'API', 'CL2 harness')
-     ON CONFLICT (id) DO UPDATE SET "aggregateVersion" = EXCLUDED."aggregateVersion"`,
-    [id, `CL2 case ${id.slice(0, 8)}`, aggregateVersion],
+       (id, name, "aggregateVersion", "createdBySource", "createdByName", "updatedBySource", "updatedByName"${stageColumn})
+     VALUES ($1, $2, $3, 'API', 'CL2 harness', 'API', 'CL2 harness'${stageValue})
+     ON CONFLICT (id) DO UPDATE SET "aggregateVersion" = EXCLUDED."aggregateVersion"${
+       stage === undefined ? '' : ', "stage" = EXCLUDED."stage"'
+     }`,
+    stage === undefined
+      ? [id, `CL2 case ${id.slice(0, 8)}`, aggregateVersion]
+      : [id, `CL2 case ${id.slice(0, 8)}`, aggregateVersion, stage],
+  );
+};
+
+export const seedCommercialDocument = async ({
+  id,
+  name,
+  documentType,
+  lifecycleStatus,
+  aggregateVersion,
+  procurementCaseRecordId,
+  supplierRecordId,
+  totalAmountMicros,
+  issueDate,
+  currencyCode,
+}: {
+  id: string;
+  name: string;
+  documentType: string;
+  lifecycleStatus: string;
+  aggregateVersion: number;
+  procurementCaseRecordId?: string;
+  supplierRecordId?: string;
+  totalAmountMicros?: string;
+  issueDate?: string;
+  currencyCode?: string;
+}): Promise<void> => {
+  await pashxQuery(
+    `INSERT INTO ${pashxTable('commercialDocument')}
+       (id, name, "documentType", "lifecycleStatus", "aggregateVersion",
+        "procurementCaseRecordId", "supplierRecordId",
+        "totalAmountAmountMicros", "totalAmountCurrencyCode",
+        "issueDate", "currencyCode",
+        "createdBySource", "createdByName", "updatedBySource", "updatedByName")
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8::bigint, $10, $9, $10,
+             'API', 'CL2 harness', 'API', 'CL2 harness')
+     ON CONFLICT (id) DO UPDATE SET
+       "documentType" = EXCLUDED."documentType",
+       "lifecycleStatus" = EXCLUDED."lifecycleStatus",
+       "aggregateVersion" = EXCLUDED."aggregateVersion",
+       "procurementCaseRecordId" = EXCLUDED."procurementCaseRecordId",
+       "supplierRecordId" = EXCLUDED."supplierRecordId",
+       "totalAmountAmountMicros" = EXCLUDED."totalAmountAmountMicros",
+       "totalAmountCurrencyCode" = EXCLUDED."totalAmountCurrencyCode"`,
+    [
+      id,
+      name,
+      documentType,
+      lifecycleStatus,
+      aggregateVersion,
+      procurementCaseRecordId ?? null,
+      supplierRecordId ?? null,
+      totalAmountMicros ?? null,
+      issueDate ?? null,
+      currencyCode ?? null,
+    ],
   );
 };
 
@@ -296,11 +430,13 @@ export const cleanupPashxTestData = async ({
   procurementCaseIds = [],
   commercialDocumentIds = [],
   supplierIds = [],
+  approvalRequestIds = [],
   idempotencyKeys = [],
 }: {
   procurementCaseIds?: string[];
   commercialDocumentIds?: string[];
   supplierIds?: string[];
+  approvalRequestIds?: string[];
   idempotencyKeys?: string[];
 }): Promise<void> => {
   const schema = pashxTestSchema();
@@ -333,18 +469,24 @@ export const cleanupPashxTestData = async ({
     );
   }
   if (
-    procurementCaseIds.length > 0 &&
+    [...procurementCaseIds, ...approvalRequestIds].length > 0 &&
     (await supportTableExists('pashx_audit_event'))
   ) {
     await pashxQuery(
       `DELETE FROM ${schema}.pashx_audit_event WHERE aggregate_id = ANY($1::uuid[])`,
-      [procurementCaseIds],
+      [[...procurementCaseIds, ...approvalRequestIds]],
     );
   }
   if (commercialDocumentIds.length > 0) {
     await pashxQuery(
       `DELETE FROM ${pashxTable('commercialDocument')} WHERE id = ANY($1::uuid[])`,
       [commercialDocumentIds],
+    );
+  }
+  if (approvalRequestIds.length > 0) {
+    await pashxQuery(
+      `DELETE FROM ${pashxTable('approvalRequest')} WHERE id = ANY($1::uuid[])`,
+      [approvalRequestIds],
     );
   }
   if (procurementCaseIds.length > 0) {

@@ -54,3 +54,11 @@ export const PASHX_PROCUREMENT_CASE_STAGES = [
 ] as const;
 export type PashxProcurementCaseStage =
   (typeof PASHX_PROCUREMENT_CASE_STAGES)[number];
+
+export const PASHX_CASE_DELIVERY_STATUSES = [
+  'notStarted',
+  'partial',
+  'full',
+] as const;
+export type PashxCaseDeliveryStatus =
+  (typeof PASHX_CASE_DELIVERY_STATUSES)[number];

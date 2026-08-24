@@ -1,6 +1,8 @@
 import {
+  type PashxCaseDeliveryStatus,
   type PashxCommercialDocumentType,
   type PashxDocumentLifecycleStatus,
+  type PashxProcurementCaseStage,
 } from 'pashx-mab-contract';
 
 // Translation between the contract vocabulary and the workspace SELECT option values.
@@ -56,3 +58,67 @@ export const toManifestDocumentType = (
 export const toManifestLifecycleStatus = (
   lifecycleStatus: PashxDocumentLifecycleStatus,
 ): string => PASHX_LIFECYCLE_STATUS_MANIFEST_VALUES[lifecycleStatus];
+
+export const PASHX_CASE_STAGE_MANIFEST_VALUES: Record<
+  PashxProcurementCaseStage,
+  string
+> = {
+  intake: 'INTAKE',
+  sourcing: 'SOURCING',
+  quoted: 'QUOTED',
+  'customer-order': 'CUSTOMER_ORDER',
+  'vendor-order': 'VENDOR_ORDER',
+  delivery: 'DELIVERY',
+  invoicing: 'INVOICING',
+  closed: 'CLOSED',
+  cancelled: 'CANCELLED',
+};
+
+export const toManifestCaseStage = (stage: PashxProcurementCaseStage): string =>
+  PASHX_CASE_STAGE_MANIFEST_VALUES[stage];
+
+export const PASHX_CASE_DELIVERY_STATUS_MANIFEST_VALUES: Record<
+  PashxCaseDeliveryStatus,
+  string
+> = {
+  notStarted: 'NOT_STARTED',
+  partial: 'PARTIAL',
+  full: 'FULL',
+};
+
+export const toManifestDeliveryStatus = (
+  deliveryStatus: PashxCaseDeliveryStatus,
+): string => PASHX_CASE_DELIVERY_STATUS_MANIFEST_VALUES[deliveryStatus];
+
+// Reverse lookups for rows read through the workspace repositories. The ORM
+// returns stored UPPER_CASE select values, so every translation above needs a
+// counterpart to interpret them as contract vocabulary.
+export const toContractDocumentType = (
+  value: string,
+): PashxCommercialDocumentType | undefined =>
+  (
+    Object.entries(PASHX_DOCUMENT_TYPE_MANIFEST_VALUES) as [
+      PashxCommercialDocumentType,
+      string,
+    ][]
+  ).find(([, manifestValue]) => manifestValue === value)?.[0];
+
+export const toContractLifecycleStatus = (
+  value: string,
+): PashxDocumentLifecycleStatus | undefined =>
+  (
+    Object.entries(PASHX_LIFECYCLE_STATUS_MANIFEST_VALUES) as [
+      PashxDocumentLifecycleStatus,
+      string,
+    ][]
+  ).find(([, manifestValue]) => manifestValue === value)?.[0];
+
+export const toContractCaseStage = (
+  value: string,
+): PashxProcurementCaseStage | undefined =>
+  (
+    Object.entries(PASHX_CASE_STAGE_MANIFEST_VALUES) as [
+      PashxProcurementCaseStage,
+      string,
+    ][]
+  ).find(([, manifestValue]) => manifestValue === value)?.[0];

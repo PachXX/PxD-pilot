@@ -11,13 +11,20 @@ import { WorkspaceAuthGuard } from 'src/engine/guards/workspace-auth.guard';
 import { WorkspaceCacheModule } from 'src/engine/workspace-cache/workspace-cache.module';
 import { WorkspaceCacheStorageModule } from 'src/engine/workspace-cache-storage/workspace-cache-storage.module';
 import { PashxApprovalCommandController } from 'src/modules/pashx-mab/controllers/pashx-approval-command.controller';
+import { PashxCaseTransitionController } from 'src/modules/pashx-mab/controllers/pashx-case-transition.controller';
+import { PashxDeliveryRecordController } from 'src/modules/pashx-mab/controllers/pashx-delivery-record.controller';
+import { PashxDocumentLifecycleController } from 'src/modules/pashx-mab/controllers/pashx-document-lifecycle.controller';
 import { PashxVendorPurchaseOrderController } from 'src/modules/pashx-mab/controllers/pashx-vendor-purchase-order.controller';
 import { PashxMabModule } from 'src/modules/pashx-mab/pashx-mab.module';
 import { PashxApprovalCommandService } from 'src/modules/pashx-mab/services/pashx-approval-command.service';
 import { PashxCapabilityService } from 'src/modules/pashx-mab/services/pashx-capability.service';
+import { PashxCaseTransitionService } from 'src/modules/pashx-mab/services/pashx-case-transition.service';
 import { PashxCommandSupportService } from 'src/modules/pashx-mab/services/pashx-command-support.service';
+import { PashxDeliveryRecordService } from 'src/modules/pashx-mab/services/pashx-delivery-record.service';
+import { PashxDocumentLifecycleService } from 'src/modules/pashx-mab/services/pashx-document-lifecycle.service';
 import { PashxVendorPurchaseOrderPersistenceService } from 'src/modules/pashx-mab/services/pashx-vendor-purchase-order-persistence.service';
 import { PashxVendorPurchaseOrderService } from 'src/modules/pashx-mab/services/pashx-vendor-purchase-order.service';
+import { PashxWorkflowPersistenceService } from 'src/modules/pashx-mab/services/pashx-workflow-persistence.service';
 import { PashxWorkspaceSchemaService } from 'src/modules/pashx-mab/services/pashx-workspace-schema.service';
 
 @Module({})
@@ -26,9 +33,13 @@ class IsolatedInfrastructureModule {}
 const PASHX_PROVIDERS = [
   PashxApprovalCommandService,
   PashxCapabilityService,
+  PashxCaseTransitionService,
   PashxCommandSupportService,
+  PashxDeliveryRecordService,
+  PashxDocumentLifecycleService,
   PashxVendorPurchaseOrderService,
   PashxVendorPurchaseOrderPersistenceService,
+  PashxWorkflowPersistenceService,
   PashxWorkspaceSchemaService,
 ] as const;
 
@@ -77,6 +88,9 @@ describe('PashxMabModule boot smoke', () => {
 
     expect(testingModule.get(PashxVendorPurchaseOrderController)).toBeDefined();
     expect(testingModule.get(PashxApprovalCommandController)).toBeDefined();
+    expect(testingModule.get(PashxCaseTransitionController)).toBeDefined();
+    expect(testingModule.get(PashxDeliveryRecordController)).toBeDefined();
+    expect(testingModule.get(PashxDocumentLifecycleController)).toBeDefined();
 
     await testingModule.close();
   });

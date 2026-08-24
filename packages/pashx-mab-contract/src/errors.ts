@@ -1,6 +1,9 @@
 export const PASHX_COMMAND_EXCEPTION_CODES = {
   invalidInput: 'PASHX_INVALID_INPUT',
   invalidTransition: 'PASHX_INVALID_TRANSITION',
+  transitionEvidenceMissing: 'PASHX_TRANSITION_EVIDENCE_MISSING',
+  documentEvidenceMissing: 'PASHX_DOCUMENT_EVIDENCE_MISSING',
+  approvalGateUnsatisfied: 'PASHX_APPROVAL_GATE_UNSATISFIED',
   forbiddenCapability: 'PASHX_FORBIDDEN_CAPABILITY',
   staleVersion: 'PASHX_STALE_VERSION',
   idempotencyKeyReused: 'PASHX_IDEMPOTENCY_KEY_REUSED',
@@ -41,6 +44,27 @@ export const PASHX_COMMAND_ERROR_DEFINITIONS = {
     messages: {
       en: 'This record cannot move to the requested stage.',
       ar: 'لا يمكن نقل هذا السجل إلى المرحلة المطلوبة.',
+    },
+  },
+  PASHX_TRANSITION_EVIDENCE_MISSING: {
+    retryable: false,
+    messages: {
+      en: 'Finalized evidence required for this stage change is missing.',
+      ar: 'الأدلة النهائية المطلوبة لهذا الانتقال غير موجودة.',
+    },
+  },
+  PASHX_DOCUMENT_EVIDENCE_MISSING: {
+    retryable: false,
+    messages: {
+      en: 'Required document data is missing before finalization.',
+      ar: 'بيانات المستند المطلوبة غير مكتملة قبل الاعتماد.',
+    },
+  },
+  PASHX_APPROVAL_GATE_UNSATISFIED: {
+    retryable: false,
+    messages: {
+      en: 'This stage change requires an approved human decision first.',
+      ar: 'يتطلب هذا الانتقال قراراً بشرياً معتمداً أولاً.',
     },
   },
   PASHX_FORBIDDEN_CAPABILITY: {

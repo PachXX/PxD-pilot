@@ -71,6 +71,8 @@ export const PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS = {
     nextActionCode: '6af335e9-22a0-42a7-a554-2af443730306',
     actionDueAt: 'a4058383-7150-472d-9b79-1505491c2d50',
     blockedReasonCode: '10cd7e7d-08fb-4d45-81ff-e446c8273e3e',
+    deliveryStatus: 'd0b2a56c-9f51-4a3f-b6c7-2f1c64a8d3e2',
+    deliveryDueAt: 'e7a1f30d-5c24-4b77-9d58-8a2b1e6c4f09',
   },
   commercialDocument: {
     documentType: '6358e709-68e0-4201-a018-5280a56810da',
@@ -137,6 +139,11 @@ export const PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS = {
       awaitingSupplierResponse: '252fcfec-b8be-4279-a9cb-91ce8fcd7cf6',
       awaitingInternalDecision: 'fb19ad99-0610-41dc-b642-f0ef52e3c9af',
       externalDependency: '632d3635-eba9-4e99-9bb9-a08bfa28aa83',
+    },
+    deliveryStatus: {
+      notStarted: 'c1e8b2a4-7f60-4d2e-9a35-3e7b0d5f1c46',
+      partial: 'a94f3d71-6c85-4a1e-b2d4-5f8c1e7a0b93',
+      full: '8b2c6e50-4d91-4f3a-a7b8-1e6d9c2f5a74',
     },
   },
   commercialDocument: {

@@ -162,5 +162,51 @@ export default defineObject({
         position,
       })),
     },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.procurementCase.deliveryStatus,
+      type: FieldType.SELECT,
+      name: 'deliveryStatus',
+      label: 'Delivery status',
+      description:
+        'Delivery progress recorded by the delivery command; evidence is the finalized delivery note.',
+      icon: 'IconTruckDelivery',
+      defaultValue: `'NOT_STARTED'`,
+      options: [
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.procurementCase
+            .deliveryStatus.notStarted,
+          value: 'NOT_STARTED',
+          label: 'Not started',
+          color: 'gray',
+          position: 0,
+        },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.procurementCase
+            .deliveryStatus.partial,
+          value: 'PARTIAL',
+          label: 'Partial',
+          color: 'yellow',
+          position: 1,
+        },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.procurementCase
+            .deliveryStatus.full,
+          value: 'FULL',
+          label: 'Full',
+          color: 'green',
+          position: 2,
+        },
+      ],
+    },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.procurementCase.deliveryDueAt,
+      type: FieldType.DATE_TIME,
+      name: 'deliveryDueAt',
+      label: 'Delivery due at',
+      description: 'Agreed delivery deadline maintained by the delivery command.',
+      icon: 'IconCalendarDue',
+    },
   ],
 });

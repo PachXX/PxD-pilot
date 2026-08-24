@@ -3,7 +3,11 @@ import {
   type PashxDecideApprovalRequest,
   type PashxCreateVendorPurchaseOrderPayload,
   type PashxCreateVendorPurchaseOrderRequest,
+  type PashxFinalizeDocumentRequest,
+  type PashxProcurementCaseStage,
+  type PashxRecordDeliveryRequest,
   type PashxRequestApprovalRequest,
+  type PashxTransitionCaseRequest,
 } from 'pashx-mab-contract';
 
 export const createVendorPurchaseOrderFingerprint = (
@@ -57,4 +61,64 @@ export const createDecideApprovalFingerprint = (
     decision: request.decision,
     decisionNote: request.decisionNote,
     expectedStatus: request.expectedStatus,
+  });
+
+export const createCaseTransitionFingerprint = (
+  request: PashxTransitionCaseRequest,
+): string =>
+  sha256Json({
+    contractVersion: request.contractVersion,
+    procurementCaseRecordId: request.procurementCaseRecordId,
+    expectedVersion: request.expectedVersion,
+    payload: {
+      fromStage: request.payload.fromStage,
+      toStage: request.payload.toStage,
+    },
+  });
+
+export const createDocumentLifecycleFingerprint = (
+  request: PashxFinalizeDocumentRequest,
+): string =>
+  sha256Json({
+    contractVersion: request.contractVersion,
+    commercialDocumentRecordId: request.commercialDocumentRecordId,
+    expectedVersion: request.expectedVersion,
+  });
+
+export const createRecordDeliveryFingerprint = (
+  request: PashxRecordDeliveryRequest,
+): string =>
+  sha256Json({
+    contractVersion: request.contractVersion,
+    procurementCaseRecordId: request.procurementCaseRecordId,
+    expectedVersion: request.expectedVersion,
+    payload: {
+      deliveryNoteRecordId: request.payload.deliveryNoteRecordId,
+      deliveryStatus: request.payload.deliveryStatus,
+      dueAt: request.payload.dueAt,
+    },
+  });
+
+// The canonical digest a case-transition approval must carry. Key order is
+// fixed here so requesters and the enforcing service agree without shared
+// runtime state. `expectedVersion` is included so an approval cannot be
+// replayed against a newer case version. Lives server-side (not in the
+// contract) because it needs node:crypto, which the browser app bundle cannot
+// resolve — the same boundary the other command fingerprints already respect.
+export const createCaseTransitionApprovalDigest = ({
+  procurementCaseRecordId,
+  fromStage,
+  toStage,
+  expectedVersion,
+}: {
+  procurementCaseRecordId: string;
+  fromStage: PashxProcurementCaseStage;
+  toStage: PashxProcurementCaseStage;
+  expectedVersion: number;
+}): string =>
+  sha256Json({
+    procurementCaseRecordId,
+    fromStage,
+    toStage,
+    expectedVersion,
   });
