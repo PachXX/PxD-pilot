@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PxD Command centre — static design preview</title>
+<style>
+  @font-face { font-family: "IBM Plex Sans"; src: url("../../../packages/twenty-apps/pashx-mab/public/fonts/ibm-plex/IBMPlexSans-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; }
+  @font-face { font-family: "IBM Plex Sans"; src: url("../../../packages/twenty-apps/pashx-mab/public/fonts/ibm-plex/IBMPlexSans-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; }
+  @font-face { font-family: "IBM Plex Sans Arabic"; src: url("../../../packages/twenty-apps/pashx-mab/public/fonts/ibm-plex/IBMPlexSansArabic-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; }
+  @font-face { font-family: "IBM Plex Sans Arabic"; src: url("../../../packages/twenty-apps/pashx-mab/public/fonts/ibm-plex/IBMPlexSansArabic-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; }
+  @font-face { font-family: "IBM Plex Mono"; src: url("../../../packages/twenty-apps/pashx-mab/public/fonts/ibm-plex/IBMPlexMono-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; }
+
+  :root { --pxd-preview-canvas: #eef2ee; }
+  body { margin: 0; background: var(--pxd-preview-canvas); font-family: "IBM Plex Sans", system-ui, sans-serif; }
+  body.preview-dark { background: #0b100d; }
+
+  .pxd-preview-toolbar { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px; position: sticky; top: 0; z-index: 10; background: #142019; color: #e9f2ec; }
+  body.preview-dark .pxd-preview-toolbar { background: #060a08; }
+  .pxd-preview-toolbar__note { flex: 1 1 320px; font-size: 13px; line-height: 1.4; margin: 0; min-width: 240px; }
+  .pxd-preview-toolbar strong { color: #ffcf7a; }
+  .pxd-preview-toolbar button { align-items: center; background: #19261f; border: 1px solid #2e3c34; border-radius: 6px; color: #e9f2ec; cursor: pointer; display: inline-flex; font: inherit; font-size: 13px; font-weight: 600; justify-content: center; min-height: 44px; padding: 8px 12px; }
+  .pxd-preview-toolbar button:focus-visible { outline: 3px solid #2d8cff; outline-offset: 2px; }
+  .pxd-preview-toolbar button[aria-pressed="true"] { background: #167a43; border-color: #167a43; }
+
+  .pxd-command { margin: 0; }
+
+  .pxd-command__sample-chip { background: #8a5700; border-radius: 4px; color: #fff; display: inline-block; font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 10px; font-weight: 600; letter-spacing: .08em; margin-inline-start: 8px; padding: 2px 6px; vertical-align: middle; }
+  .pxd-command[data-color-scheme="dark"] .pxd-command__sample-chip { background: #e8b354; color: #3a2a08; }
+  .pxd-command__sample-note { background: var(--pxd-muted-surface, #f0f3f0); border: 1px dashed var(--pxd-border, #dce3df); border-radius: 6px; color: var(--pxd-muted, #647069); font-size: 13px; margin: 0 0 24px; max-width: 1440px; padding: 12px 14px; }
+  .pxd-command__sample-note strong { color: #8a5700; }
+  .pxd-command[data-color-scheme="dark"] .pxd-command__sample-note strong { color: #e8b354; }
+</style>
+<style>
+  .pxd-command {
+    --pxd-canvas: var(--t-background-secondary, #f6f8f5);
+    --pxd-surface: var(--t-background-primary, #ffffff);
+    --pxd-muted-surface: var(--t-background-tertiary, #f0f3f0);
+    --pxd-ink: var(--t-font-color-primary, #142019);
+    --pxd-muted: var(--t-font-color-secondary, #647069);
+    --pxd-border: var(--t-border-color-light, #dce3df);
+    --pxd-green: #167a43;
+    --pxd-red: #b42318;
+    --pxd-amber: #8a5700;
+    --pxd-blue: #185f9d;
+    background: var(--pxd-canvas);
+    box-sizing: border-box;
+    color: var(--pxd-ink);
+    font-family: "IBM Plex Sans", var(--t-font-family, sans-serif);
+    font-size: 16px;
+    line-height: 1.5;
+    min-height: 100%;
+    padding: 32px clamp(20px, 4vw, 56px) 48px;
+  }
+  .pxd-command[dir="rtl"] { font-family: "IBM Plex Sans Arabic", "IBM Plex Sans", sans-serif; }
+  .pxd-command[data-color-scheme="dark"] {
+    --pxd-canvas: var(--t-background-secondary, #101713);
+    --pxd-surface: var(--t-background-primary, #17201b);
+    --pxd-muted-surface: var(--t-background-tertiary, #1d2822);
+    --pxd-ink: var(--t-font-color-primary, #ebf2ee);
+    --pxd-muted: var(--t-font-color-secondary, #aebbb4);
+    --pxd-border: var(--t-border-color-light, #39483f);
+  }
+  .pxd-command *, .pxd-command *::before, .pxd-command *::after { box-sizing: border-box; }
+  .pxd-command__header { align-items: flex-start; display: flex; gap: 32px; justify-content: space-between; margin: 0 auto 40px; max-width: 1440px; }
+  .pxd-command__eyebrow { color: var(--pxd-muted); font-size: 14px; font-weight: 600; margin: 0 0 8px; }
+  .pxd-command__title { font-size: clamp(32px, 4vw, 48px); letter-spacing: -.045em; line-height: 1.05; margin: 0; }
+  .pxd-command__subtitle { color: var(--pxd-muted); font-size: 18px; margin: 10px 0 0; max-width: 760px; }
+  .pxd-command__as-of { color: var(--pxd-muted); font-size: 14px; margin: 24px 0 0; }
+  .pxd-command__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pxd-command__button { align-items: center; background: var(--pxd-surface); border: 1px solid var(--pxd-border); border-radius: 8px; color: var(--pxd-ink); cursor: pointer; display: inline-flex; font: inherit; font-weight: 600; justify-content: center; min-height: 44px; padding: 9px 14px; }
+  .pxd-command__button--primary { background: var(--pxd-green); border-color: var(--pxd-green); color: #fff; }
+  .pxd-command__button:focus-visible, .pxd-command__link:focus-visible { outline: 3px solid #2d8cff; outline-offset: 3px; }
+  .pxd-command__main { margin: 0 auto; max-width: 1440px; }
+  .pxd-command__notice { background: var(--pxd-surface); border: 1px solid var(--pxd-border); border-radius: 6px; margin: 0 0 16px; padding: 12px 14px; }
+  .pxd-command__summary { background: var(--pxd-border); border: 1px solid var(--pxd-border); display: grid; gap: 1px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 24px; }
+  .pxd-command__summary-item { align-items: center; background: var(--pxd-surface); display: grid; grid-template-columns: auto 1fr; min-height: 132px; padding: 24px; }
+  .pxd-command__summary-label { color: var(--pxd-muted); font-size: 14px; font-weight: 600; }
+  .pxd-command__summary-count { display: block; font-size: 42px; grid-column: 2; letter-spacing: -.04em; line-height: 1.05; margin-top: 8px; }
+  .pxd-command__summary-description { color: var(--pxd-muted); display: block; font-size: 12px; grid-column: 2; margin-top: 8px; }
+  .pxd-command__signal-dot { background: currentColor; border-radius: 50%; display: inline-block; height: 8px; margin-inline-end: 9px; width: 8px; }
+  .pxd-command__signal-dot--compliance_exception, .pxd-command__signal--compliance_exception { color: var(--pxd-red); }
+  .pxd-command__signal-dot--approval_required, .pxd-command__signal--approval_required { color: var(--pxd-blue); }
+  .pxd-command__signal-dot--blocked_data, .pxd-command__signal--blocked_data { color: var(--pxd-amber); }
+  .pxd-command__signal-dot--action_required, .pxd-command__signal--action_required { color: var(--pxd-green); }
+  .pxd-command__workspace { align-items: start; display: grid; gap: 24px; grid-template-columns: minmax(0, 3fr) minmax(240px, 1fr); }
+  .pxd-command__ledger { background: var(--pxd-surface); border: 1px solid var(--pxd-border); }
+  .pxd-command__section-header { align-items: start; border-bottom: 1px solid var(--pxd-border); display: flex; gap: 20px; justify-content: space-between; padding: 20px 24px; }
+  .pxd-command__section-header h2 { font-size: 20px; margin: 0; }
+  .pxd-command__section-header p { color: var(--pxd-muted); margin: 4px 0 0; }
+  .pxd-command__section-header > span { color: var(--pxd-muted); font-size: 13px; white-space: nowrap; }
+  .pxd-command__table-scroll { overflow-x: auto; }
+  .pxd-command__table { border-collapse: collapse; min-width: 820px; table-layout: fixed; width: 100%; }
+  .pxd-command__table th { color: var(--pxd-muted); font-size: 12px; font-weight: 600; letter-spacing: .02em; padding: 11px 14px; text-align: start; }
+  .pxd-command__table td { border-top: 1px solid var(--pxd-border); font-size: 13px; min-width: 0; overflow-wrap: anywhere; padding: 13px 14px; vertical-align: middle; }
+  .pxd-command__table th:nth-child(1) { width: 18%; }
+  .pxd-command__table th:nth-child(2) { width: 27%; }
+  .pxd-command__table th:nth-child(3) { width: 12%; }
+  .pxd-command__table th:nth-child(4) { width: 16%; }
+  .pxd-command__table th:nth-child(5) { width: 13%; }
+  .pxd-command__table th:nth-child(6) { width: 14%; }
+  .pxd-command__signal { align-items: center; display: inline-flex; font-size: 12px; font-weight: 600; }
+  .pxd-command__case { color: var(--pxd-muted); display: block; font-size: 12px; margin-top: 3px; }
+  .pxd-command__side { align-content: start; display: grid; gap: 24px; }
+  .pxd-command__panel { background: var(--pxd-surface); border: 1px solid var(--pxd-border); padding: 20px 22px; }
+  .pxd-command__panel--unavailable { border-top: 4px solid var(--pxd-amber); }
+  .pxd-command__panel h2 { font-size: 20px; margin: 0; }
+  .pxd-command__panel-body { color: var(--pxd-muted); font-size: 14px; margin: 6px 0 0; }
+  .pxd-command__panel-state { border-top: 1px solid var(--pxd-border); margin-top: 16px; padding-top: 14px; }
+  .pxd-command__panel-state-title { font-weight: 600; margin: 0; }
+  .pxd-command__insights { list-style: none; margin: 16px 0 0; padding: 0; }
+  .pxd-command__insight { border-top: 1px solid var(--pxd-border); padding: 16px 0 0; }
+  .pxd-command__insight:first-child { border-top: 0; padding-top: 0; }
+  .pxd-command__tag { background: var(--pxd-muted-surface); border-radius: 4px; display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 8px; }
+  .pxd-command__tag--observation { color: var(--pxd-amber); }
+  .pxd-command__tag--suggestion { color: var(--pxd-green); }
+  .pxd-command__tag--data_quality { color: var(--pxd-red); }
+  .pxd-command__insight-narrative { font-size: 14px; margin: 10px 0 0; overflow-wrap: anywhere; }
+  .pxd-command__insight-meta { margin: 12px 0 0; }
+  .pxd-command__insight-meta > div { display: flex; font-size: 12px; gap: 12px; justify-content: space-between; padding: 4px 0; }
+  .pxd-command__insight-meta dt { color: var(--pxd-muted); }
+  .pxd-command__insight-meta dd { margin: 0; overflow-wrap: anywhere; text-align: end; }
+  .pxd-command__sources { margin: 12px 0 0; }
+  .pxd-command__sources-label { color: var(--pxd-muted); display: block; font-size: 12px; font-weight: 600; }
+  .pxd-command__sources-list { list-style: none; margin: 4px 0 0; padding: 0; }
+  .pxd-command__sources-list .pxd-command__link { font-size: 12px; }
+  .pxd-command__source-plain { color: var(--pxd-muted); direction: ltr; font-family: "IBM Plex Mono", monospace; font-size: 12px; overflow-wrap: anywhere; padding: 10px 0; unicode-bidi: isolate; }
+  .pxd-command__source-note { font-size: 11px; margin: 4px 0 0; }
+  .pxd-command__unavailable-list { margin: 16px 0 0; }
+  .pxd-command__unavailable-list > div { border-top: 1px solid var(--pxd-border); padding: 13px 0; }
+  .pxd-command__unavailable-list dt { font-size: 14px; font-weight: 600; }
+  .pxd-command__unavailable-list dd { display: flex; flex-direction: column; font-size: 13px; gap: 4px; margin: 6px 0 0; }
+  .pxd-command__unavailable-state { color: var(--pxd-amber); font-size: 12px; letter-spacing: .04em; }
+  .pxd-command__link { align-items: center; color: var(--pxd-green); display: inline-flex; font-weight: 600; min-height: 44px; }
+  .pxd-command__empty, .pxd-command__state { background: var(--pxd-surface); border: 1px solid var(--pxd-border); border-radius: 6px; padding: 28px; text-align: center; }
+  .pxd-command__empty h2, .pxd-command__state h2 { margin-top: 0; }
+  .pxd-command__muted { color: var(--pxd-muted); }
+  .pxd-command__isolate { direction: ltr; font-family: "IBM Plex Mono", monospace; font-size: 12px; unicode-bidi: isolate; }
+  @media (prefers-reduced-motion: reduce) {
+    .pxd-command *, .pxd-command *::before, .pxd-command *::after { scroll-behavior: auto !important; }
+  }
+  @media (max-width: 900px) {
+    .pxd-command { padding: 16px; }
+    .pxd-command__header { display: block; }
+    .pxd-command__actions { margin-top: 14px; }
+    .pxd-command__workspace { grid-template-columns: 1fr; }
+    .pxd-command__summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pxd-command__summary-item { min-height: 108px; }
+  }
+  @media (max-width: 560px) {
+    .pxd-command__summary { grid-template-columns: 1fr; }
+    .pxd-command__summary-item { min-height: 96px; padding: 18px; }
+    .pxd-command__section-header { display: block; }
+    .pxd-command__section-header > span { display: block; margin-top: 8px; }
+    .pxd-command__table { min-width: 0; }
+    .pxd-command__table thead { display: none; }
+    .pxd-command__table tbody, .pxd-command__table tr, .pxd-command__table td { display: block; }
+    .pxd-command__table tr { border-top: 1px solid var(--pxd-border); padding: 12px 16px; }
+    .pxd-command__table td { border: 0; display: grid; gap: 12px; grid-template-columns: minmax(92px, .7fr) 1.3fr; padding: 7px 0; }
+    .pxd-command__table td::before { color: var(--pxd-muted); content: attr(data-label); font-size: 12px; font-weight: 600; }
+  }
+</style>
+</head>
+<body>
+<div class="pxd-preview-toolbar" role="region" aria-label="Preview controls">
+  <p class="pxd-preview-toolbar__note">
+    <strong>Static design preview</strong> — not connected to Twenty. The default view shows the
+    true empty state. The sample toggle injects <strong>clearly-labeled illustrative fixtures</strong>;
+    they are not live or stored data.
+  </p>
+  <button id="sample-toggle" type="button" aria-pressed="false">Load labeled sample fixtures</button>
+  <button id="theme-toggle" type="button">Dark theme</button>
+  <button id="lang-toggle" type="button" lang="ar">العربية</button>
+</div>
+
+<div id="command-root"></div>
+
+<script>
+"use strict";
+const copy = {
+  en: {
+    eyebrow: "MAB procurement / Work", title: "Command centre",
+    subtitle: "A deterministic queue of compliance exceptions, pending approvals, blocked data, and your current actions.",
+    observed: (v) => "Observed " + v, coverage: (n) => n.toLocaleString("en-GB") + " visible records",
+    queueSummary: "Work queue summary", priorityWork: "Priority work",
+    priorityWorkDescription: "Ordered by compliance, approvals, blocked data, then your current actions.",
+    priorityLabel: "Priority", requiredActionLabel: "Required action", stageLabel: "Stage",
+    ownerLabel: "Owner / approver", dueLabel: "Due", evidenceLabel: "Evidence",
+    openEvidence: "Open evidence record", caseLabel: "Case", noStage: "Not recorded",
+    unassigned: "Unassigned", noDeadline: "No deadline", requestedActionPrefix: "Requested action",
+    approvalPendingLabel: "Pending approval", requestedAtLabel: "Requested",
+    emptyTitle: "You're caught up",
+    emptyBody: "No supported compliance, approval, blocked-data, or action signals are present.",
+    insightsTitle: "Evidence insights",
+    insightsDescription: "Active stored insights with their generated time, confidence, and source records.",
+    insightsEmpty: "No active insights",
+    insightsEmptyBody: "Insights appear here once the evidence analyst generates them from MAB records.",
+    generatedLabel: "Generated", confidenceLabel: "Confidence", generatorLabel: "Generator",
+    sourcesLabel: "Sources", sourceIdsPlainLabel: "Source IDs without a resolvable record type",
+    openInsightRecord: "Open insight record", noSources: "No source records recorded",
+    unavailableTitle: "Capability status",
+    unavailableBody: "Blocked capabilities appear honestly. Nothing here is simulated or enabled.",
+    unavailableState: "Unavailable",
+    emailIntakeLabel: "Synchronized email",
+    emailUnavailableReason: "Email intake is unavailable until a native synchronized mailbox is connected (OC5).",
+    ocrLabel: "Document OCR",
+    ocrUnavailableReason: "OCR extraction is unavailable until a provider passes the frozen benchmark and is accepted (OC5-OCR).",
+    signals: {
+      COMPLIANCE_EXCEPTION: "Compliance exceptions", APPROVAL_REQUIRED: "Pending approvals",
+      BLOCKED_DATA: "Blocked data", ACTION_REQUIRED: "Your actions"
+    },
+    signalDescriptions: {
+      COMPLIANCE_EXCEPTION: "Rejected or retryable compliance states that need resolution.",
+      APPROVAL_REQUIRED: "Approval requests pending a human decision.",
+      BLOCKED_DATA: "Records that cannot progress because required data is missing.",
+      ACTION_REQUIRED: "Complete records owned by you and ready for review."
+    },
+    reasons: {
+      COMPLIANCE_REJECTED: "Resolve the rejected compliance result",
+      CASE_CUSTOMER_MISSING: "Add the missing customer",
+      DRAFT_DOCUMENT_REVIEW_REQUIRED: "Review the draft document",
+      EXPENSE_REVIEW_REQUIRED: "Review the pending expense"
+    },
+    stages: { intake: "Intake", sourcing: "Sourcing", "vendor-order": "Vendor order", invoicing: "Invoicing" },
+    insightTypeLabels: { OBSERVATION: "Observation", SUGGESTION: "Suggestion", DATA_QUALITY: "Data quality" },
+    confidenceLabels: { LOW: "Low confidence", MEDIUM: "Medium confidence", HIGH: "High confidence" }
+  },
+  ar: {
+    eyebrow: "مشتريات MAB / العمل", title: "مركز القيادة",
+    subtitle: "قائمة حتمية لاستثناءات الامتثال والموافقات المعلقة والبيانات المعطلة وإجراءاتك الحالية.",
+    observed: (v) => "وقت الرصد " + v, coverage: (n) => n.toLocaleString("ar-SA") + " سجلات ظاهرة",
+    queueSummary: "ملخص قائمة العمل", priorityWork: "العمل ذو الأولوية",
+    priorityWorkDescription: "مرتبة حسب الامتثال ثم الموافقات ثم البيانات المعطلة ثم إجراءاتك الحالية.",
+    priorityLabel: "الأولوية", requiredActionLabel: "الإجراء المطلوب", stageLabel: "المرحلة",
+    ownerLabel: "المسؤول / الموافق", dueLabel: "الاستحقاق", evidenceLabel: "الدليل",
+    openEvidence: "فتح سجل الدليل", caseLabel: "الحالة", noStage: "غير مسجلة",
+    unassigned: "غير معيّن", noDeadline: "لا يوجد موعد", requestedActionPrefix: "الإجراء المطلوب",
+    approvalPendingLabel: "موافقة معلقة", requestedAtLabel: "الطلب",
+    emptyTitle: "لا توجد أعمال معلقة",
+    emptyBody: "لا توجد إشارات امتثال أو موافقات أو بيانات معطلة أو إجراءات مدعومة حاليًا.",
+    insightsTitle: "رؤى الأدلة",
+    insightsDescription: "رؤى نشطة مخزنة مع وقت إنشائها ودرجة ثقتها وسجلات مصادرها.",
+    insightsEmpty: "لا توجد رؤى نشطة",
+    insightsEmptyBody: "تظهر الرؤى هنا عندما ينشئها محلل الأدلة من سجلات MAB.",
+    generatedLabel: "أُنشئت", confidenceLabel: "درجة الثقة", generatorLabel: "المولّد",
+    sourcesLabel: "المصادر", sourceIdsPlainLabel: "معرفات مصادر بدون نوع سجل قابل للحل",
+    openInsightRecord: "فتح سجل الرؤية", noSources: "لا توجد سجلات مصادر مسجلة",
+    unavailableTitle: "حالة القدرات",
+    unavailableBody: "تظهر القدرات المحظورة بصدق. لا شيء هنا مُحاكى أو مُفعّل.",
+    unavailableState: "غير متاحة",
+    emailIntakeLabel: "البريد الإلكتروني المتزامن",
+    emailUnavailableReason: "استلام البريد الإلكتروني غير متاح حتى يتم ربط صندوق بريد متزامن أصلي (OC5).",
+    ocrLabel: "التعرف الضوئي على المستندات (OCR)",
+    ocrUnavailableReason: "استخراج OCR غير متاح حتى يجتاز مزوّد ما المعيار المجمّد ويُعتمد (OC5-OCR).",
+    signals: {
+      COMPLIANCE_EXCEPTION: "استثناءات الامتثال", APPROVAL_REQUIRED: "موافقات معلقة",
+      BLOCKED_DATA: "بيانات معطلة", ACTION_REQUIRED: "إجراءاتك"
+    },
+    signalDescriptions: {
+      COMPLIANCE_EXCEPTION: "حالات امتثال مرفوضة أو قابلة لإعادة المحاولة وتتطلب المعالجة.",
+      APPROVAL_REQUIRED: "طلبات موافقة تنتظر قرارًا بشريًا.",
+      BLOCKED_DATA: "سجلات لا يمكنها التقدم بسبب نقص بيانات مطلوبة.",
+      ACTION_REQUIRED: "سجلات مكتملة ومسندة إليك وجاهزة للمراجعة."
+    },
+    reasons: {
+      COMPLIANCE_REJECTED: "معالجة نتيجة الامتثال المرفوضة",
+      CASE_CUSTOMER_MISSING: "إضافة العميل المفقود",
+      DRAFT_DOCUMENT_REVIEW_REQUIRED: "مراجعة مسودة المستند",
+      EXPENSE_REVIEW_REQUIRED: "مراجعة المصروف المعلق"
+    },
+    stages: { intake: "الاستلام", sourcing: "التوريد", "vendor-order": "أمر المورّد", invoicing: "الفوترة" },
+    insightTypeLabels: { OBSERVATION: "ملاحظة", SUGGESTION: "اقتراح", DATA_QUALITY: "جودة البيانات" },
+    confidenceLabels: { LOW: "ثقة منخفضة", MEDIUM: "ثقة متوسطة", HIGH: "ثقة عالية" }
+  }
+};
+
+const SIGNAL_ORDER = ["COMPLIANCE_EXCEPTION", "APPROVAL_REQUIRED", "BLOCKED_DATA", "ACTION_REQUIRED"];
+
+// Labeled illustrative fixtures — sample only, never live data.
+const fixtures = [
+  { signal: "COMPLIANCE_EXCEPTION", kind: "command", reasonCode: "COMPLIANCE_REJECTED", caseName: "Al Shuwayer chain", recordId: "document…MAB-VPO-2026-0042", stage: "vendor-order", owner: "member-2", due: null },
+  { signal: "APPROVAL_REQUIRED", kind: "approval", name: "Issue vendor purchase order for case 2026-014", actionCode: "ISSUE_VENDOR_PO", approver: "member-2", requestedAt: "24 Aug 2026, 12:00" },
+  { signal: "APPROVAL_REQUIRED", kind: "approval", name: "Approve direct expense 2026-008", actionCode: "APPROVE_DIRECT_EXPENSE", approver: null, requestedAt: "24 Aug 2026, 11:10" },
+  { signal: "BLOCKED_DATA", kind: "command", reasonCode: "CASE_CUSTOMER_MISSING", caseName: "Riyadh fit-out extension", recordId: "case…7f21", stage: "intake", owner: "member-1", due: null },
+  { signal: "ACTION_REQUIRED", kind: "command", reasonCode: "DRAFT_DOCUMENT_REVIEW_REQUIRED", caseName: "Al Shuwayer chain", recordId: "document…D-102", stage: "sourcing", owner: "member-1", due: "25 Aug 2026, 09:00" },
+  { signal: "ACTION_REQUIRED", kind: "command", reasonCode: "EXPENSE_REVIEW_REQUIRED", caseName: "Al Shuwayer chain", recordId: "expense…E-31", stage: "invoicing", owner: "member-1", due: "26 Aug 2026, 09:00" }
+];
+
+const insightFixtures = [
+  {
+    type: "OBSERVATION", narrative: "Delivery window for case 2026-014 shifted by three days versus the quoted lead time.",
+    generatedAt: "24 Aug 2026, 13:00", confidence: "HIGH", generator: "evidence-analyst@0.2.9",
+    sources: [
+      { kind: "link", label: "procurementCase: case…7f21" },
+      { kind: "link", label: "commercialDocument: document…D-102" },
+      { kind: "plain", id: "d3f2c9b4-8a1e-4f60-9c3d-2b7e5a1f8c44" }
+    ]
+  },
+  {
+    type: "DATA_QUALITY", narrative: "Two vendor documents on case 2026-014 carry no issue date.",
+    generatedAt: "24 Aug 2026, 12:40", confidence: "MEDIUM", generator: "evidence-analyst@0.2.9",
+    sources: [ { kind: "plain", id: "9c8a7b6d-2e4f-4a90-8d1c-3f5e7a9b2c41" } ]
+  }
+];
+
+const state = { locale: "en", dark: false, samples: false };
+
+const el = (tag, className, text) => {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+};
+
+const bdi = (className, text) => {
+  const node = document.createElement("bdi");
+  if (className) node.className = className;
+  node.textContent = text;
+  return node;
+};
+
+const sampleChip = () => el("span", "pxd-command__sample-chip", "SAMPLE");
+
+const dateTime = (value, locale) =>
+  value === null || value === undefined ? "—" : value;
+
+const render = () => {
+  const root = document.getElementById("command-root");
+  const c = copy[state.locale];
+  const dir = state.locale === "ar" ? "rtl" : "ltr";
+  const items = state.samples ? fixtures : [];
+  const insights = state.samples ? insightFixtures : [];
+  const counts = Object.fromEntries(SIGNAL_ORDER.map((signal) => [signal, items.filter((i) => i.signal === signal).length]));
+  document.body.classList.toggle("preview-dark", state.dark);
+  root.innerHTML = "";
+
+  const app = el("div", "pxd-command");
+  app.setAttribute("data-color-scheme", state.dark ? "dark" : "light");
+  app.setAttribute("dir", dir);
+  app.setAttribute("lang", state.locale);
+
+  // Header
+  const header = el("header", "pxd-command__header");
+  const headerText = el("div");
+  headerText.appendChild(el("p", "pxd-command__eyebrow", c.eyebrow));
+  headerText.appendChild(el("h1", "pxd-command__title", c.title));
+  headerText.appendChild(el("p", "pxd-command__subtitle", c.subtitle));
+  const asOf = el("p", "pxd-command__as-of");
+  if (state.samples) {
+    asOf.append(c.observed("24 Aug 2026, 13:00"), " · ", c.coverage(items.length), sampleChip());
+  } else {
+    asOf.append(c.observed("—"), " · ", c.coverage(0));
+  }
+  headerText.appendChild(asOf);
+  const actions = el("div", "pxd-command__actions");
+  actions.appendChild(el("button", "pxd-command__button", state.locale === "en" ? "العربية" : "English"));
+  actions.appendChild(el("button", "pxd-command__button pxd-command__button--primary", state.locale === "en" ? "Refresh queue" : "تحديث قائمة العمل"));
+  header.append(headerText, actions);
+  app.appendChild(header);
+
+  const main = el("main", "pxd-command__main");
+
+  if (state.samples) {
+    const note = el("p", "pxd-command__sample-note");
+    const strong = document.createElement("strong");
+    strong.textContent = state.locale === "en"
+      ? "Sample mode: every row, count, insight and link below is an illustrative fixture."
+      : "وضع العينات: كل صف وعدد ورؤية ورابط أدناه هو عينة توضيحية.";
+    note.appendChild(strong);
+    note.append(state.locale === "en"
+      ? " None of it is live or stored data. Turn the sample toggle off to see the true empty state."
+      : " لا شيء منها بيانات حية أو مخزنة. أوقف مفتاح العينات لرؤية الحالة الفارغة الحقيقية.");
+    main.appendChild(note);
+  }
+
+  // Four-signal ruled band
+  const summary = el("section", "pxd-command__summary");
+  summary.setAttribute("aria-label", c.queueSummary);
+  for (const signal of SIGNAL_ORDER) {
+    const item = el("div", "pxd-command__summary-item");
+    item.appendChild(el("span", "pxd-command__signal-dot pxd-command__signal-dot--" + signal.toLowerCase()));
+    item.appendChild(el("span", "pxd-command__summary-label", c.signals[signal]));
+    item.appendChild(el("strong", "pxd-command__summary-count", counts[signal].toLocaleString(state.locale === "ar" ? "ar-SA" : "en-GB")));
+    const description = el("span", "pxd-command__summary-description", c.signalDescriptions[signal]);
+    if (state.samples) description.appendChild(sampleChip());
+    item.appendChild(description);
+    summary.appendChild(item);
+  }
+  main.appendChild(summary);
+
+  // Workspace
+  const workspace = el("div", "pxd-command__workspace");
+
+  const ledger = el("section", "pxd-command__ledger");
+  ledger.setAttribute("aria-labelledby", "pxd-priority-work");
+  const ledgerHeader = el("header", "pxd-command__section-header");
+  const ledgerHeading = el("div");
+  const h2 = el("h2", null, c.priorityWork);
+  h2.id = "pxd-priority-work";
+  ledgerHeading.append(h2, el("p", null, c.priorityWorkDescription));
+  const coverage = el("span", null, c.coverage(items.length));
+  if (state.samples) coverage.appendChild(sampleChip());
+  ledgerHeader.append(ledgerHeading, coverage);
+  ledger.appendChild(ledgerHeader);
+
+  if (items.length === 0) {
+    const empty = el("section", "pxd-command__empty");
+    empty.append(el("h2", null, c.emptyTitle), el("p", "pxd-command__muted", c.emptyBody));
+    ledger.appendChild(empty);
+  } else {
+    const scroll = el("div", "pxd-command__table-scroll");
+    const table = el("table", "pxd-command__table");
+    const thead = el("thead");
+    const headRow = el("tr");
+    for (const label of [c.priorityLabel, c.requiredActionLabel, c.stageLabel, c.ownerLabel, c.dueLabel, c.evidenceLabel]) {
+      const th = el("th", null, label);
+      th.setAttribute("scope", "col");
+      headRow.appendChild(th);
+    }
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+    const tbody = el("tbody");
+    for (const item of items) {
+      const tr = el("tr");
+      const tdSignal = el("td");
+      tdSignal.setAttribute("data-label", c.priorityLabel);
+      const signal = el("span", "pxd-command__signal pxd-command__signal--" + item.signal.toLowerCase());
+      signal.appendChild(el("span", "pxd-command__signal-dot"));
+      signal.append(c.signals[item.signal]);
+      tdSignal.appendChild(signal);
+      tr.appendChild(tdSignal);
+
+      const tdAction = el("td");
+      tdAction.setAttribute("data-label", c.requiredActionLabel);
+      const strong = el("strong", null, item.kind === "approval" ? item.name : c.reasons[item.reasonCode]);
+      if (item.kind === "approval") strong.appendChild(sampleChip());
+      tdAction.appendChild(strong);
+      const caseLine = el("span", "pxd-command__case");
+      if (item.kind === "approval") {
+        caseLine.append(c.requestedActionPrefix + ": ");
+        caseLine.appendChild(bdi("pxd-command__isolate", item.actionCode));
+      } else {
+        caseLine.append(c.caseLabel + ": " + item.caseName);
+      }
+      tdAction.appendChild(caseLine);
+      tr.appendChild(tdAction);
+
+      const tdStage = el("td", null, item.kind === "approval" ? c.approvalPendingLabel : (item.stage ? c.stages[item.stage] : c.noStage));
+      tdStage.setAttribute("data-label", c.stageLabel);
+      tr.appendChild(tdStage);
+
+      const tdOwner = el("td");
+      tdOwner.setAttribute("data-label", c.ownerLabel);
+      tdOwner.appendChild(bdi("pxd-command__isolate", item.kind === "approval" ? (item.approver ?? c.unassigned) : (item.owner ?? c.unassigned)));
+      tr.appendChild(tdOwner);
+
+      const tdDue = el("td");
+      tdDue.setAttribute("data-label", c.dueLabel);
+      const due = el("bdi", null, item.kind === "approval"
+        ? c.requestedAtLabel + " " + dateTime(item.requestedAt, state.locale)
+        : (item.due === null ? c.noDeadline : dateTime(item.due, state.locale)));
+      tdDue.appendChild(due);
+      tr.appendChild(tdDue);
+
+      const tdEvidence = el("td");
+      tdEvidence.setAttribute("data-label", c.evidenceLabel);
+      const link = el("a", "pxd-command__link", c.openEvidence);
+      link.setAttribute("href", "#sample-evidence");
+      link.setAttribute("title", "Preview only — not a live record link");
+      tdEvidence.appendChild(link);
+      tr.appendChild(tdEvidence);
+
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+    scroll.appendChild(table);
+    ledger.appendChild(scroll);
+  }
+  workspace.appendChild(ledger);
+
+  // Side: insights + unavailable
+  const side = el("aside", "pxd-command__side");
+
+  const insightsPanel = el("section", "pxd-command__panel");
+  insightsPanel.setAttribute("aria-labelledby", "pxd-insights");
+  const insightsTitle = el("h2", null, c.insightsTitle);
+  insightsTitle.id = "pxd-insights";
+  insightsPanel.append(insightsTitle, el("p", "pxd-command__panel-body", c.insightsDescription));
+  if (insights.length === 0) {
+    const emptyState = el("div", "pxd-command__panel-state");
+    emptyState.append(el("p", "pxd-command__panel-state-title", c.insightsEmpty), el("p", "pxd-command__muted", c.insightsEmptyBody));
+    insightsPanel.appendChild(emptyState);
+  } else {
+    const list = el("ul", "pxd-command__insights");
+    for (const insight of insights) {
+      const li = el("li", "pxd-command__insight");
+      const tag = el("span", "pxd-command__tag pxd-command__tag--" + insight.type.toLowerCase(), c.insightTypeLabels[insight.type]);
+      tag.appendChild(sampleChip());
+      li.appendChild(tag);
+      li.appendChild(el("p", "pxd-command__insight-narrative", insight.narrative));
+      const meta = el("dl", "pxd-command__insight-meta");
+      const metaGenerated = el("div");
+      metaGenerated.append(el("dt", null, c.generatedLabel), el("dd", null, insight.generatedAt));
+      const metaConfidence = el("div");
+      metaConfidence.append(el("dt", null, c.confidenceLabel), el("dd", null, c.confidenceLabels[insight.confidence]));
+      const metaGenerator = el("div");
+      const generatorDd = el("dd");
+      generatorDd.appendChild(bdi("pxd-command__isolate", insight.generator));
+      metaGenerator.append(el("dt", null, c.generatorLabel), generatorDd);
+      meta.append(metaGenerated, metaConfidence, metaGenerator);
+      li.appendChild(meta);
+      const sources = el("div", "pxd-command__sources");
+      sources.appendChild(el("span", "pxd-command__sources-label", c.sourcesLabel));
+      const sourceList = el("ul", "pxd-command__sources-list");
+      for (const source of insight.sources) {
+        const sourceLi = el("li");
+        if (source.kind === "link") {
+          const sourceLink = el("a", "pxd-command__link", source.label);
+          sourceLink.setAttribute("href", "#sample-evidence");
+          sourceLink.setAttribute("title", "Preview only — not a live record link");
+          sourceLi.appendChild(sourceLink);
+        } else {
+          sourceLi.appendChild(el("span", "pxd-command__source-plain", source.id));
+        }
+        sourceList.appendChild(sourceLi);
+      }
+      sources.appendChild(sourceList);
+      sources.appendChild(el("p", "pxd-command__muted pxd-command__source-note", c.sourceIdsPlainLabel));
+      li.appendChild(sources);
+      const openInsight = el("a", "pxd-command__link", c.openInsightRecord);
+      openInsight.setAttribute("href", "#sample-evidence");
+      openInsight.setAttribute("title", "Preview only — not a live record link");
+      li.appendChild(openInsight);
+      list.appendChild(li);
+    }
+    insightsPanel.appendChild(list);
+  }
+  side.appendChild(insightsPanel);
+
+  const unavailablePanel = el("section", "pxd-command__panel pxd-command__panel--unavailable");
+  unavailablePanel.setAttribute("aria-labelledby", "pxd-unavailable");
+  const unavailableTitle = el("h2", null, c.unavailableTitle);
+  unavailableTitle.id = "pxd-unavailable";
+  unavailablePanel.append(unavailableTitle, el("p", "pxd-command__panel-body", c.unavailableBody));
+  const unavailableList = el("dl", "pxd-command__unavailable-list");
+  for (const entry of [
+    { term: c.emailIntakeLabel, reason: c.emailUnavailableReason },
+    { term: c.ocrLabel, reason: c.ocrUnavailableReason }
+  ]) {
+    const row = el("div");
+    const dd = el("dd");
+    dd.append(el("strong", "pxd-command__unavailable-state", c.unavailableState), el("span", "pxd-command__muted", entry.reason));
+    row.append(el("dt", null, entry.term), dd);
+    unavailableList.appendChild(row);
+  }
+  unavailablePanel.appendChild(unavailableList);
+  side.appendChild(unavailablePanel);
+
+  workspace.appendChild(side);
+  main.appendChild(workspace);
+  app.appendChild(main);
+  root.appendChild(app);
+
+  // Toolbar button labels
+  document.getElementById("sample-toggle").textContent = state.samples
+    ? (state.locale === "en" ? "Remove sample fixtures" : "إزالة العينات")
+    : (state.locale === "en" ? "Load labeled sample fixtures" : "تحميل عينات توضيحية");
+  document.getElementById("sample-toggle").setAttribute("aria-pressed", String(state.samples));
+  document.getElementById("theme-toggle").textContent = state.dark ? "Light theme" : "Dark theme";
+  document.getElementById("lang-toggle").textContent = state.locale === "en" ? "العربية" : "English";
+  document.getElementById("lang-toggle").setAttribute("lang", state.locale === "en" ? "ar" : "en");
+};
+
+document.getElementById("sample-toggle").addEventListener("click", () => { state.samples = !state.samples; render(); });
+document.getElementById("theme-toggle").addEventListener("click", () => { state.dark = !state.dark; render(); });
+document.getElementById("lang-toggle").addEventListener("click", () => { state.locale = state.locale === "en" ? "ar" : "en"; render(); });
+render();
+</script>
+</body>
+</html>
