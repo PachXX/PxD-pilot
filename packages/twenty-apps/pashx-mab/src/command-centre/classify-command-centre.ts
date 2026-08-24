@@ -1,7 +1,8 @@
-import type {
-  PashxCommandCentreItem,
-  PashxCommandCentreReasonCode,
-  PashxCommandCentreSignal,
+import {
+  PASHX_MAB_WORKFLOW_DOCUMENT_RULES,
+  type PashxCommandCentreItem,
+  type PashxCommandCentreReasonCode,
+  type PashxCommandCentreSignal,
 } from 'pashx-mab-contract';
 
 import type {
@@ -16,8 +17,17 @@ const SIGNAL_PRIORITY: Record<PashxCommandCentreSignal, number> = {
   ACTION_REQUIRED: 2,
 };
 
+// Manifest-space (SCREAMING_SNAKE) counterpart of the contract-space document type.
+const toManifestDocumentType = (value: string): string =>
+  value.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toUpperCase();
+
+// Derived from the frozen WF1 workflow rules so the supplier requirement is never duplicated.
+// Credit notes are financial corrections outside the workflow graph, so their pre-existing
+// supplier requirement is kept explicitly.
 const VENDOR_DOCUMENT_TYPES = new Set([
-  'VENDOR_PURCHASE_ORDER',
+  ...Object.entries(PASHX_MAB_WORKFLOW_DOCUMENT_RULES)
+    .filter(([, rule]) => rule.requiresSupplier)
+    .map(([documentType]) => toManifestDocumentType(documentType)),
   'VENDOR_CREDIT_NOTE',
 ]);
 

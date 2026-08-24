@@ -186,6 +186,64 @@ test('compliance exceptions outrank missing document data', () => {
   assert.equal(items[0]?.reasonCode, 'COMPLIANCE_REJECTED');
 });
 
+test('WF1 supplier-required document roles block on a missing supplier', () => {
+  const items = classifyCommandCentre({
+    cases: [caseRecord()],
+    documents: [
+      documentRecord({ id: 'rfq-1', documentType: 'SUPPLIER_RFQ', supplierRecordId: null }),
+      documentRecord({ id: 'quote-1', documentType: 'VENDOR_QUOTE', supplierRecordId: null }),
+      documentRecord({ id: 'vendor-invoice-1', documentType: 'VENDOR_INVOICE', supplierRecordId: null }),
+      documentRecord({ id: 'credit-note-1', documentType: 'VENDOR_CREDIT_NOTE', supplierRecordId: null }),
+    ],
+    expenses: [],
+    currentUserRecordId: 'member-1',
+    observedAt: OBSERVED_AT,
+  });
+
+  assert.deepEqual(
+    items.map(({ recordId, signal, reasonCode }) => ({
+      recordId,
+      signal,
+      reasonCode,
+    })),
+    [
+      { recordId: 'credit-note-1', signal: 'BLOCKED_DATA', reasonCode: 'DRAFT_DOCUMENT_SUPPLIER_MISSING' },
+      { recordId: 'quote-1', signal: 'BLOCKED_DATA', reasonCode: 'DRAFT_DOCUMENT_SUPPLIER_MISSING' },
+      { recordId: 'rfq-1', signal: 'BLOCKED_DATA', reasonCode: 'DRAFT_DOCUMENT_SUPPLIER_MISSING' },
+      { recordId: 'vendor-invoice-1', signal: 'BLOCKED_DATA', reasonCode: 'DRAFT_DOCUMENT_SUPPLIER_MISSING' },
+    ],
+  );
+});
+
+test('customer-side workflow roles do not require a supplier', () => {
+  const items = classifyCommandCentre({
+    cases: [caseRecord()],
+    documents: [
+      documentRecord({
+        id: 'customer-rfq-1',
+        documentType: 'CUSTOMER_RFQ',
+        supplierRecordId: null,
+      }),
+      documentRecord({
+        id: 'customer-quote-1',
+        documentType: 'CUSTOMER_QUOTE',
+        supplierRecordId: null,
+      }),
+    ],
+    expenses: [],
+    currentUserRecordId: 'member-1',
+    observedAt: OBSERVED_AT,
+  });
+
+  assert.deepEqual(
+    items.map(({ recordId, signal }) => ({ recordId, signal })),
+    [
+      { recordId: 'customer-quote-1', signal: 'ACTION_REQUIRED' },
+      { recordId: 'customer-rfq-1', signal: 'ACTION_REQUIRED' },
+    ],
+  );
+});
+
 test('uses stable signal, due-date, update-time, and id ordering', () => {
   const items = classifyCommandCentre({
     cases: [
