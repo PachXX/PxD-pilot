@@ -4,8 +4,8 @@
 - Coordinator: DeepSeek harness
 - Owner (source): Codex
 - Status: source complete and **accepted; DS5 publish/install and the DS6 fixture matrix are
-  complete (app 0.2.10 live); two manual native observations remain** (physical Tab/VoiceOver
-  speech and exact native 200% zoom)
+  complete (app 0.2.10 live); DS6 fully closed on 2026-08-24 after Shahil passed the two manual
+  native observations** (exact native 200% zoom and physical Tab/VoiceOver spoken order)
 - Scope: `packages/pashx-mab-contract` + `packages/twenty-apps/pashx-mab` only
 - Graph: `docs/execution/2026-08-24 - deepseek-command-centre-handoff.md`
 - Live evidence: `docs/execution/evidence/OC6-A-DS6-live-qa.md` + `oc6-a-ds6-runtime/` screenshots
@@ -83,14 +83,14 @@ host loading-feedback repair, all recorded in `OC6-A-DS6-live-qa.md`.
 
 ## Next steps after this node
 
-1. **Shahil (manual, live):** close the two DS6 residuals on `https://34-18-165-1.nip.io` —
-   exact native 200% zoom (Cmd-plus ×5, no horizontal scroll) and physical Tab/VoiceOver spoken
-   order (language → refresh → first evidence link). Exact procedure recorded in the shared
-   ledger (2026-08-24 18:30 CEST entry).
-2. **Shahil (labels):** complete the OC5-OCR-B2 40-page ground-truth labels (Google Sheet,
+**DS6 closed** — the two manual native observations were passed by Shahil (exact 200% zoom,
+physical Tab/VoiceOver order) on the live pilot. Remaining graph is the OCR/email critical path:
+
+1. **Shahil (labels):** complete the OC5-OCR-B2 40-page ground-truth labels (Google Sheet,
    `IN_REVIEW`, 0/40 approved) — the critical path to freezing the corpus.
-3. **Codex:** validate and freeze the B2-A corpus once labels pass completeness.
-4. **Claude:** run B2-C on the isolated disposable instance, then **B2-D** provider accept/reject
+2. **Codex:** validate and freeze the B2-A corpus once labels pass completeness.
+3. **Claude:** run B2-C on the isolated disposable instance, then **B2-D** provider accept/reject
    with Codex + Shahil → unblocks OC5-OCR.
-5. **OC6-B** (email/OCR panels) remains blocked on OC5 (native mailbox decision) + OC5-OCR;
-   **OC6-C/OC7** follow integration acceptance.
+4. **OC5 email:** decision to connect a native synchronized mailbox (no code until connected).
+5. **OC6-B** (email/OCR panels) remains blocked on OC5 (mailbox) + OC5-OCR; **OC6-C/OC7** follow
+   integration acceptance.
