@@ -1,2 +1,1 @@
-export const DEFAULT_WORKSPACE_LOGO =
-  'https://twentyhq.github.io/placeholder-images/workspaces/twenty-logo.png';
+export const DEFAULT_WORKSPACE_LOGO = '/branding/pxd-logo-192.png';

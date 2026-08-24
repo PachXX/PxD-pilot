@@ -7,11 +7,13 @@ const createHandlerHarness = () => {
   const contentWindow = { postMessage: jest.fn() };
   const sandboxIframe = { contentWindow } as unknown as HTMLIFrameElement;
   const workerMessagePort = {} as MessagePort;
+  const workerHostFetchMessagePort = {} as MessagePort;
   const onSandboxError = jest.fn();
 
   const handleSandboxMessage = createFrontComponentSandboxMessageHandler({
     sandboxIframe,
     workerMessagePort,
+    workerHostFetchMessagePort,
     onSandboxError,
   });
 
@@ -24,6 +26,7 @@ const createHandlerHarness = () => {
   return {
     contentWindow,
     workerMessagePort,
+    workerHostFetchMessagePort,
     onSandboxError,
     handleSandboxMessage,
     dispatchSandboxMessage,
@@ -32,8 +35,12 @@ const createHandlerHarness = () => {
 
 describe('createFrontComponentSandboxMessageHandler', () => {
   it('should post INIT with the worker port when READY arrives from the sandbox', () => {
-    const { contentWindow, workerMessagePort, dispatchSandboxMessage } =
-      createHandlerHarness();
+    const {
+      contentWindow,
+      workerMessagePort,
+      workerHostFetchMessagePort,
+      dispatchSandboxMessage,
+    } = createHandlerHarness();
 
     dispatchSandboxMessage({
       type: FRONT_COMPONENT_SANDBOX_MESSAGE_TYPE.READY,
@@ -42,7 +49,7 @@ describe('createFrontComponentSandboxMessageHandler', () => {
     expect(contentWindow.postMessage).toHaveBeenCalledWith(
       { type: FRONT_COMPONENT_SANDBOX_MESSAGE_TYPE.INIT },
       '*',
-      [workerMessagePort],
+      [workerMessagePort, workerHostFetchMessagePort],
     );
   });
 

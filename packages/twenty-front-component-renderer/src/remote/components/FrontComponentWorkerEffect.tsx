@@ -1,11 +1,12 @@
 import { release, retain } from '@quilted/threads';
 import { RemoteReceiver } from '@remote-dom/core/receivers';
 import { useEffect, useRef } from 'react';
-import { isDefined } from 'twenty-shared/utils';
+import { getURLSafely, isDefined } from 'twenty-shared/utils';
 
 import { buildHostFetchPolicyFromFrontComponentUrls } from '@/host/utils/buildHostFetchPolicyFromFrontComponentUrls';
 import { createFrontComponentHostThread } from '@/host/utils/createFrontComponentHostThread';
 import { createHostFetchEnforcingPolicy } from '@/host/utils/createHostFetchEnforcingPolicy';
+import { connectHostFetchMessagePort } from '@/host/utils/connectHostFetchMessagePort';
 import { type GeometryTracker } from '@/host/types/GeometryTracker';
 import { fetchComponentSource } from '@/host/utils/fetchComponentSource';
 import { fetchSdkClientSources } from '@/host/utils/fetchSdkClientSources';
@@ -57,6 +58,7 @@ export const FrontComponentWorkerEffect = ({
     document.body.append(sandboxIframe);
 
     const channel = new MessageChannel();
+    const hostFetchChannel = new MessageChannel();
 
     const hostFetchPolicy = buildHostFetchPolicyFromFrontComponentUrls({
       componentUrl,
@@ -67,6 +69,8 @@ export const FrontComponentWorkerEffect = ({
 
     const hostFetch = createHostFetchEnforcingPolicy(hostFetchPolicy);
 
+    connectHostFetchMessagePort(hostFetchChannel.port1, hostFetch);
+
     const thread = createFrontComponentHostThread({
       hostMessagePort: channel.port1,
       hostFetch,
@@ -76,6 +80,7 @@ export const FrontComponentWorkerEffect = ({
     const handleSandboxMessage = createFrontComponentSandboxMessageHandler({
       sandboxIframe,
       workerMessagePort: channel.port2,
+      workerHostFetchMessagePort: hostFetchChannel.port2,
       onSandboxError: setError,
     });
 
@@ -120,7 +125,13 @@ export const FrontComponentWorkerEffect = ({
           apiUrl,
           functionsBaseUrl,
           sdkClientSources,
-          hostFetchOrigins: hostFetchPolicy.allowedOrigins,
+          // API requests already carry the application bearer token and the server explicitly
+          // allows the sandbox worker's opaque origin. Keep them on native worker fetch so a
+          // write does not depend on a reverse call while the host is servicing remote UI work.
+          // Component-storage and function origins remain behind the host policy below.
+          hostFetchOrigins: hostFetchPolicy.allowedOrigins.filter(
+            (origin) => origin !== getURLSafely(apiUrl ?? '')?.origin,
+          ),
           applicationVariables,
           initialViewportGeometry: geometryTracker.getViewportGeometry(),
         });
@@ -141,6 +152,7 @@ export const FrontComponentWorkerEffect = ({
       window.removeEventListener('message', handleSandboxMessage);
       setThread(null);
       channel.port1.close();
+      hostFetchChannel.port1.close();
       sandboxIframe.remove();
       isInitializedRef.current = false;
     };

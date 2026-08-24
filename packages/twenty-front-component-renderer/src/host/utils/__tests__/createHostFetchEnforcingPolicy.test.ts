@@ -80,7 +80,11 @@ describe('createHostFetchEnforcingPolicy', () => {
 
     expect(fetchSpy).toHaveBeenCalledWith(
       'https://api.twenty.test/graphql',
-      expect.objectContaining({ method: 'POST', credentials: 'omit' }),
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'omit',
+        signal: expect.any(AbortSignal),
+      }),
     );
     expect(result.status).toBe(200);
     expect(result.body).toBe('response-body');
@@ -151,5 +155,36 @@ describe('createHostFetchEnforcingPolicy', () => {
     await expect(hostFetch({ url: 'not a url' })).rejects.toThrow(
       'disallowed origin',
     );
+  });
+
+  it('should dispatch a request before rejecting a host fetch that never settles', async () => {
+    jest.useFakeTimers();
+    const fetchSpy = jest.fn(async () => await new Promise<Response>(() => {}));
+    globalThis.fetch = fetchSpy as unknown as typeof fetch;
+
+    const hostFetch = createHostFetchEnforcingPolicy(
+      {
+        allowedOrigins: ['https://api.twenty.test'],
+        fileStorageRedirectableUrls: [],
+      },
+      { timeoutMs: 25 },
+    );
+    const result = hostFetch({
+      url: 'https://api.twenty.test/rest/vendor-purchase-orders',
+      method: 'POST',
+      headers: { authorization: 'Bearer token' },
+      body: '{"idempotencyKey":"command-id"}',
+    });
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    const timeoutExpectation = expect(result).rejects.toMatchObject({
+      code: 'FRONT_COMPONENT_HOST_FETCH_TIMEOUT',
+    });
+    await jest.advanceTimersByTimeAsync(25);
+    await timeoutExpectation;
+    expect(
+      (fetchSpy.mock.calls[0]?.[1] as RequestInit | undefined)?.signal?.aborted,
+    ).toBe(true);
+    jest.useRealTimers();
   });
 });

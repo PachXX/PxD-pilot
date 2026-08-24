@@ -26,8 +26,10 @@ import { renderFrontComponent } from '@/remote/worker/utils/renderFrontComponent
 import { setFrontComponentExecutionContext } from '@/remote/worker/utils/setFrontComponentExecutionContext';
 import { type FrontComponentHostThread } from '@/types/FrontComponentHostThread';
 import { type FrontComponentHostThreadExports } from '@/types/FrontComponentHostThreadExports';
+import { type HostFetchFunction } from '@/types/HostFetchFunction';
 import { type WorkerExports } from '@/types/WorkerExports';
 import { createClonableErrorThreadSerialization } from '@/utils/createClonableErrorThreadSerialization';
+import { createHostFetchFromMessagePort } from '@/remote/worker/utils/createHostFetchFromMessagePort';
 
 installStylePropertyOnRemoteElements();
 patchRemoteElementAttributes();
@@ -56,13 +58,14 @@ exposeGlobals({
 });
 
 let hostThread: FrontComponentHostThread | null = null;
+let hostFetch: HostFetchFunction | null = null;
 
 const workerExports: WorkerExports = {
   render: async (connection, renderContext) => {
     await renderFrontComponent({
       connection,
       renderContext,
-      hostFetch: hostThread?.imports.hostFetch ?? null,
+      hostFetch,
     });
   },
   initializeHostCommunicationApi: async () => {
@@ -89,9 +92,13 @@ const workerExports: WorkerExports = {
 };
 
 self.addEventListener('message', (event) => {
-  const [transferredPort] = event.ports;
+  const [transferredPort, transferredHostFetchPort] = event.ports;
 
-  if (isDefined(hostThread) || !isDefined(transferredPort)) {
+  if (
+    isDefined(hostThread) ||
+    !isDefined(transferredPort) ||
+    !isDefined(transferredHostFetchPort)
+  ) {
     return;
   }
 
@@ -103,6 +110,8 @@ self.addEventListener('message', (event) => {
     serialization: createClonableErrorThreadSerialization(),
   });
   hostThread = nextHostThread;
+
+  hostFetch = createHostFetchFromMessagePort(transferredHostFetchPort);
 
   workerGeometryStore.connectTransport(nextHostThread.imports);
 

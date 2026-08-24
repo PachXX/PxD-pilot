@@ -15,6 +15,8 @@ export type HtmlCommonProperties = {
   className?: string;
   style?: string;
   title?: string;
+  dir?: string;
+  lang?: string;
   tabIndex?: number;
   role?: string;
   'aria-label'?: string;
@@ -147,6 +149,8 @@ const HTML_COMMON_PROPERTIES_CONFIG = {
   className: { type: String },
   style: { type: String },
   title: { type: String },
+  dir: { type: String },
+  lang: { type: String },
   tabIndex: { type: Number },
   role: { type: String },
   'aria-label': { type: String },
@@ -1182,21 +1186,13 @@ export const HtmlBdiElement = createRemoteElement<
     ...HTML_COMMON_EVENTS_CONFIG,
   },
 });
-
-export type HtmlBdoProperties = HtmlCommonProperties & {
-  dir?: string;
-};
-
 export const HtmlBdoElement = createRemoteElement<
-  HtmlBdoProperties,
+  HtmlCommonProperties,
   Record<string, never>,
   Record<string, never>,
   HtmlCommonEvents
 >({
-  properties: {
-    ...HTML_COMMON_PROPERTIES_CONFIG,
-    dir: { type: String },
-  },
+  properties: HTML_COMMON_PROPERTIES_CONFIG,
   events: {
     ...HTML_COMMON_EVENTS_CONFIG,
   },
