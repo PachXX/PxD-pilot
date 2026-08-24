@@ -73,6 +73,7 @@ export const PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS = {
     blockedReasonCode: '10cd7e7d-08fb-4d45-81ff-e446c8273e3e',
     deliveryStatus: 'd0b2a56c-9f51-4a3f-b6c7-2f1c64a8d3e2',
     deliveryDueAt: 'e7a1f30d-5c24-4b77-9d58-8a2b1e6c4f09',
+    supplierResponseDeadlineAt: 'cac02a45-571f-45ad-83af-413d83907b6f',
   },
   commercialDocument: {
     documentType: '6358e709-68e0-4201-a018-5280a56810da',
@@ -84,6 +85,9 @@ export const PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS = {
     currency: '6e5f46be-cd05-4968-b90a-96eb3d77de04',
     totalAmount: '2163b287-a6f8-4926-ba6b-0ac2b3504a45',
     complianceStatus: '5325c958-afdb-44d8-a82f-eefe0478d5df',
+    leadTimeDays: 'c9b4daa8-8734-424c-9dd7-d49f28b71ff6',
+    paymentTerms: 'aca372c0-089b-44ee-b871-04e85507c74f',
+    validUntil: '1d212108-8eb5-4449-bdc5-bf81cd0fd6d7',
   },
   expense: {
     amount: '14a73261-5a3b-4266-a976-d627e302e695',
@@ -187,6 +191,7 @@ export const PASHX_MAB_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS = {
   operationalProfitabilityDashboard: '1e81794c-ebfb-42ce-9e5f-d8e07b9936c2',
   commandCentre: '89ae99fe-2032-461b-90b0-d263c64f7617',
   caseWorkflow: 'f3b8c1d5-4a2e-4f9c-9d7a-2c5e6f8a1b3d',
+  vendorComparison: 'b4405431-752b-43ff-8c75-d1115b324dbe',
 } as const;
 
 export const PASHX_MAB_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIERS = {
@@ -204,12 +209,16 @@ export const PASHX_MAB_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS = {
   caseWorkflow: '9c4d2e7f-1b5a-4e6d-8c3f-7a2b5d4e6f18',
   caseWorkflowOverviewTab: 'a7e3f5c2-6d8b-4f1a-9e4d-3c6b8a2f5d17',
   caseWorkflowWidget: 'b5d8f4e1-8c2a-4b7d-9f3e-5a1c6d9b2e47',
+  vendorComparison: '818ea2d1-777d-401b-a122-44c383dd68fb',
+  vendorComparisonOverviewTab: '45194dc2-6325-46b5-b930-544f00656c28',
+  vendorComparisonWidget: '7497e9c5-8beb-455a-a3f4-3772c73be9c6',
 } as const;
 
 export const PASHX_MAB_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS = {
   commandCentre: 'c18efee1-b333-4382-a7ba-22349d95c654',
   operationalProfitability: 'ee29da14-bc1c-4a5f-a630-bb243f10a307',
   caseWorkflow: 'd4f7a1c8-3b6e-4d2a-8f5c-1e9b7c3a6d24',
+  vendorComparison: '4d87cab5-b423-47e5-ab4f-211ec7f689c1',
 } as const;
 
 export type PashxMabObjectName =
