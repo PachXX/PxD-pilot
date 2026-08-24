@@ -23,6 +23,27 @@ import { useVendorPurchaseOrderData } from './use-vendor-purchase-order-data';
 import { VendorPurchaseOrderFields } from './vendor-purchase-order-fields';
 
 const PASHX_COMMAND_TIMEOUT_MS = 30_000;
+const HOST_FETCH_TIMEOUT_ERROR_CODE = 'FRONT_COMPONENT_HOST_FETCH_TIMEOUT';
+
+const createUuid = (): string => {
+  const bytes = new Uint8Array(16);
+
+  globalThis.crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+  const hex = [...bytes].map((byte) => byte.toString(16).padStart(2, '0'));
+
+  return `${hex.slice(0, 4).join('')}-${hex.slice(4, 6).join('')}-${hex
+    .slice(6, 8)
+    .join('')}-${hex.slice(8, 10).join('')}-${hex.slice(10).join('')}`;
+};
+
+const isHostFetchTimeoutError = (error: unknown): boolean =>
+  typeof error === 'object' &&
+  error !== null &&
+  'code' in error &&
+  error.code === HOST_FETCH_TIMEOUT_ERROR_CODE;
 
 const getThrownCommandError = (
   error: unknown,
@@ -98,9 +119,6 @@ const CreateVendorPurchaseOrder = (): ReactElement => {
       return;
     }
 
-    setSubmitting(true);
-    setSubmissionFailed(false);
-    setStatusMessage(text.creating);
     const signature = JSON.stringify({
       procurementCaseRecordId,
       supplierRecordId,
@@ -112,8 +130,8 @@ const CreateVendorPurchaseOrder = (): ReactElement => {
     if (commandAttempt.current?.signature !== signature) {
       commandAttempt.current = {
         signature,
-        commercialDocumentRecordId: globalThis.crypto.randomUUID(),
-        idempotencyKey: globalThis.crypto.randomUUID(),
+        commercialDocumentRecordId: createUuid(),
+        idempotencyKey: createUuid(),
       };
     }
     const request: PashxCreateVendorPurchaseOrderRequest = {
@@ -134,19 +152,30 @@ const CreateVendorPurchaseOrder = (): ReactElement => {
     };
 
     const abortController = new AbortController();
-    const timeoutId = globalThis.setTimeout(
-      () => abortController.abort(),
-      PASHX_COMMAND_TIMEOUT_MS,
-    );
-
+    let timeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
     activeSubmission.current = abortController;
 
+    // Start the command before the first React state update. Remote DOM flushes that update back
+    // to the host synchronously while this click callback is active; dispatching afterwards can
+    // deadlock the callback before fetch is ever invoked.
+    const requestPromise = new RestApiClient().post<
+      PashxCommandSuccess<PashxVendorPurchaseOrderResult> | PashxCommandError
+    >('/rest/pashx-mab/vendor-purchase-orders', request, {
+      signal: abortController.signal,
+    });
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = globalThis.setTimeout(() => {
+        abortController.abort();
+        reject(new Error('PASHX_COMMAND_TIMEOUT'));
+      }, PASHX_COMMAND_TIMEOUT_MS);
+    });
+
+    setSubmitting(true);
+    setSubmissionFailed(false);
+    setStatusMessage(text.creating);
+
     try {
-      const response = await new RestApiClient().post<
-        PashxCommandSuccess<PashxVendorPurchaseOrderResult> | PashxCommandError
-      >('/rest/pashx-mab/vendor-purchase-orders', request, {
-        signal: abortController.signal,
-      });
+      const response = await Promise.race([requestPromise, timeoutPromise]);
 
       if (!response.ok) {
         setSubmissionFailed(true);
@@ -166,12 +195,14 @@ const CreateVendorPurchaseOrder = (): ReactElement => {
       setStatusMessage(
         commandError !== undefined
           ? getPashxCommandErrorMessage(commandError.code, locale)
-          : abortController.signal.aborted
+          : abortController.signal.aborted || isHostFetchTimeoutError(error)
             ? text.timeoutError
             : text.submitError,
       );
     } finally {
-      globalThis.clearTimeout(timeoutId);
+      if (timeoutId !== undefined) {
+        globalThis.clearTimeout(timeoutId);
+      }
       if (activeSubmission.current === abortController) {
         activeSubmission.current = undefined;
       }

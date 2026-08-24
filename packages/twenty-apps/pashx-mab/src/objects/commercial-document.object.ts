@@ -46,6 +46,30 @@ export default defineObject({
           color: 'blue',
           position: 0,
         },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
+            .commercialDocument.documentType.customerInvoice,
+          value: 'CUSTOMER_INVOICE',
+          label: 'Customer invoice',
+          color: 'green',
+          position: 1,
+        },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
+            .commercialDocument.documentType.customerCreditNote,
+          value: 'CUSTOMER_CREDIT_NOTE',
+          label: 'Customer credit note',
+          color: 'orange',
+          position: 2,
+        },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
+            .commercialDocument.documentType.vendorCreditNote,
+          value: 'VENDOR_CREDIT_NOTE',
+          label: 'Vendor credit note',
+          color: 'yellow',
+          position: 3,
+        },
       ],
     },
     {
@@ -66,6 +90,30 @@ export default defineObject({
           label: 'Draft',
           color: 'gray',
           position: 0,
+        },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
+            .commercialDocument.lifecycleStatus.finalized,
+          value: 'FINALIZED',
+          label: 'Finalized',
+          color: 'green',
+          position: 1,
+        },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
+            .commercialDocument.lifecycleStatus.cancelled,
+          value: 'CANCELLED',
+          label: 'Cancelled',
+          color: 'red',
+          position: 2,
+        },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
+            .commercialDocument.lifecycleStatus.credited,
+          value: 'CREDITED',
+          label: 'Credited',
+          color: 'gray',
+          position: 3,
         },
       ],
     },
@@ -118,6 +166,62 @@ export default defineObject({
       description: 'ISO 4217 currency code; SAR is the pilot default.',
       icon: 'IconCurrencyRiyal',
       defaultValue: `'SAR'`,
+    },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.commercialDocument.totalAmount,
+      type: FieldType.CURRENCY,
+      name: 'totalAmount',
+      label: 'Final total',
+      description:
+        'Authoritative finalized total; calculations retain integer micros.',
+      icon: 'IconCurrencyRiyal',
+    },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.commercialDocument
+          .complianceStatus,
+      type: FieldType.SELECT,
+      name: 'complianceStatus',
+      label: 'Invoice compliance',
+      description:
+        'Whether a revenue document may enter authoritative profitability.',
+      icon: 'IconShieldCheck',
+      defaultValue: `'NOT_REQUIRED'`,
+      options: [
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
+            .commercialDocument.complianceStatus.notRequired,
+          value: 'NOT_REQUIRED',
+          label: 'Not required',
+          color: 'gray',
+          position: 0,
+        },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
+            .commercialDocument.complianceStatus.pending,
+          value: 'PENDING',
+          label: 'Pending',
+          color: 'yellow',
+          position: 1,
+        },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
+            .commercialDocument.complianceStatus.cleared,
+          value: 'CLEARED',
+          label: 'Cleared',
+          color: 'green',
+          position: 2,
+        },
+        {
+          id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS
+            .commercialDocument.complianceStatus.rejected,
+          value: 'REJECTED',
+          label: 'Rejected',
+          color: 'red',
+          position: 3,
+        },
+      ],
     },
   ],
 });

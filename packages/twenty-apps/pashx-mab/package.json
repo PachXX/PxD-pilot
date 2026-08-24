@@ -1,6 +1,6 @@
 {
   "name": "pashx-mab",
-  "version": "0.1.3",
+  "version": "0.2.10",
   "private": true,
   "license": "UNLICENSED",
   "sideEffects": false,
@@ -18,6 +18,11 @@
   ],
   "scripts": {
     "lint": "oxlint -c .oxlintrc.json src",
+    "test": "node --import tsx --test test/*.test.ts",
+    "test:coverage": "mkdir -p .twenty/coverage-compiled && ../../../node_modules/.bin/esbuild src/profitability/aggregate-operational-profitability.ts --bundle --platform=node --format=esm --external:pashx-mab-contract --outfile=.twenty/coverage-compiled/aggregate.mjs && ../../../node_modules/.bin/esbuild test/aggregate-operational-profitability.test.ts --platform=node --format=esm --outfile=.twenty/coverage-compiled/test.mjs && sed -i '' 's#../src/profitability/aggregate-operational-profitability#./aggregate.mjs#' .twenty/coverage-compiled/test.mjs && yarn dlx c8 --all --include=.twenty/coverage-compiled/aggregate.mjs --check-coverage --lines=100 --branches=100 --functions=100 node --test .twenty/coverage-compiled/test.mjs",
+    "test:ui3:coverage": "node --import tsx --experimental-test-coverage --test-coverage-include=src/profitability/operational-profitability-dashboard.model.ts --test-coverage-lines=90 --test-coverage-branches=80 --test-coverage-functions=90 --test test/operational-profitability-dashboard.model.test.ts",
+    "test:ui4": "node --import tsx --test test/operational-profitability-dashboard.accessibility.test.ts",
+    "metadata:plan": "node --import tsx scripts/plan-metadata-import.ts",
     "twenty": "twenty",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
@@ -28,6 +33,7 @@
   "devDependencies": {
     "@types/react": "^19.2.0",
     "oxlint": "^1.51.0",
+    "tsx": "^4.17.0",
     "twenty-client-sdk": "workspace:*",
     "twenty-sdk": "workspace:*",
     "typescript": "^5.9.3"

@@ -40,6 +40,14 @@ export const PASHX_MAB_ROLE_OBJECT_PERMISSIONS = {
     permission(PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS.documentLine, readWrite),
     permission(PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS.expense, readOnly),
     permission(
+      PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS.approvalRequest,
+      readOnly,
+    ),
+    permission(
+      PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS.operationalInsight,
+      readOnly,
+    ),
+    permission(
       STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.company.universalIdentifier,
       readOnly,
     ),
@@ -56,11 +64,28 @@ export const PASHX_MAB_ROLE_OBJECT_PERMISSIONS = {
     permission(PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS.documentLine, readWrite),
     permission(PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS.expense, readWrite),
     permission(
+      PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS.approvalRequest,
+      readOnly,
+    ),
+    permission(
+      PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS.operationalInsight,
+      readOnly,
+    ),
+    permission(
       STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.company.universalIdentifier,
       readOnly,
     ),
   ],
   viewer: [
+    ...Object.values(PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS).map((id) =>
+      permission(id, readOnly),
+    ),
+    permission(
+      STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.company.universalIdentifier,
+      readOnly,
+    ),
+  ],
+  evidenceAgent: [
     ...Object.values(PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS).map((id) =>
       permission(id, readOnly),
     ),

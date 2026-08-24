@@ -1,0 +1,20 @@
+{
+  "A deterministic quantity and price line on a commercial document.": "بند كمية وسعر حتمي في مستند تجاري.",
+  "A versioned RFQ, quotation, order, delivery note, or invoice.": "طلب عرض أسعار أو عرض أو أمر أو إشعار تسليم أو فاتورة بإصدارات مضبوطة.",
+  "An approved direct cost attributable to a procurement case.": "تكلفة مباشرة معتمدة ومنسوبة إلى حالة شراء.",
+  "Commercial document": "مستند تجاري",
+  "Commercial documents": "المستندات التجارية",
+  "Command centre": "مركز القيادة",
+  "Create Vendor PO": "إنشاء أمر شراء مورّد",
+  "Create vendor purchase order": "إنشاء أمر شراء للمورّد",
+  "Document line": "بند مستند",
+  "Document lines": "بنود المستندات",
+  "Expense": "مصروف",
+  "Expenses": "المصروفات",
+  "Operational profitability": "الربحية التشغيلية",
+  "Overview": "نظرة عامة",
+  "Procurement case": "حالة شراء",
+  "Procurement cases": "حالات الشراء",
+  "The authoritative RFQ-to-margin transaction chain.": "سلسلة المعاملات المعتمدة من طلب عرض الأسعار إلى الهامش.",
+  "Work queue": "قائمة العمل"
+}

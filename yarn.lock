@@ -41662,6 +41662,7 @@ __metadata:
     oxlint: "npm:^1.51.0"
     pashx-mab-contract: "workspace:*"
     react: "npm:^19.2.0"
+    tsx: "npm:^4.17.0"
     twenty-client-sdk: "workspace:*"
     twenty-sdk: "workspace:*"
     typescript: "npm:^5.9.3"

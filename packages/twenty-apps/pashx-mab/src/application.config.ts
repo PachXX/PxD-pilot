@@ -3,7 +3,8 @@ import { defineApplication } from 'twenty-sdk/define';
 
 export default defineApplication({
   universalIdentifier: PASHX_MAB_APPLICATION_UNIVERSAL_IDENTIFIER,
-  displayName: 'PashX MAB Procurement',
+  displayName: 'PxD',
   description:
-    'Single-workspace MAB procurement operations from requisition through delivery, invoicing, margin, and compliance.',
+    'MAB procurement command centre and read-only operational profitability.',
+  logo: 'public/brand/pxd-logo-512.png',
 });
