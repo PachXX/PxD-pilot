@@ -1,0 +1,337 @@
+#!/bin/bash
+# PashX MAB application VM startup script (Container-Optimized OS).
+#
+# Rendered by Terraform. Do not edit on the VM — edit the template and recreate the instance.
+#
+# Responsibilities, in order:
+#   1. Fetch secrets from Secret Manager into a tmpfs-backed env file (never on persistent disk).
+#   2. Write the runtime compose file.
+#   3. Start Redis, then the Twenty server (migration owner), then the worker after /healthz.
+#   4. Start Caddy as the TLS-terminating reverse proxy.
+#
+# No secret value is ever echoed, logged, or written to the boot disk.
+
+set -euo pipefail
+
+readonly PROJECT_ID="${project_id}"
+readonly NAME_PREFIX="${name_prefix}"
+readonly IMAGE="${container_image}"
+readonly SERVER_URL="${server_url}"
+readonly SERVER_HOST="${server_host}"
+readonly BUCKET="${bucket_name}"
+readonly STORAGE_ENDPOINT="${storage_endpoint}"
+readonly REGION="${region}"
+
+readonly RUN_DIR=/run/pashx-mab
+readonly ENV_FILE="$RUN_DIR/app.env"
+
+log() { echo "[pashx-mab-startup] $*"; }
+
+if [[ -z "$IMAGE" ]]; then
+  log "FATAL: container_image is empty. The VM will not start an application."
+  log "Set container_image to a digest-pinned reference and re-apply."
+  exit 1
+fi
+
+# --- 1. Secrets into tmpfs ----------------------------------------------------
+
+mkdir -p "$RUN_DIR"
+mount -t tmpfs -o size=1m,mode=0700 tmpfs "$RUN_DIR" || true
+umask 077
+
+# Container-Optimized OS ships NO gcloud binary — the read-only rootfs and absent package manager
+# that make COS a good choice here also exclude the CLI. An earlier revision called
+# `gcloud secrets versions access` and swallowed stderr with 2>/dev/null, so "command not found"
+# surfaced as "required secret PG_DATABASE_URL is empty in Secret Manager" — a message that
+# pointed at the secret (which was fine) instead of the missing tool.
+#
+# Fetch over the Secret Manager REST API instead, authenticating with the metadata server's token
+# for the attached runtime service account. curl and python3 are both present on COS.
+METADATA_TOKEN_URL='http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token'
+
+get_access_token() {
+  curl -sf -H 'Metadata-Flavor: Google' "$METADATA_TOKEN_URL" \
+    | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])'
+}
+
+# Errors are NOT suppressed. A fetch failure must be distinguishable from a genuinely empty
+# secret, because the remedies are opposite: fix access versus populate the value.
+fetch_secret() {
+  local name="$1"
+  local full="$${NAME_PREFIX}-$${name}"
+  local url="https://secretmanager.googleapis.com/v1/projects/$${PROJECT_ID}/secrets/$${full}/versions/latest:access"
+  local body
+
+  if ! body="$(curl -sf -H "Authorization: Bearer $${ACCESS_TOKEN}" "$url")"; then
+    log "FATAL: could not read secret $${full} from Secret Manager (HTTP request failed)."
+    log "Check that secretmanager.googleapis.com is enabled and that the runtime service account"
+    log "holds roles/secretmanager.secretAccessor on that secret."
+    exit 1
+  fi
+
+  # payload.data is base64. Decoding in python3 avoids relying on a base64 flag spelling.
+  printf '%s' "$body" | python3 -c '
+import base64, json, sys
+payload = json.load(sys.stdin).get("payload", {})
+data = payload.get("data")
+if data is None:
+    sys.exit(3)
+sys.stdout.write(base64.b64decode(data).decode())
+'
+}
+
+log "obtaining metadata access token for the runtime service account"
+ACCESS_TOKEN="$(get_access_token)" || {
+  log "FATAL: could not obtain an access token from the metadata server."
+  exit 1
+}
+if [[ -z "$ACCESS_TOKEN" ]]; then
+  log "FATAL: metadata server returned an empty access token."
+  exit 1
+fi
+
+log "fetching secrets from Secret Manager"
+{
+  echo "PG_DATABASE_URL=$(fetch_secret pg-database-url)"
+  echo "APP_SECRET=$(fetch_secret app-secret)"
+  echo "ENCRYPTION_KEY=$(fetch_secret encryption-key)"
+  echo "FALLBACK_ENCRYPTION_KEY=$(fetch_secret fallback-encryption-key)"
+  echo "STORAGE_S3_ACCESS_KEY_ID=$(fetch_secret storage-hmac-access-key)"
+  echo "STORAGE_S3_SECRET_ACCESS_KEY=$(fetch_secret storage-hmac-secret)"
+} > "$ENV_FILE"
+
+# Fail visibly rather than booting a half-configured server. The CX0 contract requires that
+# startup fail loudly when required configuration is absent.
+for required in PG_DATABASE_URL APP_SECRET ENCRYPTION_KEY STORAGE_S3_ACCESS_KEY_ID; do
+  if grep -q "^$${required}=$" "$ENV_FILE"; then
+    log "FATAL: required secret $${required} is empty in Secret Manager."
+    log "Populate it with infra/pashx-mab-gcp/scripts/30-put-secrets.sh, then restart the VM."
+    exit 1
+  fi
+done
+
+{
+  echo "NODE_PORT=3000"
+  echo "SERVER_URL=$SERVER_URL"
+  echo "REDIS_URL=redis://redis:6379"
+  echo "STORAGE_TYPE=s3"
+  echo "STORAGE_S3_REGION=$REGION"
+  echo "STORAGE_S3_NAME=$BUCKET"
+  echo "STORAGE_S3_ENDPOINT=$STORAGE_ENDPOINT"
+  # HMAC credentials were present from CL0 but this flag was never set, so upload/download
+  # silently fell back to server-mediated streaming instead of a direct browser<->GCS
+  # presigned URL. Closed as part of the Gate 0 storage suite follow-up (2026-08-14).
+  echo "STORAGE_S3_PRESIGNED_URL_ENABLED=true"
+  echo "PASHX_IMAGE=$IMAGE"
+  echo "SERVER_HOST=$SERVER_HOST"
+  # Cloud SQL is created with sslMode=ENCRYPTED_ONLY, so a plaintext connection is refused with
+  #   pg_hba.conf rejects connection for host "...", user "twenty_app", database "twenty",
+  #   no encryption
+  # which reads like an authentication failure and is not one — the credentials are correct and
+  # the transport is the problem.
+  #
+  # Twenty only enables TLS when this flag is true; see core.datasource.ts, which otherwise passes
+  # `ssl: undefined` to pg. Setting sslmode in the connection URL is NOT sufficient: TypeORM parses
+  # the url into discrete fields and takes ssl from this option instead.
+  #
+  # rejectUnauthorized is false in that code path, so the server certificate is not verified.
+  # Accepted here, deliberately: the instance has no public IP, the connection crosses a private
+  # PSA range inside our own VPC, and verifying would mean distributing the Google-managed server
+  # CA to the VM. Revisit if the database ever becomes reachable off this VPC.
+  echo "PG_SSL_ALLOW_SELF_SIGNED=true"
+  # Turns on Twenty's Prometheus exporter on :9464. The otel-collector container scrapes it and
+  # writes to Google Managed Prometheus, which is what the p95 rollback detector alerts on.
+  echo "METER_DRIVER=prometheus"
+} >> "$ENV_FILE"
+
+log "secret and configuration env file written to tmpfs ($(wc -l < "$ENV_FILE") entries)"
+
+# --- 2. Compose file and collector config -------------------------------------
+#
+# Both are injected verbatim by Terraform from the checked-in sources in deploy/pashx-mab/.
+# They are NOT duplicated here: an inline copy drifts from the reviewed file, and the compose
+# file is the artifact CL3 and CX2 read to understand what is actually running.
+
+cat > "$RUN_DIR/docker-compose.yml" <<'COMPOSE'
+${compose_content}
+COMPOSE
+
+cat > "$RUN_DIR/otel-collector-config.yaml" <<'OTELCFG'
+${otel_collector_content}
+OTELCFG
+
+# The collector image runs as UID 10001, NOT root, and `umask 077` above makes every file here
+# 0600 root-owned — so the container could not read its own config and crash-looped 23 times with
+#   failed to get config: ... open /etc/otelcol/config.yaml: permission denied
+# while the rest of the stack looked healthy. Caddy hid the same latent problem because that image
+# runs as root and could read a 0600 file.
+#
+# 0644 is safe for THIS file specifically: it holds scrape targets and relabel rules, no secrets.
+# Do NOT relax the umask globally and do not touch app.env — that one holds every secret and must
+# stay 0600.
+chmod 0644 "$RUN_DIR/otel-collector-config.yaml"
+
+# --- 2b. Certificate store on the persistent disk -----------------------------
+#
+# Caddy's /data (ACME account + issued certificates) lives on a SEPARATE persistent disk that
+# survives instance replacement. Before this existed it was a docker named volume on the boot disk,
+# so every deploy destroyed it and re-issued the certificate — which exhausted Let's Encrypt's
+# "5 certificates per exact set of identifiers per 168h" limit and took public HTTPS down.
+#
+# The disk is attached with device_name=caddy-certs, so it appears at a stable path regardless of
+# PCI enumeration order.
+readonly CERT_DISK=/dev/disk/by-id/google-caddy-certs
+readonly CERT_DIR=/mnt/disks/caddy-certs
+
+mkdir -p "$CERT_DIR"
+
+if [[ ! -e "$CERT_DISK" ]]; then
+  log "FATAL: certificate disk $CERT_DISK is not attached."
+  log "Expected an attached_disk with device_name=caddy-certs on this instance."
+  exit 1
+fi
+
+# Format ONLY when there is no filesystem. `blkid` succeeding means the disk already carries one,
+# and reformatting it would destroy the certificate this disk exists to preserve — the one
+# irreversible action in this script.
+if ! blkid "$CERT_DISK" >/dev/null 2>&1; then
+  log "certificate disk is blank; creating an ext4 filesystem (first boot only)"
+  mkfs.ext4 -m 0 -E lazy_itable_init=0,lazy_journal_init=0,discard "$CERT_DISK"
+else
+  log "certificate disk already has a filesystem; preserving it"
+fi
+
+if ! mount -o discard,defaults "$CERT_DISK" "$CERT_DIR"; then
+  log "FATAL: could not mount $CERT_DISK at $CERT_DIR."
+  exit 1
+fi
+
+# Caddy runs as root in its container and needs to write here. 0700 keeps private keys unreadable
+# to anything else on the host.
+chmod 0700 "$CERT_DIR"
+log "certificate store mounted at $CERT_DIR ($(ls -A "$CERT_DIR" | wc -l) existing entries)"
+
+# --- 3. TLS proxy -------------------------------------------------------------
+# Caddy obtains and renews a Let's Encrypt certificate automatically. Only HTTPS is public;
+# the server container is never published directly.
+
+cat > "$RUN_DIR/Caddyfile" <<CADDY
+{
+  admin off
+}
+
+$SERVER_HOST {
+  encode gzip
+  reverse_proxy server:3000
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    -Server
+  }
+}
+CADDY
+
+# --- 4. Start -----------------------------------------------------------------
+#
+# Container-Optimized OS has docker but NOT the compose plugin, and there is nowhere to install
+# one: /var/lib, /home, and /mnt/stateful_partition are all mounted noexec, and the rootfs is
+# read-only. Those are the properties COS was chosen for, so the answer is not to weaken them.
+#
+# Compose therefore runs INSIDE a container that drives the host daemon through the mounted
+# socket. Verified on this VM: docker:27-cli provides Compose v2.33.0, which the compose file's
+# `depends_on: condition: service_healthy` requires (v1 cannot express it).
+#
+# Tradeoff, stated plainly: mounting /var/run/docker.sock into a container is root-equivalent on
+# the host. Acceptable here because this runs once at boot from a Terraform-rendered script that
+# no unprivileged user can influence, and the image is digest-pinned. It would not be acceptable
+# for anything reachable from application traffic.
+COMPOSE_IMAGE='docker:27-cli@sha256:851f91d241214e7c6db86513b270d58776379aacc5eb9c4a87e5b47115e3065c'
+
+# $RUN_DIR is mounted at the SAME path inside the container so that both the compose CLI (which
+# reads docker-compose.yml and app.env itself) and the host daemon (which resolves the Caddyfile
+# bind mount) see identical paths.
+compose() {
+  docker run --rm \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v "$RUN_DIR:$RUN_DIR" \
+    -v "$DOCKER_CONFIG:/root/.docker:ro" \
+    -w "$RUN_DIR" \
+    "$COMPOSE_IMAGE" \
+    docker compose --env-file "$ENV_FILE" "$@"
+}
+
+# Registry auth without the gcr credential helper.
+#
+# `docker-credential-gcr configure-docker` fails on COS with:
+#   ERROR: Unable to save docker config: mkdir /root/.docker: read-only file system
+# /root is read-only, the same immutability that removed gcloud and the compose plugin. Pointing
+# DOCKER_CONFIG at the tmpfs run directory gives docker a writable config location.
+#
+# Rather than reinstate the helper, reuse the metadata access token already fetched above:
+# Artifact Registry accepts it directly as the oauth2accesstoken user. Fewer moving parts, and the
+# credential is short-lived and lives only on tmpfs, which is discarded on reboot.
+#
+# --password-stdin, not -p: a token passed as an argument is visible in `ps` to any local process.
+export DOCKER_CONFIG="$RUN_DIR/docker"
+mkdir -p "$DOCKER_CONFIG"
+
+log "authenticating docker to Artifact Registry with the metadata token"
+if ! printf '%s' "$ACCESS_TOKEN" \
+  | docker login -u oauth2accesstoken --password-stdin "https://$${REGION}-docker.pkg.dev"; then
+  log "FATAL: docker login to $${REGION}-docker.pkg.dev failed."
+  log "The runtime service account needs roles/artifactregistry.reader on pashx-mab-images."
+  exit 1
+fi
+
+# Pull the private image on the HOST, not from inside the compose container.
+#
+# Registry credentials are resolved by the docker CLI, not the daemon, and the gcr credential
+# helper only exists on the host. A compose container would therefore fail to authenticate to
+# Artifact Registry. Pulling here means compose finds the image already present locally; the other
+# images (redis, caddy, otel-collector) are public and pull anonymously.
+log "pulling the pinned application image on the host"
+if ! docker pull "$IMAGE"; then
+  log "FATAL: could not pull $IMAGE."
+  log "Check that the runtime service account holds roles/artifactregistry.reader on the"
+  log "pashx-mab-images repository and that the digest exists."
+  exit 1
+fi
+
+log "starting stack via compose-in-container"
+cd "$RUN_DIR"
+
+# compose up can race the config files this same script just wrote to tmpfs: the compose
+# container sometimes starts creating Caddy/otel-collector before their bind-mount sources are
+# fully flushed, so Docker silently creates an empty directory in place of the missing file and
+# the mount fails with "not a directory". By the time of a retry a few seconds later, the files
+# are always present. compose up -d is idempotent — already-healthy containers are left alone, so
+# retrying only touches whatever failed. Observed twice in production (2026-08-20, 2026-08-23).
+COMPOSE_UP_OK=0
+for attempt in 1 2 3; do
+  if compose up -d; then
+    COMPOSE_UP_OK=1
+    break
+  fi
+  log "compose up attempt $attempt failed; retrying in 5s"
+  sleep 5
+done
+if [ "$COMPOSE_UP_OK" -ne 1 ]; then
+  log "FATAL: compose up failed after 3 attempts."
+  docker ps -a || true
+  exit 1
+fi
+
+log "waiting for /healthz through the server container"
+for _ in $(seq 1 60); do
+  if compose exec -T server curl -sf http://localhost:3000/healthz >/dev/null 2>&1; then
+    log "server healthy"
+    exit 0
+  fi
+  sleep 10
+done
+
+log "FATAL: server did not become healthy within 10 minutes"
+compose ps || true
+compose logs --tail=50 server || true
+exit 1

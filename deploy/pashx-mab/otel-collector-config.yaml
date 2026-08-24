@@ -1,0 +1,102 @@
+# OpenTelemetry Collector — PashX MAB metric export to Google Managed Service for Prometheus.
+#
+# Path chosen (see docs/operations/pashx-mab-gcp/CL0-M1-p95-alert.md for the full rationale):
+#
+#   twenty-server  --Prometheus :9464-->  this collector  --GMP-->  Cloud Monitoring
+#
+# Twenty already ships a Prometheus exporter (MeterDriver.Prometheus in
+# packages/twenty-server/src/instrument.ts, port 9464). Using it means no new application code
+# and no OTLP/ClickHouse pipeline to operate. Google Managed Prometheus is chosen over the
+# `googlecloud` exporter because Cloud Monitoring's PromQL condition can express
+# "p95 over a histogram AND a minimum sample count" in one readable expression; MQL cannot do
+# that cleanly on a distribution.
+#
+# The histogram this exists for is Codex's:
+#   key     pashx/financial-command/internal-duration-ms
+#   buckets 10 25 50 100 250 500 750 1000 1500 2500 5000 10000 (ms)
+#   scope   internal command work only; external providers (ZATCA, OCR) are outside the timer
+
+receivers:
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: pashx-server
+          # 30s against a 10s OTel export interval: every scrape sees fresh data without
+          # oversampling. GMP bills per sample ingested, so this is also a cost decision.
+          scrape_interval: 30s
+          static_configs:
+            - targets: ["server:9464"]
+              labels:
+                component: twenty-server
+
+          metric_relabel_configs:
+            # 1. Pin the metric name.
+            #
+            # The OTel JS Prometheus exporter sanitises `pashx/financial-command/internal-duration-ms`
+            # to underscores and MAY append the unit as `_milliseconds` depending on version.
+            # Relying on that is how alert filters silently stop matching after an upgrade, so the
+            # name is normalised here and the alert is written against the normalised name only.
+            # Confirm the raw name once with the discovery step in CL0-M1-p95-alert.md.
+            - source_labels: [__name__]
+              regex: "pashx_financial_command_internal_duration_ms(?:_milliseconds)?(_bucket|_count|_sum)?"
+              target_label: __name__
+              # `$$1`, NOT `${1}`. Two expanders read this string in sequence and only the second
+              # one is Prometheus:
+              #   1. the collector's own config loader expands `${NAME}` as an ENVIRONMENT
+              #      VARIABLE, and rejected `${1}` outright — `environment variable "1" has
+              #      invalid name: must match regex ^[a-zA-Z_][a-zA-Z0-9_]*$` — crash-looping;
+              #   2. Prometheus then reads `$1` as relabel capture group 1.
+              # `$$` is the collector's escape for a literal `$`, so it emits `$1` and capture
+              # group 1 survives to Prometheus intact.
+              replacement: "pashx_financial_command_internal_duration_ms$$1"
+              action: replace
+
+            # 2. Keep only what is alerted on or diagnosed with.
+            #
+            # Twenty exposes a large default metric surface. GMP charges per sample, and an
+            # unfiltered scrape of every twenty-server metric every 30s is the single easiest way
+            # to blow through the monitoring line in the cost estimate.
+            - source_labels: [__name__]
+              regex: "pashx_financial_command_internal_duration_ms(_bucket|_count|_sum)?|up|scrape_samples_scraped"
+              action: keep
+
+processors:
+  # Attaches project id, zone, and instance id so GMP can resolve the monitored resource.
+  # Without this the exporter cannot place the series and silently drops it.
+  resourcedetection:
+    detectors: [gcp]
+    timeout: 10s
+    override: false
+
+  # GMP rejects points that arrive out of order or too rapidly for the same series.
+  batch:
+    send_batch_size: 200
+    timeout: 30s
+
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 128
+    spike_limit_mib: 32
+
+exporters:
+  googlemanagedprometheus:
+    # project comes from resourcedetection; set explicitly only when exporting cross-project.
+    sending_queue:
+      enabled: true
+      num_consumers: 2
+      queue_size: 200
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    metrics:
+      receivers: [prometheus]
+      processors: [memory_limiter, resourcedetection, batch]
+      exporters: [googlemanagedprometheus]
+  telemetry:
+    logs:
+      level: warn

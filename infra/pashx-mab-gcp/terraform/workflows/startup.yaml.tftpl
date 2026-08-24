@@ -1,0 +1,115 @@
+# PashX MAB — scheduled startup.
+#
+# Rendered by Terraform from infra/pashx-mab-gcp/terraform/schedule.tf.
+#
+# Order is the whole point of using a Workflow rather than a pile of Cloud Scheduler jobs:
+# Cloud SQL must be RUNNABLE before the VM boots, because the Twenty server runs migrations at
+# startup and fails hard against an unreachable database. Alert policies are re-enabled LAST,
+# after /healthz passes, so the morning start does not page the operator.
+
+main:
+  steps:
+    - init:
+        assign:
+          - project: "${project_id}"
+          - zone: "${zone}"
+          - vm: "${vm_name}"
+          - sqlInstance: "${sql_instance}"
+          - healthUrl: "${server_url}/healthz"
+          - alertPolicies: ${alert_policy_ids}
+
+    # --- 1. Cloud SQL first -------------------------------------------------
+    - startCloudSql:
+        call: http.patch
+        args:
+          url: $${"https://sqladmin.googleapis.com/v1/projects/" + project + "/instances/" + sqlInstance}
+          auth:
+            type: OAuth2
+          body:
+            settings:
+              activationPolicy: "ALWAYS"
+        result: sqlStartOp
+
+    # Cloud SQL reports RUNNABLE well before it accepts connections, so this polls state and the
+    # VM start still leaves headroom. 20 attempts x 30s = 10 minutes, which covers a cold start.
+    - waitForCloudSql:
+        try:
+          steps:
+            - pollState:
+                call: http.get
+                args:
+                  url: $${"https://sqladmin.googleapis.com/v1/projects/" + project + "/instances/" + sqlInstance}
+                  auth:
+                    type: OAuth2
+                result: sqlState
+            - checkState:
+                switch:
+                  - condition: $${sqlState.body.state == "RUNNABLE"}
+                    next: startVm
+            - notReadyYet:
+                raise: "cloudsql-not-runnable"
+        retry:
+          predicate: $${custom_predicate}
+          max_retries: 20
+          backoff:
+            initial_delay: 30
+            max_delay: 30
+            multiplier: 1
+
+    # --- 2. Then the VM ------------------------------------------------------
+    - startVm:
+        call: googleapis.compute.v1.instances.start
+        args:
+          project: $${project}
+          zone: $${zone}
+          instance: $${vm}
+        result: vmStartOp
+
+    # --- 3. Wait for the application, not just the infrastructure -----------
+    # A started VM is not a working PashX. This polls the real external HTTPS boundary, which is
+    # the same thing the uptime check measures.
+    - waitForHealthz:
+        try:
+          call: http.get
+          args:
+            url: $${healthUrl}
+          result: health
+        retry:
+          predicate: $${custom_predicate}
+          max_retries: 30
+          backoff:
+            initial_delay: 20
+            max_delay: 20
+            multiplier: 1
+        next: reenableAlerts
+
+    # --- 4. Only now re-arm the alerts --------------------------------------
+    # Re-enabling before /healthz passes would page the operator every single morning, which is
+    # how a rollback detector gets muted and stops working.
+    - reenableAlerts:
+        for:
+          value: policyId
+          in: $${alertPolicies}
+          steps:
+            - enableOne:
+                call: http.patch
+                args:
+                  url: $${"https://monitoring.googleapis.com/v3/" + policyId + "?updateMask=enabled"}
+                  auth:
+                    type: OAuth2
+                  body:
+                    enabled: true
+
+    - done:
+        return:
+          started: $${vm}
+          database: $${sqlInstance}
+          healthy: true
+
+# Retries on any exception. Both waits above are "poll until true", so a raised error simply
+# means "not yet".
+custom_predicate:
+  params: [e]
+  steps:
+    - always_retry:
+        return: true

@@ -1,0 +1,75 @@
+# PashX MAB — scheduled shutdown.
+#
+# Rendered by Terraform from infra/pashx-mab-gcp/terraform/schedule.tf.
+#
+# Reverse of startup, and the order matters just as much: alerts are silenced FIRST, then the VM
+# stops, then Cloud SQL. Stopping the VM while the availability alerts are live would page the
+# operator every evening.
+#
+# The VM is stopped, not deleted. Its boot disk, static IP, and Caddy certificate volume survive,
+# so the morning start is a boot rather than a rebuild.
+
+main:
+  steps:
+    - init:
+        assign:
+          - project: "${project_id}"
+          - zone: "${zone}"
+          - vm: "${vm_name}"
+          - sqlInstance: "${sql_instance}"
+          - alertPolicies: ${alert_policy_ids}
+
+    # --- 1. Silence the availability alerts ----------------------------------
+    # Only the policies that would fire *because of the shutdown itself*. The p95 detector, the
+    # secret-leak metric, and the Cloud SQL disk alert are deliberately NOT in this list — they
+    # cannot fire against a stopped environment anyway, and leaving them armed means a partial
+    # shutdown still gets noticed.
+    - disableAlerts:
+        for:
+          value: policyId
+          in: $${alertPolicies}
+          steps:
+            - disableOne:
+                call: http.patch
+                args:
+                  url: $${"https://monitoring.googleapis.com/v3/" + policyId + "?updateMask=enabled"}
+                  auth:
+                    type: OAuth2
+                  body:
+                    enabled: false
+
+    # --- 2. Stop the VM ------------------------------------------------------
+    # Graceful: Compute sends ACPI shutdown, Docker stops the containers, and the Twenty server
+    # closes its Cloud SQL connections before the database goes away.
+    - stopVm:
+        call: googleapis.compute.v1.instances.stop
+        args:
+          project: $${project}
+          zone: $${zone}
+          instance: $${vm}
+        result: vmStopOp
+
+    - settle:
+        call: sys.sleep
+        args:
+          seconds: 60
+
+    # --- 3. Then Cloud SQL ---------------------------------------------------
+    # NEVER = stopped. Storage and automated backups already taken are still billed and still
+    # retained; compute is not. Point-in-time recovery has no transaction log for the period the
+    # instance is stopped — see docs/operations/pashx-mab-gcp/runbook-backup-restore.md.
+    - stopCloudSql:
+        call: http.patch
+        args:
+          url: $${"https://sqladmin.googleapis.com/v1/projects/" + project + "/instances/" + sqlInstance}
+          auth:
+            type: OAuth2
+          body:
+            settings:
+              activationPolicy: "NEVER"
+        result: sqlStopOp
+
+    - done:
+        return:
+          stopped: $${vm}
+          database: $${sqlInstance}

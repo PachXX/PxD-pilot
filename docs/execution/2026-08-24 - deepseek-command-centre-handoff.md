@@ -4,7 +4,7 @@
 - Coordinator: DeepSeek harness
 - Application/source owner: Codex
 - Runtime/deployment/evidence owner: Claude
-- Status: **DS0-DS4 complete; DS5 explicitly authorized 2026-08-24 and ready for Claude**
+- Status: **DS0-DS5 complete; DS6 fixture-dependent matrix complete, two manual native checks remain**
 
 ## Mission
 
@@ -43,8 +43,8 @@ new business rule.
 | **DS2** | Codex | DS1 | Extend the bounded loader/read model for pending approvals and active insights; compose the four-signal ledger and insight panel. | Contract, permission, partial/error and deterministic-order tests pass. |
 | **DS3** | Codex | DS2 | English/Arabic UI, true RTL, evidence links, loading/empty/error/partial states, 44px targets and 200%-zoom-safe layout. | App tests, lint and official Twenty app build pass. |
 | **DS4** | DeepSeek | DS2 + DS3 | Independent integration review and failure classification. | No fake metrics, invented links, optimistic mutations or graph violations; failures assigned to one owner. |
-| **DS5** | Claude | DS4 | App-only immutable publish/install and live read-only verification. | **Authorized 2026-08-24:** bump `0.2.9` → `0.2.10`, retain `0.2.9` rollback, record source/build digest, publish/install and verify health. Not started at authorization time. |
-| **DS6** | Codex + Claude | DS5 | Native browser acceptance and ledger closure. | Role scope, drill-through, RTL, keyboard/VoiceOver, exact 200% zoom and runtime-state matrix pass. |
+| **DS5** | Claude | DS4 | App-only immutable publish/install and live read-only verification. | **Complete 2026-08-24:** `0.2.10` published/installed, shasum recorded, `0.2.9` retained, health/logs/DB verified. |
+| **DS6** | Codex + Claude | DS5 | Native browser acceptance and ledger closure. | **Fixture-dependent matrix complete 2026-08-24:** operator role, four-signal data, approval/insight/case drill-through, RTL, semantics, refresh/success/empty/partial, console and layout-equivalent reflow pass. Two approved disposable fixtures were deleted and verified absent. Physical Tab/VoiceOver and exact native 200% remain manual observations. Evidence: `docs/execution/evidence/OC6-A-DS6-live-qa.md`. |
 
 DS2 and DS3 may iterate locally. DS5 must not begin merely because source tests pass.
 

@@ -70,3 +70,7 @@ screenshots/
 /.diag*.mjs
 /.compare*.mjs
 /.narrow*.mjs
+.gstack/
+
+# PashX MAB live Terraform variable values (secrets)
+/infra/pashx-mab-gcp/terraform/terraform.tfvars

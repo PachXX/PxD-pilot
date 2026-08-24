@@ -1,0 +1,17 @@
+# Remote state for the PashX MAB pilot.
+#
+# Copy to backend.tf and run `terraform init -migrate-state` AFTER the state bucket exists.
+# Bootstrap order matters: the first `terraform apply` runs against local state, because the
+# bucket that holds the state does not exist yet. Create the bucket out of band with
+# scripts/20-create-state-bucket.sh, then migrate.
+#
+# State must never be committed. It contains resource metadata and, for some providers,
+# generated values. This configuration deliberately keeps every secret VALUE out of state:
+# Secret Manager secrets are created empty and populated out of band (see secrets.tf).
+
+terraform {
+  backend "gcs" {
+    bucket = "REPLACE-pashx-mab-tfstate"
+    prefix = "pashx-mab-gcp"
+  }
+}

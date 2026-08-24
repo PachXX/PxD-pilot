@@ -1,0 +1,77 @@
+# Cloud Build config for the pinned Twenty/PashX image.
+#
+# Uses the upstream Twenty Dockerfile at packages/twenty-docker/twenty/Dockerfile so the pilot
+# image stays a thin pin of upstream rather than a fork of the build. The PashX app and contract
+# packages are part of the monorepo, so they are built by the same yarn workspace install — no
+# extra step is needed.
+#
+# BUILD ARGS: the Dockerfile declares exactly one build arg, APP_VERSION. An earlier revision of
+# this file also passed REACT_APP_SERVER_BASE_URL, which does not exist in the Dockerfile — Twenty
+# injects the server URL at RUNTIME (SERVER_URL in the container env), not at image build time.
+# Docker only warns about an unrecognised build arg, so that mistake would have shipped a normally-
+# built image while implying the URL was baked in. Passing a URL at build time would also make the
+# image non-portable across hostnames, which defeats digest pinning.
+#
+# BUILD CONTEXT: submitted with --ignore-file=.dockerignore (see build-and-push.sh). That file
+# already excludes .git (1.4 GB) and **/node_modules (988 MB), taking a 3.0 GB working tree down to
+# roughly 600 MB. Using the SAME ignore file Docker uses means the uploaded context is exactly the
+# context the build sees — a separate .gcloudignore could drift from it.
+
+# BUILD TARGET: --target=twenty is MANDATORY and must never be dropped.
+# The Dockerfile is multi-stage and `twenty-app-dev` is the LAST stage in the file, so a build
+# with no --target silently produces the all-in-one DEVELOPMENT image: s6-overlay entrypoint,
+# a Postgres and Redis bundled inside the container, DISABLE_DB_MIGRATIONS=true, port 2020, a
+# hardcoded APP_SECRET, and NODE_ENV=development. It also omits pashx-mab-contract, which the
+# `twenty-server` stage does copy. An earlier revision of this file had no --target and shipped
+# exactly that image to the pilot VM. It failed in three ways at once and none of them named the
+# real cause: `Cannot find module 'pashx-mab-contract'`, a Postgres `ClientAuthentication` error
+# from the container's OWN bundled Postgres, and a healthcheck that could never pass because the
+# dev image listens on 2020 while compose probes 3000. Docker does not warn about a defaulted
+# target, so this is silent. Keep the flag.
+#
+# APP_VERSION: validated at server boot by IsTwentySemVer (semver.parse), so a bare git sha is
+# REJECTED — the server exits with "APP_VERSION must be a valid semantic version". Pass
+# <root package.json version>+<sha>, e.g. 0.2.1+8cd5396c: valid semver build metadata, and the
+# sha stays readable in the running app.
+
+substitutions:
+  _IMAGE: ''
+  _TAG: ''
+  _APP_VERSION: ''
+
+options:
+  # A cold monorepo build is CPU-bound in yarn install and the front-end bundle, so a high-CPU
+  # machine is worth it — but machine-type availability is REGIONAL and quota-gated.
+  # E2_HIGHCPU_32 was rejected in me-central1 with:
+  #   FAILED_PRECONDITION: due to quota restrictions, Cloud Build cannot run builds of this
+  #   machine type in this region
+  # me-central1 is a smaller region and does not carry the largest sizes on default quota. 8 vCPU
+  # is the conservative choice that still finishes a monorepo build in reasonable wall time.
+  #
+  # If this is ever rejected too, do NOT drop to the default machine — the front-end bundle is
+  # memory-hungry and will either OOM or blow the timeout. Build in a region that has the quota
+  # and push to this registry instead; build region and registry region are independent. See the
+  # BUILD_REGION argument in build-and-push.sh.
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+
+# 8 vCPU rather than 32 means a longer wall time; 2 hours leaves headroom for a cold cache.
+timeout: 7200s
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file=packages/twenty-docker/twenty/Dockerfile
+      - --target=twenty
+      - --tag=${_IMAGE}:${_TAG}
+      - --build-arg=APP_VERSION=${_APP_VERSION}
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: [push, '${_IMAGE}:${_TAG}']
+
+images:
+  - '${_IMAGE}:${_TAG}'
