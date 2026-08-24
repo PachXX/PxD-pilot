@@ -5,7 +5,9 @@ import { MetricsModule } from 'src/engine/core-modules/metrics/metrics.module';
 import { UserRoleModule } from 'src/engine/metadata-modules/user-role/user-role.module';
 import { WorkspaceCacheModule } from 'src/engine/workspace-cache/workspace-cache.module';
 import { WorkspaceCacheStorageModule } from 'src/engine/workspace-cache-storage/workspace-cache-storage.module';
+import { PashxApprovalCommandController } from 'src/modules/pashx-mab/controllers/pashx-approval-command.controller';
 import { PashxVendorPurchaseOrderController } from 'src/modules/pashx-mab/controllers/pashx-vendor-purchase-order.controller';
+import { PashxApprovalCommandService } from 'src/modules/pashx-mab/services/pashx-approval-command.service';
 import { PashxCapabilityService } from 'src/modules/pashx-mab/services/pashx-capability.service';
 import { PashxCommandSupportService } from 'src/modules/pashx-mab/services/pashx-command-support.service';
 import { PashxVendorPurchaseOrderService } from 'src/modules/pashx-mab/services/pashx-vendor-purchase-order.service';
@@ -34,8 +36,12 @@ import { PashxWorkspaceSchemaService } from 'src/modules/pashx-mab/services/pash
     WorkspaceCacheModule,
     WorkspaceCacheStorageModule,
   ],
-  controllers: [PashxVendorPurchaseOrderController],
+  controllers: [
+    PashxApprovalCommandController,
+    PashxVendorPurchaseOrderController,
+  ],
   providers: [
+    PashxApprovalCommandService,
     PashxCapabilityService,
     PashxCommandSupportService,
     PashxVendorPurchaseOrderService,

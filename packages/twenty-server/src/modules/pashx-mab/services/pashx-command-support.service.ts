@@ -3,6 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import {
   PASHX_COMMAND_EXCEPTION_CODES,
+  type PashxApprovalCommandResult,
+  type PashxCommandName,
   type PashxCreateVendorPurchaseOrderRequest,
   type PashxVendorPurchaseOrderResult,
 } from 'pashx-mab-contract';
@@ -36,6 +38,24 @@ const isVendorPurchaseOrderResult = (
     typeof result.documentNumber === 'string' &&
     result.lifecycleStatus === 'draft' &&
     typeof result.aggregateVersion === 'number'
+  );
+};
+
+const isApprovalCommandResult = (
+  value: unknown,
+): value is PashxApprovalCommandResult => {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const result = value as Readonly<Record<string, unknown>>;
+
+  return (
+    typeof result.approvalRequestRecordId === 'string' &&
+    ['PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'].includes(
+      String(result.status),
+    ) &&
+    (result.decidedAt === null || typeof result.decidedAt === 'string')
   );
 };
 
@@ -82,6 +102,94 @@ export class PashxCommandSupportService {
     }
 
     return receipt.result_json;
+  }
+
+  async findApprovalReplay({
+    queryRunner,
+    schema,
+    idempotencyKey,
+    requestHash,
+  }: {
+    queryRunner: WorkspaceQueryRunner;
+    schema: string;
+    idempotencyKey: string;
+    requestHash: string;
+  }): Promise<PashxApprovalCommandResult | undefined> {
+    const receipt = firstRow<PashxCommandReceiptRow>(
+      await queryRunner.query(
+        `SELECT request_hash, result_json FROM ${schema}.pashx_command_receipt WHERE idempotency_key = $1`,
+        [idempotencyKey],
+      ),
+    );
+
+    if (receipt === undefined) return undefined;
+    if (receipt.request_hash !== requestHash) {
+      throw new PashxMabException(
+        PASHX_COMMAND_EXCEPTION_CODES.idempotencyKeyReused,
+      );
+    }
+    if (!isApprovalCommandResult(receipt.result_json)) {
+      throw new PashxMabException(PASHX_COMMAND_EXCEPTION_CODES.internalError);
+    }
+
+    return receipt.result_json;
+  }
+
+  async persistApprovalReceiptAndAudit({
+    queryRunner,
+    schema,
+    idempotencyKey,
+    requestHash,
+    commandName,
+    result,
+    actorId,
+    correlationId,
+    auditEventId,
+    payload,
+  }: {
+    queryRunner: WorkspaceQueryRunner;
+    schema: string;
+    idempotencyKey: string;
+    requestHash: string;
+    commandName: Extract<
+      PashxCommandName,
+      | 'approval.request'
+      | 'approval.approve'
+      | 'approval.reject'
+      | 'approval.cancel'
+    >;
+    result: PashxApprovalCommandResult;
+    actorId: string;
+    correlationId: string;
+    auditEventId: string;
+    payload: unknown;
+  }): Promise<void> {
+    await queryRunner.query(
+      `INSERT INTO ${schema}.pashx_command_receipt
+        (idempotency_key, request_hash, aggregate_id, aggregate_version, result_json)
+       VALUES ($1, $2, $3, $4, $5::jsonb)`,
+      [
+        idempotencyKey,
+        requestHash,
+        result.approvalRequestRecordId,
+        result.status === 'PENDING' ? 1 : 2,
+        JSON.stringify(result),
+      ],
+    );
+    await queryRunner.query(
+      `INSERT INTO ${schema}.pashx_audit_event
+        (id, correlation_id, actor_id, command_name, aggregate_id, aggregate_version, payload)
+       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)`,
+      [
+        auditEventId,
+        correlationId,
+        actorId,
+        commandName,
+        result.approvalRequestRecordId,
+        result.status === 'PENDING' ? 1 : 2,
+        JSON.stringify(payload),
+      ],
+    );
   }
 
   async allocateVendorPurchaseOrderNumber({

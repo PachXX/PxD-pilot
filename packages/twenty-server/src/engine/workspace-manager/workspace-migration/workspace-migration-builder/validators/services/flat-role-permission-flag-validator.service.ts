@@ -232,6 +232,7 @@ export class FlatRolePermissionFlagValidatorService {
       flatRolePermissionFlagMaps: optimisticFlatRolePermissionFlagMaps,
       flatRoleMaps,
     },
+    buildOptions,
   }: UniversalFlatEntityValidationArgs<
     typeof ALL_METADATA_NAME.rolePermissionFlag
   >): FailedFlatEntityValidation<'rolePermissionFlag', 'delete'> {
@@ -261,7 +262,16 @@ export class FlatRolePermissionFlagValidatorService {
         flatEntityMaps: flatRoleMaps,
       });
 
-      if (isDefined(referencedRole) && !referencedRole.isEditable) {
+      const relationBelongsToCallerApplication =
+        existingFlatRolePermissionFlag.applicationUniversalIdentifier ===
+        buildOptions.applicationUniversalIdentifier;
+
+      if (
+        isDefined(referencedRole) &&
+        !referencedRole.isEditable &&
+        !buildOptions.isSystemBuild &&
+        !relationBelongsToCallerApplication
+      ) {
         validationResult.errors.push({
           code: PermissionsExceptionCode.ROLE_NOT_EDITABLE,
           message: t`Role is not editable`,

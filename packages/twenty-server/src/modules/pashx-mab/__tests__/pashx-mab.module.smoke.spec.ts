@@ -10,8 +10,10 @@ import { JwtAuthGuard } from 'src/engine/guards/jwt-auth.guard';
 import { WorkspaceAuthGuard } from 'src/engine/guards/workspace-auth.guard';
 import { WorkspaceCacheModule } from 'src/engine/workspace-cache/workspace-cache.module';
 import { WorkspaceCacheStorageModule } from 'src/engine/workspace-cache-storage/workspace-cache-storage.module';
+import { PashxApprovalCommandController } from 'src/modules/pashx-mab/controllers/pashx-approval-command.controller';
 import { PashxVendorPurchaseOrderController } from 'src/modules/pashx-mab/controllers/pashx-vendor-purchase-order.controller';
 import { PashxMabModule } from 'src/modules/pashx-mab/pashx-mab.module';
+import { PashxApprovalCommandService } from 'src/modules/pashx-mab/services/pashx-approval-command.service';
 import { PashxCapabilityService } from 'src/modules/pashx-mab/services/pashx-capability.service';
 import { PashxCommandSupportService } from 'src/modules/pashx-mab/services/pashx-command-support.service';
 import { PashxVendorPurchaseOrderPersistenceService } from 'src/modules/pashx-mab/services/pashx-vendor-purchase-order-persistence.service';
@@ -22,6 +24,7 @@ import { PashxWorkspaceSchemaService } from 'src/modules/pashx-mab/services/pash
 class IsolatedInfrastructureModule {}
 
 const PASHX_PROVIDERS = [
+  PashxApprovalCommandService,
   PashxCapabilityService,
   PashxCommandSupportService,
   PashxVendorPurchaseOrderService,
@@ -73,6 +76,7 @@ describe('PashxMabModule boot smoke', () => {
     const testingModule = await builder.compile();
 
     expect(testingModule.get(PashxVendorPurchaseOrderController)).toBeDefined();
+    expect(testingModule.get(PashxApprovalCommandController)).toBeDefined();
 
     await testingModule.close();
   });

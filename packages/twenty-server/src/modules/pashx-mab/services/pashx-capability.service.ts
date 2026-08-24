@@ -8,6 +8,7 @@ import {
 } from 'src/engine/metadata-modules/permissions/permissions.exception';
 import { UserRoleService } from 'src/engine/metadata-modules/user-role/user-role.service';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
+import { STANDARD_ROLE } from 'src/engine/workspace-manager/twenty-standard-application/constants/standard-role.constant';
 
 @Injectable()
 export class PashxCapabilityService {
@@ -55,6 +56,10 @@ export class PashxCapabilityService {
 
     if (!isDefined(role)) {
       return undefined;
+    }
+
+    if (roleUniversalIdentifier === STANDARD_ROLE.admin.universalIdentifier) {
+      return roleId;
     }
 
     const hasCapability = role.rolePermissionFlagIds.some(

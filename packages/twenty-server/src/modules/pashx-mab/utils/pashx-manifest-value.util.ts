@@ -30,6 +30,8 @@ export const PASHX_DOCUMENT_TYPE_MANIFEST_VALUES: Record<
   vendorPurchaseOrder: 'VENDOR_PURCHASE_ORDER',
   deliveryNote: 'DELIVERY_NOTE',
   customerInvoice: 'CUSTOMER_INVOICE',
+  customerCreditNote: 'CUSTOMER_CREDIT_NOTE',
+  vendorCreditNote: 'VENDOR_CREDIT_NOTE',
   creditNote: 'CREDIT_NOTE',
   debitNote: 'DEBIT_NOTE',
 };
