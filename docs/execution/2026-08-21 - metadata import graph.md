@@ -4,7 +4,7 @@
 - Owners: Codex (contract/import source), Claude (pilot execution/evidence)
 - Source: Google Sheet `Meta information - Demo`
   (`1MpVpiBdkYO9u7uMMjfjubNGycLJivHCIEGMlnuxdOAk`) and `/Users/pxd/Desktop/mab/`
-- Status: **MI4 apply authorized in advance; MI3 live dry-run remains the mandatory prerequisite**
+- Status: **MI3, MI4 and MI5 complete 2026-08-24; WF1 ready**
 
 ## Outcome
 
@@ -41,9 +41,9 @@ through the existing workspace-scoped CC2 read model; the UI never queries Googl
 | **MI0** | Codex | none | Re-read live sheet metadata and reconcile with the existing CC1 source audit. | **complete 2026-08-21** |
 | **MI1** | Shahil + Codex | MI0 | Approve import scope: companies first; documents only when uniquely evidenced; users excluded. | **approved 2026-08-21** |
 | **MI2** | Codex | MI1 | Versioned mapping manifest, normalization rules, deterministic source keys, and dry-run importer tests. | **complete in source 2026-08-21** |
-| **MI3** | Claude | MI2 | Read-only pilot inventory and dry-run diff against live Companies/documents. | **ready** |
-| **MI4** | Claude | MI3 + explicit apply approval | Backup, execute idempotent import, verify counts/duplicates/provenance, retain rollback inventory. | **apply approved 2026-08-21; blocked only on MI3 pass** |
-| **MI5** | Codex | MI4 | Command Centre and profitability smoke test using imported authoritative records. | blocked |
+| **MI3** | Claude | MI2 | Read-only pilot inventory and dry-run diff against live Companies/documents. | **complete 2026-08-24 — CREATE 10 / CONFLICT 0** |
+| **MI4** | Claude | MI3 + explicit apply approval | Backup, execute idempotent import, verify counts/duplicates/provenance, retain rollback inventory. | **complete 2026-08-24 — 3 customers / 7 suppliers / zero duplicates / replay SKIP 10** |
+| **MI5** | Codex | MI4 | Correction ledger, page-level verification, supported-record import with native source links, idempotent replay, and live health/integrity checks. | **complete 2026-08-24 — 4 documents / 4 attachments / replay SKIP** |
 
 ## Known document conflicts
 
@@ -56,15 +56,14 @@ through the existing workspace-scoped CC2 read model; the UI never queries Googl
 
 These rows remain staged until a human confirms the intended page/document boundaries.
 
-## Next decision
+## MI5 result and next development
 
-Claude installs the next app version so the four Company provenance fields exist, exports a
-read-only JSON inventory with `id`, `name`, `commercialRegistrationNumber`,
-`vatRegistrationNumber`, `mabMetadataSourceKey`, and `mabBusinessRoles`, then runs:
+All 24 rows now have a correction-ledger decision. Nineteen were matched to reviewed local
+evidence; five are missing or channel-only. Four uniquely verified records supported by the current
+Commercial Document contract were imported with native source attachments and an identical replay
+created nothing. The other 20 remain held without type coercion.
 
-`yarn workspace pashx-mab metadata:plan <existing-companies.json>`
-
-The command must exit successfully with an explicit CREATE/UPDATE/SKIP/CONFLICT summary. Shahil
-approved MI4 apply in advance on 2026-08-21. Claude may therefore proceed directly from a clean
-MI3 result to backup and apply; any CONFLICT still blocks MI4 and must return to Shahil/Codex rather
-than being auto-resolved.
+The next ready node is **WF1 — Codex** in
+`docs/execution/2026-08-24 - MAB operating workflow graph.md`: extend the typed source contract to
+represent the full supplied MAB sequence from client RFQ through supplier comparison, quotation,
+human-approved client PO, vendor procurement, delivery note, and customer invoice.

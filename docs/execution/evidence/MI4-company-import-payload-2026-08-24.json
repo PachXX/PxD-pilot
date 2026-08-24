@@ -1,0 +1,12 @@
+[
+  {"name":"Al Shuwayer","commercialRegistrationNumber":"2051011606","vatRegistrationNumber":"300507679900003","mabMetadataSourceKey":"mab-meta:clients:2","mabBusinessRoles":["CUSTOMER"]},
+  {"name":"M.S Al-Suwaidi Industrial Services","commercialRegistrationNumber":"2066001780","vatRegistrationNumber":null,"mabMetadataSourceKey":"mab-meta:clients:3","mabBusinessRoles":["CUSTOMER"]},
+  {"name":"Seyana Maintenance Company for Operation & Industrial Services","commercialRegistrationNumber":"7013296434","vatRegistrationNumber":"311215410600003","mabMetadataSourceKey":"mab-meta:clients:4","mabBusinessRoles":["CUSTOMER"]},
+  {"name":"DBMS Steel and Metal Solution Trading Company","commercialRegistrationNumber":"2050187041","vatRegistrationNumber":null,"mabMetadataSourceKey":"mab-meta:suppliers:2","mabBusinessRoles":["SUPPLIER"]},
+  {"name":"Asia Oruba Trading Co.","commercialRegistrationNumber":"2051065071","vatRegistrationNumber":null,"mabMetadataSourceKey":"mab-meta:suppliers:3","mabBusinessRoles":["SUPPLIER"]},
+  {"name":"PowerTech International Trading Co.","commercialRegistrationNumber":"2051026451","vatRegistrationNumber":"311372689300003","mabMetadataSourceKey":"mab-meta:suppliers:4","mabBusinessRoles":["SUPPLIER"]},
+  {"name":"Sana for Electrical & Telephone Co.","commercialRegistrationNumber":"1010143643","vatRegistrationNumber":"30055984700003","mabMetadataSourceKey":"mab-meta:suppliers:5","mabBusinessRoles":["SUPPLIER"]},
+  {"name":"Smart Decision Trading Company","commercialRegistrationNumber":"2051045171","vatRegistrationNumber":"311360673900003","mabMetadataSourceKey":"mab-meta:suppliers:6","mabBusinessRoles":["SUPPLIER"]},
+  {"name":"Excellence & Success Business Establishment","commercialRegistrationNumber":"2851842816","vatRegistrationNumber":"300544793488883","mabMetadataSourceKey":"mab-meta:suppliers:7","mabBusinessRoles":["SUPPLIER"]},
+  {"name":"Attieh Trading Company Ltd","commercialRegistrationNumber":"2055007244","vatRegistrationNumber":"310030450600003","mabMetadataSourceKey":"mab-meta:suppliers:8","mabBusinessRoles":["SUPPLIER"]}
+]

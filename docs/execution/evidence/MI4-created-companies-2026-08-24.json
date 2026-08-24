@@ -1,0 +1,12 @@
+[
+  {"id":"cb08c7c5-5095-4370-9976-92c622f5ddc6","name":"Al Shuwayer","commercialRegistrationNumber":"2051011606","vatRegistrationNumber":"300507679900003","mabMetadataSourceKey":"mab-meta:clients:2","mabBusinessRoles":["CUSTOMER"]},
+  {"id":"c7e57c65-2b71-48a5-b308-ead5f7ff8337","name":"M.S Al-Suwaidi Industrial Services","commercialRegistrationNumber":"2066001780","vatRegistrationNumber":null,"mabMetadataSourceKey":"mab-meta:clients:3","mabBusinessRoles":["CUSTOMER"]},
+  {"id":"10f54605-a2e8-4108-9319-99444c36baac","name":"Seyana Maintenance Company for Operation & Industrial Services","commercialRegistrationNumber":"7013296434","vatRegistrationNumber":"311215410600003","mabMetadataSourceKey":"mab-meta:clients:4","mabBusinessRoles":["CUSTOMER"]},
+  {"id":"9f4fe842-3e73-4067-b4f4-3dc125240c0b","name":"DBMS Steel and Metal Solution Trading Company","commercialRegistrationNumber":"2050187041","vatRegistrationNumber":null,"mabMetadataSourceKey":"mab-meta:suppliers:2","mabBusinessRoles":["SUPPLIER"]},
+  {"id":"ed14fe8e-f121-46f5-bc4f-ccad63505867","name":"Asia Oruba Trading Co.","commercialRegistrationNumber":"2051065071","vatRegistrationNumber":null,"mabMetadataSourceKey":"mab-meta:suppliers:3","mabBusinessRoles":["SUPPLIER"]},
+  {"id":"6a489d4c-5e9b-4b06-9a7f-64877f6626fb","name":"PowerTech International Trading Co.","commercialRegistrationNumber":"2051026451","vatRegistrationNumber":"311372689300003","mabMetadataSourceKey":"mab-meta:suppliers:4","mabBusinessRoles":["SUPPLIER"]},
+  {"id":"fff44135-b4f4-4a8d-af77-27354f247cdb","name":"Sana for Electrical & Telephone Co.","commercialRegistrationNumber":"1010143643","vatRegistrationNumber":"30055984700003","mabMetadataSourceKey":"mab-meta:suppliers:5","mabBusinessRoles":["SUPPLIER"]},
+  {"id":"0020a28c-1992-4cfe-87b0-edaf6a907744","name":"Smart Decision Trading Company","commercialRegistrationNumber":"2051045171","vatRegistrationNumber":"311360673900003","mabMetadataSourceKey":"mab-meta:suppliers:6","mabBusinessRoles":["SUPPLIER"]},
+  {"id":"f3d9018c-5ffe-4309-a41a-794a577f152c","name":"Excellence & Success Business Establishment","commercialRegistrationNumber":"2851842816","vatRegistrationNumber":"300544793488883","mabMetadataSourceKey":"mab-meta:suppliers:7","mabBusinessRoles":["SUPPLIER"]},
+  {"id":"ad60f4a3-fb54-4676-a579-a2ea70712eb6","name":"Attieh Trading Company Ltd","commercialRegistrationNumber":"2055007244","vatRegistrationNumber":"310030450600003","mabMetadataSourceKey":"mab-meta:suppliers:8","mabBusinessRoles":["SUPPLIER"]}
+]
