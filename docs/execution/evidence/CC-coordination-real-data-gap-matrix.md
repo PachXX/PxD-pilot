@@ -141,7 +141,8 @@ or the mismatch is a regression to fix, never a number to adjust:
 1. Command Centre band: Compliance 0 · Approvals 0 · Blocked **3** · Your actions 0; ledger =
    exactly the three real cases (`3af759e7` customer missing; `780c98af` + `47e1d3ee` owner
    missing) with native drill-through.
-2. Case workflow page per case: stage-null rail (all upcoming, no current marker); price
+2. Case workflow page per case (stages applied 2026-08-25): rails show current markers —
+   MAB-PO `vendor-order`, SEN-EPO `invoicing`, ASHM `invoicing`; price
    comparison shows the single real quote SAR 127,544.20 DRAFT on `3af759e7`; delivery
    NOT_STARTED everywhere; ASHM (`780c98af`) shows 2/2 finalized invoices but readiness "missing"
    (CPO still DRAFT).
@@ -254,3 +255,10 @@ Post-apply battery: Command Centre band unchanged **0/0/3/0** (blocked-data sign
 customer/owner-missing data fields, not stage-dependent); case-workflow rails now show real
 current markers. RFQ eligibility stays **0** (vendor-order/invoicing are not intake/sourcing) —
 the RFQ flow becomes exercisable with a properly-staged new case.
+
+## 17. Applied stages visible through the live UI data path (2026-08-25)
+
+Live GraphQL read model (the Case workflow page's own query) returns the applied stages:
+MAB-PO `VENDOR_ORDER`, SEN-EPO `INVOICING`, ASHM `INVOICING` — the rails render real current
+markers live. §10 QA expectations updated accordingly (item 2). Supplier-RFQ endpoint still
+absent on the live host (Claude-lane redeploy pending).

@@ -245,3 +245,9 @@ Shahil approved the §11 candidates; applied and verified via the standard recor
 MAB-PO → vendor-order, SEN-EPO → invoicing, ASHM → invoicing (contradiction documented).
 Case-workflow rails now show real current markers; band stays 0/0/3/0; RFQ eligibility
 remains 0. Detail: gap matrix §16.
+
+### 2026-08-25 round-12 stage visibility + QA expectation update
+
+Applied stages confirmed through the live GraphQL UI path (MAB-PO vendor-order, SEN-EPO and
+ASHM invoicing). §10 QA expectation item 2 updated from stage-null to the applied markers.
+Supplier-RFQ host redeploy still pending (Claude lane). Detail: gap matrix §17.
