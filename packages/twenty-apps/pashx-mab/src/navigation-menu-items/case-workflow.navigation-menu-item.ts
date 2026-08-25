@@ -13,7 +13,7 @@ export default defineNavigationMenuItem({
   name: 'Case workflow',
   icon: 'IconTimelineEvent',
   color: 'green',
-  position: 2,
+  position: 3,
   type: NavigationMenuItemType.PAGE_LAYOUT,
   pageLayoutUniversalIdentifier:
     PASHX_MAB_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.caseWorkflow,

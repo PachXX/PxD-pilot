@@ -192,6 +192,7 @@ export const PASHX_MAB_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS = {
   commandCentre: '89ae99fe-2032-461b-90b0-d263c64f7617',
   caseWorkflow: 'f3b8c1d5-4a2e-4f9c-9d7a-2c5e6f8a1b3d',
   vendorComparison: 'b4405431-752b-43ff-8c75-d1115b324dbe',
+  workflowPipeline: 'd8172718-88ac-4b1f-8cd1-c521de7516b4',
 } as const;
 
 export const PASHX_MAB_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIERS = {
@@ -212,6 +213,9 @@ export const PASHX_MAB_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS = {
   vendorComparison: '818ea2d1-777d-401b-a122-44c383dd68fb',
   vendorComparisonOverviewTab: '45194dc2-6325-46b5-b930-544f00656c28',
   vendorComparisonWidget: '7497e9c5-8beb-455a-a3f4-3772c73be9c6',
+  workflowPipeline: 'db786f76-6b3e-474f-b869-3f94bab0541c',
+  workflowPipelineOverviewTab: '9e4719a3-1496-41b4-8d5b-170517196381',
+  workflowPipelineWidget: '957179e3-6e90-4dfe-b284-def0a792c402',
 } as const;
 
 export const PASHX_MAB_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS = {
@@ -219,6 +223,7 @@ export const PASHX_MAB_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS = {
   operationalProfitability: 'ee29da14-bc1c-4a5f-a630-bb243f10a307',
   caseWorkflow: 'd4f7a1c8-3b6e-4d2a-8f5c-1e9b7c3a6d24',
   vendorComparison: '4d87cab5-b423-47e5-ab4f-211ec7f689c1',
+  workflowPipeline: 'b7b6c363-d4a0-40f1-9243-6166b3395371',
 } as const;
 
 export type PashxMabObjectName =
