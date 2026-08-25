@@ -194,3 +194,20 @@ The page renders the honest no-recommendation state: the only real vendor quote 
 comparison or recommendation is fabricated. Every live surface is now verified against stored
 records (Command Centre band, Case workflow, Vendors, Vendor comparison, Operational
 profitability).
+
+## 13. In-flight overview builder verified against live data (2026-08-25)
+
+The Codex lane's `buildCommandCentreOverview` (uncommitted, `twenty-cc-live-codex` worktree)
+was executed with the live dump (temp runner, removed afterwards). Result — all numbers derived
+from stored records, all honest states:
+
+| Case | Docs (total/finalized) | Quotation state | Delivery | Invoices | Cash | nextWork |
+|---|---|---|---|---|---|---|
+| MAB-PO-2026-4141 | 3/1 | 1 draft invitation + 1 draft response, `AWAITING_FINALIZED_RESPONSES` | notStarted | — | UNAVAILABLE | CASE_CUSTOMER_MISSING |
+| ASHM-004151-1 | 4/2 | `AWAITING_FINALIZED_RESPONSES` | notStarted | MAB-0560, MAB-0521 FINALIZED/CLEARED | UNAVAILABLE | CASE_OWNER_MISSING |
+| SEN-EPO-2026-1102 | 1/1 | `AWAITING_FINALIZED_RESPONSES` | notStarted | MAB-INV-254 FINALIZED/CLEARED | UNAVAILABLE | CASE_OWNER_MISSING |
+
+Consistent with the independent predictions: stage summary `unrecordedCount: 3`, work queue
+3× BLOCKED_DATA, cash capability-gated `UNAVAILABLE` (live pilot has no cash capability), and
+38 native links (3 cases + 8 documents + 25 companies + 2 approvals — exact). The lane's
+in-flight builder complies with every real-data rule; no fabrication path observed.
