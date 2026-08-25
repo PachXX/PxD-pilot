@@ -280,3 +280,13 @@ lint **0/0** (94 files), official `dev:build` **26 files** (manifest + typecheck
 overview UI source is verification-ready — the lane can commit/merge/release (0.2.16) on its
 own schedule. Remaining lane threads: overview release → §10 browser/operator QA (Claude),
 host redeploy for the supplier-RFQ endpoint (Claude, recipe in the release-gate evidence).
+
+### 2026-08-25 round-17 overview UI landed + verified
+
+The Codex lane landed **`6d01d8826d` "make command centre evidence-led"** on
+`deepseek/cc-live-codex` (15 files, +2712/−613: overview builder + loader, reworked
+bilingual UI, new overview tests); worktree clean. Coordinator re-verified the landed source
+in the lane worktree: app tests **133/133**, lint **0/0**, official build **26 files**.
+Next steps: merge the lane branch into `codex/pashx-pilot-cx3-cx4`, bump to 0.2.16, publish/
+install, then §10 browser/operator QA (Claude lane). Host redeploy for the supplier-RFQ
+endpoint remains pending (Claude lane, recipe in the release-gate evidence).
