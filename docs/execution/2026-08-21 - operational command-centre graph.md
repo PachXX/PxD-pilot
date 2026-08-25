@@ -251,3 +251,10 @@ remains 0. Detail: gap matrix §16.
 Applied stages confirmed through the live GraphQL UI path (MAB-PO vendor-order, SEN-EPO and
 ASHM invoicing). §10 QA expectation item 2 updated from stage-null to the applied markers.
 Supplier-RFQ host redeploy still pending (Claude lane). Detail: gap matrix §17.
+
+### 2026-08-25 round-13 lane status signal
+
+The Codex lane's app suite now passes **133/133** in its worktree (the four stale UI-test
+failures from round 9 are resolved; the lane updated its tests with the UI rework). The lane
+has its own working dependency install; 15 uncommitted files remain (overview UI in flight).
+Supplier-RFQ host redeploy still pending (Claude lane). No new lane commits landed.
