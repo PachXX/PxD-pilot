@@ -308,3 +308,10 @@ Bumped to 0.2.16 and published (`0e36b1fce3…` shasum); install confirmed the w
 pages present, data intact (3/8/2). Full evidence:
 `docs/execution/evidence/CC-release-0-2-16.md`. Remaining (Claude lane): host redeploy for the
 supplier-RFQ endpoint, §10 browser/operator QA; rollback target 0.2.15.
+
+### 2026-08-25 round-20 status probe
+
+No new commits; the supplier-RFQ host redeploy is still pending (endpoint returns the
+REST-core "Query path invalid" — Claude-lane infra item, acceptance recipe in
+`CC-release-gate-0-2-15.md`); §10 browser/operator QA not yet recorded. Healthz 200; data
+intact (3/8/2). 0.2.16 remains the live version with the evidence-led Command Centre.
