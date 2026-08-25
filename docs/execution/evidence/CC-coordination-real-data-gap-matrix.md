@@ -152,3 +152,23 @@ or the mismatch is a regression to fix, never a number to adjust:
    honest "no eligible case" state; the 15 roleless companies never appear.
 5. Insights and expenses panels: honest empty states; OCR/email unavailable states.
 6. Bilingual English/Arabic, RTL, a11y, 44px, 200%-equivalent reflow, console clean.
+
+## 11. Cross-boundary verification + stage-candidate proposal (2026-08-25)
+
+**GraphQL read-model cross-check:** the exact command-centre loader query (procurementCases,
+commercialDocuments, expenses, PENDING approvalRequests, ACTIVE insights) was run against the
+live `/graphql` endpoint and fed to the same classifier. Prediction **identical** to the REST
+path: Compliance 0 · Approvals 0 · Blocked 3 · Actions 0 (only the observed timestamp differs).
+The UI's own data path produces the same honest band.
+
+**Stage candidates** via `packages/twenty-apps/pashx-mab/scripts/propose-case-stages-from-live.ts`
+(decision-support only; nothing written; closed/cancelled never proposed):
+
+| Case | Candidate stage | Driving finalized evidence | Flag |
+|---|---|---|---|
+| MAB-META-MAB-PO-2026-4141 | vendor-order | MAB-PO-2026-4141 (VPO) | none |
+| MAB-META-SEN-EPO-2026-1102 | invoicing | MAB-INV-254 (customer invoice) | none |
+| MAB-META-ASHM-004151-1 | invoicing | MAB-0560 + MAB-0521 (invoices) | **contradiction**: invoices finalized while the customer PO is not — chain is not clean |
+
+Applying any candidate requires Shahil's explicit confirmation; until then the UI keeps the
+honest stage-null rendering.
