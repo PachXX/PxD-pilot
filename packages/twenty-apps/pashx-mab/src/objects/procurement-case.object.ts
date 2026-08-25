@@ -71,7 +71,7 @@ export default defineObject({
       label: 'Stage',
       description: 'Authoritative position in the procurement chain.',
       icon: 'IconProgress',
-      options: [
+      options: ([
         ['intake', 'INTAKE', 'Intake', 'gray'],
         ['sourcing', 'SOURCING', 'Sourcing', 'blue'],
         ['quoted', 'QUOTED', 'Quoted', 'cyan'],
@@ -81,7 +81,7 @@ export default defineObject({
         ['invoicing', 'INVOICING', 'Invoicing', 'pink'],
         ['closed', 'CLOSED', 'Closed', 'green'],
         ['cancelled', 'CANCELLED', 'Cancelled', 'red'],
-      ].map(([key, value, label, color], position) => ({
+      ] as const).map(([key, value, label, color], position) => ({
         id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.procurementCase.stage[
           key as keyof typeof PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.procurementCase.stage
         ],
@@ -99,7 +99,7 @@ export default defineObject({
       label: 'Next action',
       description: 'Allowlisted next action maintained by the domain service.',
       icon: 'IconPlayerPlay',
-      options: [
+      options: ([
         ['reviewDraftDocument', 'REVIEW_DRAFT_DOCUMENT', 'Review draft document'],
         ['reviewPendingExpense', 'REVIEW_PENDING_EXPENSE', 'Review pending expense'],
         ['completeCaseData', 'COMPLETE_CASE_DATA', 'Complete case data'],
@@ -109,7 +109,7 @@ export default defineObject({
           'RESOLVE_COMPLIANCE_EXCEPTION',
           'Resolve compliance exception',
         ],
-      ].map(([key, value, label], position) => ({
+      ] as const).map(([key, value, label], position) => ({
         id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.procurementCase
           .nextActionCode[
           key as keyof typeof PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.procurementCase.nextActionCode
@@ -138,7 +138,7 @@ export default defineObject({
       label: 'Blocked reason',
       description: 'Recorded operational blocker that cannot be derived from validation.',
       icon: 'IconBarrierBlock',
-      options: [
+      options: ([
         ['awaitingCustomerInput', 'AWAITING_CUSTOMER_INPUT', 'Awaiting customer input'],
         [
           'awaitingSupplierResponse',
@@ -151,7 +151,7 @@ export default defineObject({
           'Awaiting internal decision',
         ],
         ['externalDependency', 'EXTERNAL_DEPENDENCY', 'External dependency'],
-      ].map(([key, value, label], position) => ({
+      ] as const).map(([key, value, label], position) => ({
         id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.procurementCase
           .blockedReasonCode[
           key as keyof typeof PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.procurementCase.blockedReasonCode

@@ -21,9 +21,9 @@ export default defineObject({
     {
       universalIdentifier: PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.operationalInsight.insightType,
       type: FieldType.SELECT, name: 'insightType', label: 'Insight type', description: 'Presentation category, not workflow truth.', icon: 'IconCategory',
-      options: [
+      options: ([
         ['observation', 'OBSERVATION', 'Observation', 'orange'], ['suggestion', 'SUGGESTION', 'Suggestion', 'green'], ['dataQuality', 'DATA_QUALITY', 'Data quality', 'red'],
-      ].map(([key, value, label, color], position) => ({ id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.operationalInsight.insightType[key as keyof typeof PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.operationalInsight.insightType], value, label, color, position })),
+      ] as const).map(([key, value, label, color], position) => ({ id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.operationalInsight.insightType[key as keyof typeof PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.operationalInsight.insightType], value, label, color, position })),
     },
     { universalIdentifier: PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.operationalInsight.lifecycleStatus, type: FieldType.TEXT, name: 'lifecycleStatus', label: 'Lifecycle', description: 'ACTIVE, DISMISSED, or SUPERSEDED.', icon: 'IconProgress' },
     { universalIdentifier: PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.operationalInsight.narrative, type: FieldType.TEXT, name: 'narrative', label: 'Narrative', description: 'Evidence-backed generated or deterministic explanation.', icon: 'IconNotes' },

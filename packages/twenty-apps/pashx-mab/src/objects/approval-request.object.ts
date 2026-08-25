@@ -35,12 +35,12 @@ export default defineObject({
       description: 'Human decision state.',
       icon: 'IconProgress',
       defaultValue: `'PENDING'`,
-      options: [
+      options: ([
         ['pending', 'PENDING', 'Pending', 'yellow'],
         ['approved', 'APPROVED', 'Approved', 'green'],
         ['rejected', 'REJECTED', 'Rejected', 'red'],
         ['cancelled', 'CANCELLED', 'Cancelled', 'gray'],
-      ].map(([key, value, label, color], position) => ({
+      ] as const).map(([key, value, label, color], position) => ({
         id: PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.approvalRequest.status[
           key as keyof typeof PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS.approvalRequest.status
         ],
