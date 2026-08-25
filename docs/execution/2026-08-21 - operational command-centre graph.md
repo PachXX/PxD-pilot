@@ -228,3 +228,13 @@ before landing. Full detail: gap matrix §14.
 Overview loader field selection verified against the live GraphQL schema: every field
 resolves (delivery/cash/terms/validity), real values confirmed — no schema-side unknown when
 the lane's overview UI lands. Detail: gap matrix §15.
+
+### 2026-08-25 release gate opened — verification result
+
+Gate opened by Shahil. Live verification (evidence:
+`docs/execution/evidence/CC-release-gate-0-2-15.md`): app **0.2.15 already deployed**
+(registry refuses duplicates; shasum `b8d5fda1bf…`, 35 files); full shared-branch surface
+live (incl. Vendors); WF2 endpoints live (transitions/delivery/finalize probed with
+validation-only requests). **Release gap: `supplier-rfqs` endpoint is not on the live host
+server** — app releases do not ship server code; a Claude-lane host redeploy is required
+before the Vendors RFQ flow works live. Data unchanged; §10 predictions still hold.
