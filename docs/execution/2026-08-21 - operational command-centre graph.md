@@ -215,3 +215,10 @@ stages are assigned or a properly-staged case is created.
   summary `unrecordedCount: 3`, work queue 3× BLOCKED_DATA, quotation states
   `AWAITING_FINALIZED_RESPONSES` with the real draft counts, cash `UNAVAILABLE` (capability-
   gated), 38 native links exact. Lane worktree left pristine.
+
+### 2026-08-25 round-9 lane delta review
+
+Logic deltas reviewed (compliance helper semantics preserved; overview loader wiring correct —
+placeholders in the old loader are inert). Lane app suite 125 pass / 4 fail: the 4 failures are
+stale assertions in the old command-centre UI tests, expected mid-flight; lane updates them
+before landing. Full detail: gap matrix §14.

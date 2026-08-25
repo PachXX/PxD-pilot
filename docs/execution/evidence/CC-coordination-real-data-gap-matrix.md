@@ -211,3 +211,18 @@ Consistent with the independent predictions: stage summary `unrecordedCount: 3`,
 3× BLOCKED_DATA, cash capability-gated `UNAVAILABLE` (live pilot has no cash capability), and
 38 native links (3 cases + 8 documents + 25 companies + 2 approvals — exact). The lane's
 in-flight builder complies with every real-data rule; no fabrication path observed.
+
+## 14. Round-9 lane delta review (2026-08-25)
+
+Logic deltas in `twenty-cc-live-codex` reviewed (classifier/model/loader/pipeline):
+
+- `isAcceptedComplianceException` (new shared helper) == REJECTED || RETRYABLE_FAILURE —
+  semantics identical to the previous inline checks; reason codes preserved.
+- `resolveOverviewInsightSourceLinks` — unresolvable source ids stay honest plain ids.
+- Old `load-command-centre` gains placeholder defaults (`normalizedDocumentType: null`, etc.);
+  **the new UI uses `loadCommandCentreOverview`, so the placeholders are inert** — no
+  honesty risk, but the old loader must not be used by the new overview path.
+- Lane app suite: **125 pass / 4 fail** — the 4 failures are stale assertions in the old
+  command-centre UI tests (copy/states/styles/source) that predate the UI rework; expected
+  mid-flight. Lane should update those tests before landing.
+- Live state unchanged (3 cases, stages still null) — no stage decision applied yet.
