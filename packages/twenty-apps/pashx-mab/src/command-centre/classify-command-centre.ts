@@ -10,6 +10,7 @@ import type {
   CommandCentreDocumentRecord,
   CommandCentreExpenseRecord,
 } from './command-centre.types';
+import { isAcceptedComplianceException } from './compliance-status';
 
 const SIGNAL_PRIORITY: Record<PashxCommandCentreSignal, number> = {
   COMPLIANCE_EXCEPTION: 0,
@@ -82,16 +83,13 @@ const firstDocumentReason = (
   signal: PashxCommandCentreSignal;
   reasonCode: PashxCommandCentreReasonCode;
 }> | null => {
-  if (document.complianceStatus === 'REJECTED') {
+  if (isAcceptedComplianceException(document.complianceStatus)) {
     return {
       signal: 'COMPLIANCE_EXCEPTION',
-      reasonCode: 'COMPLIANCE_REJECTED',
-    };
-  }
-  if (document.complianceStatus === 'RETRYABLE_FAILURE') {
-    return {
-      signal: 'COMPLIANCE_EXCEPTION',
-      reasonCode: 'COMPLIANCE_RETRYABLE_FAILURE',
+      reasonCode:
+        document.complianceStatus === 'RETRYABLE_FAILURE'
+          ? 'COMPLIANCE_RETRYABLE_FAILURE'
+          : 'COMPLIANCE_REJECTED',
     };
   }
   if (document.lifecycleStatus !== 'DRAFT') return null;
@@ -137,7 +135,9 @@ export const classifyCommandCentre = ({
   currentUserRecordId: string;
   observedAt: string;
 }): readonly PashxCommandCentreItem[] => {
-  const casesById = new Map(cases.map((caseRecord) => [caseRecord.id, caseRecord]));
+  const casesById = new Map(
+    cases.map((caseRecord) => [caseRecord.id, caseRecord]),
+  );
   const items: PashxCommandCentreItem[] = [];
 
   for (const caseRecord of cases) {
@@ -200,7 +200,8 @@ export const classifyCommandCentre = ({
   }
 
   return items.sort((left, right) => {
-    const signalOrder = SIGNAL_PRIORITY[left.signal] - SIGNAL_PRIORITY[right.signal];
+    const signalOrder =
+      SIGNAL_PRIORITY[left.signal] - SIGNAL_PRIORITY[right.signal];
     if (signalOrder !== 0) return signalOrder;
 
     const leftDueAt = left.actionDueAt ?? '9999-12-31T23:59:59.999Z';

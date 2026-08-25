@@ -208,20 +208,27 @@ const toCaseRecord = (node: CaseNode): CommandCentreCaseRecord => ({
     node.blockedReasonCode,
     PASHX_BLOCKED_REASON_CODES,
   ),
+  deliveryStatus: null,
+  deliveryDueAt: null,
+  supplierResponseDeadlineAt: null,
   updatedAt: node.updatedAt,
 });
 
-const toDocumentRecord = (
-  node: DocumentNode,
-): CommandCentreDocumentRecord => ({
+const toDocumentRecord = (node: DocumentNode): CommandCentreDocumentRecord => ({
   id: node.id,
+  name: node.id,
   procurementCaseRecordId: node.procurementCaseRecordId,
   documentType: node.documentType,
+  normalizedDocumentType: null,
   lifecycleStatus: node.lifecycleStatus,
   complianceStatus: node.complianceStatus ?? null,
   supplierRecordId: node.supplierRecordId ?? null,
   issueDate: node.issueDate ?? null,
   currencyCode: node.currencyCode ?? null,
+  totalAmountMicros: null,
+  leadTimeDays: null,
+  paymentTerms: null,
+  validUntil: null,
   updatedAt: node.updatedAt,
 });
 

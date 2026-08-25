@@ -105,7 +105,7 @@ test('uses supplier and delivery deadlines for their workflow stages', () => {
   assert.equal(cards[1]?.isOverdue, true);
 });
 
-test('maps customer, document and compliance evidence onto each card', () => {
+test('maps customer and finalized-document evidence without treating pending review as an exception', () => {
   const cards = buildWorkflowPipelineCards(
     result({
       documents: [
@@ -123,7 +123,37 @@ test('maps customer, document and compliance evidence onto each card', () => {
   assert.equal(cards[0]?.customerName, 'MAB Demo Customer');
   assert.equal(cards[0]?.documentCount, 2);
   assert.equal(cards[0]?.finalizedDocumentCount, 1);
-  assert.equal(cards[0]?.complianceExceptionCount, 1);
+  assert.equal(cards[0]?.complianceExceptionCount, 0);
+});
+
+test('does not infer Intake when the authoritative stage is absent', () => {
+  const cards = buildWorkflowPipelineCards(
+    result({
+      cases: [caseRecord({ stage: null })],
+      documents: [],
+    }),
+    NOW,
+  );
+
+  assert.deepEqual(cards, []);
+});
+
+test('counts only rejected and retryable compliance outcomes as exceptions', () => {
+  const cards = buildWorkflowPipelineCards(
+    result({
+      documents: [
+        documentRecord({ id: 'pending', complianceStatus: 'PENDING' }),
+        documentRecord({ id: 'rejected', complianceStatus: 'REJECTED' }),
+        documentRecord({
+          id: 'retryable',
+          complianceStatus: 'RETRYABLE_FAILURE',
+        }),
+      ],
+    }),
+    NOW,
+  );
+
+  assert.equal(cards[0]?.complianceExceptionCount, 2);
 });
 
 test('shows seven active stages by default, filters search and archives closed cases', () => {
