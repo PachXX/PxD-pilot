@@ -80,3 +80,23 @@ quote); none produces an action item because the imported cases carry no owner �
 shows the underlying `CASE_OWNER_MISSING` blockers instead of inventing per-document tasks.
 
 Tool usage: `node --import tsx scripts/recompute-command-centre-from-live.ts <dumpDir> [currentUserRecordId]`.
+
+## 7. Case workflow page recompute (2026-08-25)
+
+Same protocol for the Case workflow surfaces, via
+`packages/twenty-apps/pashx-mab/scripts/recompute-case-workflow-from-live.ts` (the UI's own
+`buildCaseStageRail` / `buildPriceComparisonRows` / `buildDeliveryState` /
+`buildInvoiceReadiness` against the live dump):
+
+| Case | Rail | Price comparison | Delivery | Invoice readiness |
+|---|---|---|---|---|
+| MAB-META-MAB-PO-2026-4141 (`3af759e7`) | all upcoming (stage null — honest, no current marker) | 1 real row: DBMS-QUOTE-STRUCTURAL-MATERIALS **SAR 127,544.20 DRAFT** | notStarted, no due, 0 notes | 3 gates missing (no finalized CPO/DN/invoice) |
+| MAB-META-SEN-EPO-2026-1102 (`47e1d3ee`) | all upcoming (stage null) | none | notStarted | invoice 1/1 finalized (MAB-INV-254); CPO + DN missing |
+| MAB-META-ASHM-004151-1 (`780c98af`) | all upcoming (stage null) | none | notStarted | cpo 0/1 (ASHM-004151-1 is DRAFT), invoice 2/2 finalized (MAB-0560 + MAB-0521); DN missing |
+
+Observations: the ASHM case correctly shows finalized invoices **without** claiming readiness
+(the customer PO is still DRAFT) — readiness derives from finalized evidence only, so imported
+historical invoices do not fabricate an eligible chain. Stage-null remains an open data
+decision for Shahil; the rail renders the honest no-current state until then. Recommended
+option if stages are ever assigned: derive candidate stages from finalized document evidence
+per case and confirm with Shahil before any write.
