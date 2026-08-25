@@ -99,7 +99,13 @@ const createRecord = async (objectPlural, data) => {
     fail(`create ${objectPlural} returned ${response.status}: ${JSON.stringify(response.body)}`);
   }
 
-  return response.body;
+  // The REST create response wraps the record as { data: { create<Singular>: {...} } }.
+  const wrapped = response.body?.data;
+  if (wrapped === undefined || wrapped === null) {
+    fail(`create ${objectPlural} returned an unexpected shape: ${JSON.stringify(response.body)}`);
+  }
+
+  return Object.values(wrapped)[0];
 };
 
 const postCommand = async (path, body) => {
@@ -238,6 +244,7 @@ const main = async () => {
 
   const caseRecord = await createRecord('procurementCases', {
     name: `${PREFIX} disposable case`,
+    stage: 'INTAKE',
   });
   ids.case = caseRecord.id ?? null;
   if (ids.case === null) fail('procurement case could not be created (plan mode stops here).');
@@ -353,13 +360,13 @@ const main = async () => {
   }
 
   // Verify absence through the same read boundary.
-  for (const [objectPlural, id] of [
-    ['commercialDocuments', ...ids.documents.filter(Boolean)],
-    ['procurementCases', ...(ids.case === null ? [] : [ids.case])],
-    ['companies', ...(ids.supplier === null ? [] : [ids.supplier])],
-    ['approvalRequests', ...ids.approvals],
+  for (const [objectPlural, recordIds] of [
+    ['commercialDocuments', ids.documents.filter(Boolean)],
+    ['procurementCases', ids.case === null ? [] : [ids.case]],
+    ['companies', ids.supplier === null ? [] : [ids.supplier]],
+    ['approvalRequests', ids.approvals],
   ]) {
-    for (const recordId of id) {
+    for (const recordId of recordIds) {
       const response = await request('GET', `/rest/${objectPlural}/${recordId}`);
       if (response.status !== 404) {
         fail(`cleanup verification: ${objectPlural}/${recordId} still returns ${response.status}`);
