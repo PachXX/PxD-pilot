@@ -197,6 +197,7 @@ test('component moves only through the audited transition command', () => {
   requiredPatterns.forEach((pattern) => assert.match(componentSource, pattern));
   assert.doesNotMatch(componentSource, /updateOneProcurementCase/);
   assert.doesNotMatch(componentSource, /stage:\s*toStage/);
+  assert.doesNotMatch(componentSource, /dataTransfer/);
 });
 
 test('page and navigation wire the dedicated MAB pipeline identifiers', () => {

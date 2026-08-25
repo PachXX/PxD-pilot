@@ -496,7 +496,6 @@ const WorkflowPipeline = () => {
                       isAllowedWorkflowPipelineMove(card.stage, column.stage)
                     ) {
                       event.preventDefault();
-                      event.dataTransfer.dropEffect = 'move';
                       if (dropTargetStage !== column.stage) {
                         setDropTargetStage(column.stage);
                       }
@@ -553,11 +552,6 @@ const WorkflowPipeline = () => {
                                   return;
                                 }
                                 setDraggedCaseId(caseRecord.id);
-                                event.dataTransfer.effectAllowed = 'move';
-                                event.dataTransfer.setData(
-                                  'text/plain',
-                                  caseRecord.id,
-                                );
                               }}
                             >
                               <div className="pxd-pipeline__card-top">

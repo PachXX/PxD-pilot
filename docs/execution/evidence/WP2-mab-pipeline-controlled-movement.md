@@ -55,6 +55,15 @@ server failures are shown in English or Arabic. One in-flight transition is allo
 The isolated worktree reused only gitignored dependency/build outputs from the primary checkout;
 no credentials, environment files, live records, package version, or deployment state changed.
 
+### Remote DOM drag-event compatibility repair
+
+Live UI evidence after the first integration exposed `Cannot set properties of undefined (setting
+'dropEffect')`. Twenty's Remote DOM forwards the drag lifecycle but does not expose the browser
+`DragEvent.dataTransfer` object. The pipeline did not need that object because it already tracks the
+dragged case id in component state. The browser-only `dropEffect`, `effectAllowed`, and `setData`
+accesses were removed; `dragstart`/`dragover`/`drop` and the audited command path remain intact. A
+source regression assertion now prohibits `dataTransfer` in this front component.
+
 ## Release boundary
 
 No publish, install, infrastructure change, or pilot-data mutation is included. The next release
