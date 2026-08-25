@@ -141,7 +141,12 @@ test('line validation accepts matching integer-micros lines', () => {
     validateVendorPurchaseOrderLines({
       lines: [
         line({ id: 'line-1', lineTotalMicros: 20_000_000 }),
-        line({ id: 'line-2', position: 2, lineTotalMicros: 10_000_000 }),
+        line({
+          id: 'line-2',
+          position: 2,
+          quantity: 1,
+          lineTotalMicros: 10_000_000,
+        }),
       ],
       document: document(),
     }),
@@ -193,6 +198,26 @@ test('line validation rejects unsafe line totals', () => {
       document: document(),
     }),
     { status: 'unsafe-amount', positions: [1] },
+  );
+});
+
+test('line validation rejects a canceling per-line product inconsistency', () => {
+  // Line A overstates by 1 micro; line B understates by 1 micro. The sum still
+  // matches the document total, so only the per-line product gate can reject it.
+  assert.deepEqual(
+    validateVendorPurchaseOrderLines({
+      lines: [
+        line({ id: 'line-a', lineTotalMicros: 20_000_001 }),
+        line({
+          id: 'line-b',
+          position: 2,
+          quantity: 1,
+          lineTotalMicros: 9_999_999,
+        }),
+      ],
+      document: document({ totalAmountMicros: 30_000_000 }),
+    }),
+    { status: 'line-product-mismatch', positions: [1, 2] },
   );
 });
 

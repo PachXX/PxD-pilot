@@ -84,9 +84,10 @@ const distinctNonEmpty = (values: readonly (string | null)[]): readonly string[]
   [...new Set(values.filter((value): value is string => value !== null && value.trim() !== ''))].sort();
 
 // Integer-micros line validation. Gate order is part of the frozen contract:
-// no lines, mixed currency, invalid quantity, unsafe micros, then the summed
-// total against the document total. Missing values never fabricate a number;
-// they fail closed to their explicit state.
+// no lines, mixed currency, invalid quantity, unsafe micros, per-line product
+// (quantity × unit price in integer micros), then the summed total against the
+// document total. Missing values never fabricate a number; they fail closed to
+// their explicit state.
 export const validateVendorPurchaseOrderLines = ({
   lines,
   document,
@@ -133,12 +134,35 @@ export const validateVendorPurchaseOrderLines = ({
   }
 
   const unsafeAmountPositions = lines
-    .filter((line) => !isSafeMicros(line.lineTotalMicros))
+    .filter(
+      (line) =>
+        !isSafeMicros(line.lineTotalMicros) ||
+        (line.unitPriceMicros !== null && !isSafeMicros(line.unitPriceMicros)),
+    )
     .map((line) => line.position)
     .filter((position): position is number => position !== null);
 
   if (unsafeAmountPositions.length > 0) {
     return { status: 'unsafe-amount', positions: unsafeAmountPositions };
+  }
+
+  // Per-line product gate: recompute quantity × unit price in integer micros
+  // and fail closed when it mismatches the stored line total. The stored total
+  // is trusted only if it reproduces from its own line, so a canceling pair of
+  // errors cannot escape through the sum check below.
+  const productMismatchPositions = lines
+    .filter((line) => {
+      if (line.quantity === null || !(line.quantity > 0)) return false;
+      if (line.unitPriceMicros === null) return false;
+      const product = Math.round(line.quantity * line.unitPriceMicros);
+
+      return product !== line.lineTotalMicros;
+    })
+    .map((line) => line.position)
+    .filter((position): position is number => position !== null);
+
+  if (productMismatchPositions.length > 0) {
+    return { status: 'line-product-mismatch', positions: productMismatchPositions };
   }
 
   const summedTotalMicros = lines.reduce(

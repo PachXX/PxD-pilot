@@ -266,7 +266,7 @@ test('copy covers every stage in both locales and resolves locale deterministica
       assert.equal(typeof copy.stages[stage], 'string');
       assert.ok(copy.stages[stage]!.length > 0);
     }
-    assert.equal(copy.formulaSteps.length, 5);
+    assert.equal(copy.formulaSteps.length, 6);
     assert.equal(Object.keys(copy.stepLabels).length, 7);
     assert.equal(copy.evidenceKinds.verifiedPayment.length > 0, true);
   }

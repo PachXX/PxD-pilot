@@ -153,3 +153,9 @@
 - P2-4: the server change is now driven by the frozen contract predicate
   `isPurchaseOrderApprovalDecisionAuthorized` and cited to the failing assertion in
   `vendor-purchase-order-approval.test.mjs` (see above).
+- P2-5: the line validation now independently recomputes each line's product
+  (`quantity × unitPriceMicros`, rounded to integer micros) and fails closed with a distinct
+  `line-product-mismatch` gate before the sum check, so a canceling pair of per-line errors cannot
+  escape. Frozen gate order is now: `no-lines` → `mixed-currency` → `invalid-quantity` →
+  `unsafe-amount` → `line-product-mismatch` → `mismatched-total`. A model test proves a
+  +1/−1 micros canceling pair (sum matching the document total) is rejected.

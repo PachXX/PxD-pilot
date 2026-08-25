@@ -126,6 +126,8 @@ const describeLineValidation = (
       );
     case 'unsafe-amount':
       return copy.unsafeAmountBody(validation.positions.join(', '));
+    case 'line-product-mismatch':
+      return copy.lineProductMismatchBody(validation.positions.join(', '));
   }
 };
 
