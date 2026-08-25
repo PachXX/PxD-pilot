@@ -117,16 +117,39 @@
 - `packages/pashx-mab-contract/src/capabilities.ts` + its `contract-manifest.test.mjs`: the frozen
   VPO2 D5 decision ("Operator may decide") supersedes the base assertion that operator lacks
   `approvalDecide`; the contract-wide write authority comes from the VPO2 frozen contract.
-- `packages/twenty-server/src/modules/pashx-mab/…`: the requester-may-not-approve-own rule cannot
-  be enforced app-only; a failing server spec was written and the service change kept minimal.
+- `packages/twenty-server/src/modules/pashx-mab/…`: justified by the failing contract test
+  `packages/pashx-mab-contract/test/vendor-purchase-order-approval.test.mjs` — the assertion
+  `isPurchaseOrderApprovalDecisionAuthorized({ requesterRecordId: X, approverRecordId: null,
+  actorRecordId: X, decision: 'APPROVE' }) === false` fails against the pre-change
+  `pashx-approval-command.service.ts`. The base `decide` only rejected an actor when an approver
+  was assigned and differed (`approverRecordId !== null && approverRecordId !== actorRecordId`),
+  so with no assigned approver the requester could approve/reject their own request — a direct
+  D5 violation. The rule is a server-side authorization boundary (a client can only hide buttons,
+  never enforce), so only the service change (enforce the frozen contract predicate in `decide`)
+  satisfies D5 requester≠approver; the app-only implementation is insufficient.
 - `vendor-directory.navigation-menu-item.ts` + `vendor-directory-ui.test.ts`: mechanical 5 → 6
   shift implied by the "add Vendor PO detail at position 5 (update the navigation source tests
   for the shift)" instruction.
 
 ## Deferred (recorded gaps, not silently dropped)
 
-- `no-permission` surfaces as the honest not-found state ("not visible to this account"); the
-  read model does not fabricate a permission claim it cannot prove.
+- `no-permission` for record visibility surfaces as the honest not-found state ("not visible to
+  this account"); the read model does not fabricate a permission claim it cannot prove. The
+  approval action panel itself now renders an explicit read-only no-permission state (P2-3).
 - Cross-user assigned-approver enforcement needs a second credentialed identity for live QA
   (stays BLOCKED without one; the unit-level rule is enforced and tested).
 - Supplier risk remains `Not recorded`; no compliance projection exists this release (D3).
+
+## Repair iteration VPO3-C.2 (VPO4-A P2 findings)
+
+- P2-1: `.pxd-vpo__table-num` is now applied to every numeric order-line cell (position, quantity,
+  unit price, line total) and its column headers, matching DESIGN.md tabular-nums.
+- P2-2: approval-request identity is deterministic — `buildPurchaseOrderApprovalIdempotencyKey`
+  (stable per PO) and `buildPurchaseOrderApprovalRequestRecordId` (v4 UUID derived from the digest)
+  — so a timeout retry resends a byte-identical request and hits the audited replay no-op.
+- P2-3: approval actions are role-gated via `resolveApprovalCapabilities` from the workspace
+  member's MAB permission flags; Viewer/Evidence Agent render the read-only `readOnlyApproval`
+  state while Admin/Operator keep request + decide + cancel.
+- P2-4: the server change is now driven by the frozen contract predicate
+  `isPurchaseOrderApprovalDecisionAuthorized` and cited to the failing assertion in
+  `vendor-purchase-order-approval.test.mjs` (see above).
