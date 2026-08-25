@@ -5,8 +5,10 @@ import {
   buildWorkflowPipelineCards,
   buildWorkflowPipelineColumns,
   buildWorkflowPipelineSummary,
+  getNextWorkflowPipelineStage,
   getWorkflowPipelineCaseHref,
   getWorkflowPipelineDocumentHref,
+  isAllowedWorkflowPipelineMove,
   selectLatestPipelineEvidence,
 } from '../src/workflow-pipeline/workflow-pipeline.model';
 import type {
@@ -23,6 +25,7 @@ const caseRecord = (
   id: 'case-1',
   name: 'PC-001',
   stage: 'intake',
+  aggregateVersion: 3,
   customerRecordId: 'customer-1',
   projectName: 'Fictional pump package',
   nextActionCode: 'COMPLETE_CASE_DATA',
@@ -160,6 +163,17 @@ test('shows seven active stages by default, filters search and archives closed c
     allColumns.find((column) => column.stage === 'closed')?.cards[0]?.caseRecord.id,
     'closed',
   );
+});
+
+test('allows only the next audited workflow transition', () => {
+  assert.equal(getNextWorkflowPipelineStage('intake'), 'sourcing');
+  assert.equal(getNextWorkflowPipelineStage('customer-order'), 'vendor-order');
+  assert.equal(getNextWorkflowPipelineStage('invoicing'), 'closed');
+  assert.equal(getNextWorkflowPipelineStage('closed'), null);
+  assert.equal(getNextWorkflowPipelineStage('cancelled'), null);
+  assert.equal(isAllowedWorkflowPipelineMove('intake', 'sourcing'), true);
+  assert.equal(isAllowedWorkflowPipelineMove('intake', 'quoted'), false);
+  assert.equal(isAllowedWorkflowPipelineMove('sourcing', 'intake'), false);
 });
 
 test('sorts overdue and earliest-due cards first within a stage', () => {

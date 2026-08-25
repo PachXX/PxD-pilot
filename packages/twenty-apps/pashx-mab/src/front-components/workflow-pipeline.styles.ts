@@ -44,7 +44,7 @@ export const workflowPipelineStyles = `
   .pxd-pipeline__button--primary { background: var(--pxd-green); border-color: var(--pxd-green); color: #fff; }
   .pxd-pipeline__button[aria-pressed="true"] { border-color: var(--pxd-green); color: var(--pxd-green); }
   .pxd-pipeline__button:disabled { cursor: default; opacity: .68; }
-  .pxd-pipeline__button:focus-visible, .pxd-pipeline__input:focus-visible, .pxd-pipeline__link:focus-visible { outline: 3px solid #2d8cff; outline-offset: 3px; }
+  .pxd-pipeline__button:focus-visible, .pxd-pipeline__move-button:focus-visible, .pxd-pipeline__input:focus-visible, .pxd-pipeline__link:focus-visible { outline: 3px solid #2d8cff; outline-offset: 3px; }
   .pxd-pipeline__main { display: grid; gap: 20px; margin: 0 auto; max-width: 1600px; }
   .pxd-pipeline__notice, .pxd-pipeline__state { background: var(--pxd-surface); border: 1px solid var(--pxd-border); border-radius: 6px; padding: 16px; }
   .pxd-pipeline__notice[role="alert"] { border-color: var(--pxd-red); }
@@ -63,6 +63,7 @@ export const workflowPipelineStyles = `
   .pxd-pipeline__board-wrap { overflow-x: auto; padding-block-end: 8px; }
   .pxd-pipeline__board { display: grid; gap: 10px; grid-auto-columns: minmax(288px, 320px); grid-auto-flow: column; min-width: max-content; }
   .pxd-pipeline__column { background: color-mix(in srgb, var(--pxd-muted-surface) 75%, transparent); border: 1px solid var(--pxd-border); border-block-start: 4px solid var(--pxd-border); border-radius: 4px; display: flex; flex-direction: column; min-height: 420px; padding: 12px; }
+  .pxd-pipeline__column[data-drop-active="true"] { outline: 3px solid var(--pxd-green); outline-offset: -3px; }
   .pxd-pipeline__column[data-stage="intake"] { border-block-start-color: #647069; }
   .pxd-pipeline__column[data-stage="sourcing"] { border-block-start-color: #246bce; }
   .pxd-pipeline__column[data-stage="quoted"] { border-block-start-color: #087e8b; }
@@ -80,6 +81,8 @@ export const workflowPipelineStyles = `
   .pxd-pipeline__card-list { display: grid; gap: 10px; list-style: none; margin: 0; padding: 0; }
   .pxd-pipeline__empty-column { color: var(--pxd-muted); font-size: 13px; margin: 8px 2px; }
   .pxd-pipeline__card { background: var(--pxd-surface); border: 1px solid var(--pxd-border); border-radius: 4px; padding: 13px; }
+  .pxd-pipeline__card[draggable="true"] { cursor: grab; }
+  .pxd-pipeline__card[aria-busy="true"] { opacity: .68; }
   .pxd-pipeline__card--overdue { border-inline-start: 4px solid var(--pxd-red); }
   .pxd-pipeline__card-top { align-items: flex-start; display: flex; gap: 8px; justify-content: space-between; }
   .pxd-pipeline__card-title { font-size: 15px; line-height: 1.3; margin: 0; }
@@ -97,8 +100,10 @@ export const workflowPipelineStyles = `
   .pxd-pipeline__evidence-label { color: var(--pxd-muted); display: block; font-size: 11px; }
   .pxd-pipeline__amount { display: block; font-size: 16px; font-variant-numeric: tabular-nums; font-weight: 600; margin-block: 2px; }
   .pxd-pipeline__evidence-meta { color: var(--pxd-muted); font-size: 11px; }
-  .pxd-pipeline__card-footer { align-items: center; display: flex; gap: 10px; justify-content: space-between; margin-block-start: 12px; }
+  .pxd-pipeline__card-footer { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; margin-block-start: 12px; }
   .pxd-pipeline__docs { color: var(--pxd-muted); font-size: 11px; }
+  .pxd-pipeline__move-button { align-items: center; background: var(--pxd-green); border: 1px solid var(--pxd-green); border-radius: 4px; color: #fff; cursor: pointer; display: inline-flex; flex: 1 1 100%; font: inherit; font-size: 12px; font-weight: 600; justify-content: center; min-height: 44px; padding: 8px 10px; }
+  .pxd-pipeline__move-button:disabled { cursor: default; opacity: .68; }
   .pxd-pipeline__skeleton { animation: pxd-pipeline-pulse 1.4s ease-in-out infinite; background: var(--pxd-border); border-radius: 4px; height: 112px; opacity: .62; }
   .pxd-pipeline__isolate { unicode-bidi: isolate; }
   @keyframes pxd-pipeline-pulse { 50% { opacity: .32; } }

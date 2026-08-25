@@ -68,6 +68,7 @@ test('loader maps stored enums, scopes customer lookup and filters foreign evide
             id: 'case-1',
             name: 'PC-001',
             stage: 'CUSTOMER_ORDER',
+            aggregateVersion: 4,
             customerRecordId: 'company-1',
             projectName: 'Pump package',
             nextActionCode: null,
@@ -119,12 +120,23 @@ test('loader maps stored enums, scopes customer lookup and filters foreign evide
   });
 
   assert.equal(result.cases[0]?.stage, 'customer-order');
+  assert.equal(result.cases[0]?.aggregateVersion, 4);
   assert.equal(result.cases[0]?.deliveryStatus, 'notStarted');
   assert.equal(result.documents[0]?.documentType, 'customerPurchaseOrder');
   assert.deepEqual(result.documents.map(({ id }) => id), ['document-1']);
   assert.deepEqual(
     (selections[1]?.companies as { __args: unknown }).__args,
     { first: 200, filter: { id: { in: ['company-1'] } } },
+  );
+  assert.equal(
+    (
+      (
+        selections[0]?.procurementCases as {
+          edges: { node: Record<string, unknown> };
+        }
+      ).edges.node
+    ).aggregateVersion,
+    true,
   );
 });
 
@@ -160,7 +172,7 @@ test('English and Arabic pipeline copy cover every stage and share one structure
   assert.equal(toWorkflowPipelineLocale('de-DE'), 'en');
 });
 
-test('component is a read-only evidence board, not a mutation surface', () => {
+test('component moves only through the audited transition command', () => {
   const requiredPatterns = [
     /dir=\{locale === 'ar' \? 'rtl' : 'ltr'\}/,
     /lang=\{locale\}/,
@@ -171,12 +183,20 @@ test('component is a read-only evidence board, not a mutation surface', () => {
     /getWorkflowPipelineCaseHref/,
     /getWorkflowPipelineDocumentHref/,
     /mab-indus-solutions-logo\.jpg/,
+    /draggable=\{canMove && movingCaseId === null\}/,
+    /onDragStart=/,
+    /onDrop=/,
+    /PashxTransitionCaseRequest/,
+    /expectedVersion: caseRecord\.aggregateVersion/,
+    /idempotencyKey: transitionAttempt\.current\.idempotencyKey/,
+    /\/rest\/pashx-mab\/procurement-cases\/\$\{encodeURIComponent\(caseRecord\.id\)\}\/transitions/,
+    /isAllowedWorkflowPipelineMove/,
+    /Promise\.race/,
+    /copy\.moveTimeout/,
   ];
   requiredPatterns.forEach((pattern) => assert.match(componentSource, pattern));
-  assert.doesNotMatch(componentSource, /fetch\(/);
-  assert.doesNotMatch(componentSource, /draggable/);
-  assert.doesNotMatch(componentSource, /onDrag/);
-  assert.doesNotMatch(componentSource, /mutat/i);
+  assert.doesNotMatch(componentSource, /updateOneProcurementCase/);
+  assert.doesNotMatch(componentSource, /stage:\s*toStage/);
 });
 
 test('page and navigation wire the dedicated MAB pipeline identifiers', () => {

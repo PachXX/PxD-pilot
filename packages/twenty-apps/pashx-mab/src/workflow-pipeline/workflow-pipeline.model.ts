@@ -1,5 +1,6 @@
 import {
   PASHX_PROCUREMENT_CASE_STAGES,
+  getPashxMabStageTransition,
   type PashxCommercialDocumentType,
   type PashxProcurementCaseStage,
 } from 'pashx-mab-contract';
@@ -12,6 +13,21 @@ import type {
   WorkflowPipelineResult,
   WorkflowPipelineSummary,
 } from './workflow-pipeline.types';
+
+export const getNextWorkflowPipelineStage = (
+  stage: PashxProcurementCaseStage,
+): PashxProcurementCaseStage | null => {
+  const transition = PASHX_PROCUREMENT_CASE_STAGES
+    .map((candidate) => getPashxMabStageTransition(stage, candidate))
+    .find((candidate) => candidate !== undefined);
+
+  return transition?.to ?? null;
+};
+
+export const isAllowedWorkflowPipelineMove = (
+  fromStage: PashxProcurementCaseStage,
+  toStage: PashxProcurementCaseStage,
+): boolean => getPashxMabStageTransition(fromStage, toStage) !== undefined;
 
 const ACTIVE_STAGES = new Set<PashxProcurementCaseStage>([
   'intake',
