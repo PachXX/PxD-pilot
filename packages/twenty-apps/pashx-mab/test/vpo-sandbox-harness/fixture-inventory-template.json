@@ -1,0 +1,11 @@
+{
+  "fixtureIds": [],
+  "createdBy": "VPO-QA-DISPOSABLE-<run-id>",
+  "sanitized": true,
+  "mixedWithPilotEvidence": false,
+  "cleanupProof": {
+    "deleted": [],
+    "absenceVerified": false,
+    "notes": ""
+  }
+}
