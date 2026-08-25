@@ -300,3 +300,11 @@ Merge-tree preview was conflict-free; the merge delta is exactly the overview co
 **134/134**, lint **0/0**, official build **26 files**, contract **100% coverage**. Next:
 bump to 0.2.16 → publish/install → §10 browser/operator QA (Claude lane); supplier-RFQ host
 redeploy remains pending (Claude lane).
+
+### 2026-08-25 round-19 release 0.2.16 installed
+
+Bumped to 0.2.16 and published (`0e36b1fce3…` shasum); install confirmed the workspace runs
+0.2.16 (parallel lane's release flow landed it concurrently). Live verified: healthz 200, all
+pages present, data intact (3/8/2). Full evidence:
+`docs/execution/evidence/CC-release-0-2-16.md`. Remaining (Claude lane): host redeploy for the
+supplier-RFQ endpoint, §10 browser/operator QA; rollback target 0.2.15.
