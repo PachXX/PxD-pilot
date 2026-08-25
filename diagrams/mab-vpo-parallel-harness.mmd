@@ -1,0 +1,31 @@
+flowchart TD
+  P0[VPO0 Parallel plans]
+  B[VPO1 DeepSeek clean base]
+  F[VPO2 Freeze contract]
+  C3[VPO3-C Codex source]
+  A3[VPO3-A Claude harness]
+  X4[VPO4 Reciprocal review]
+  I[VPO5 DeepSeek integration]
+  C6[VPO6-C Source QA]
+  A6[VPO6-A Runtime QA]
+  V{Verdict}
+  G[VPO7 Shahil release gate]
+  R[VPO8 Claude release]
+  L[VPO9 Joint live acceptance]
+
+  P0 --> F
+  B --> F
+  F --> C3
+  F --> A3
+  C3 --> X4
+  A3 --> X4
+  X4 --> I
+  I --> C6
+  I --> A6
+  C6 --> V
+  A6 --> V
+  V -->|Codex repair| C3
+  V -->|Claude repair| A3
+  V -->|Pass| G
+  G --> R
+  R --> L
