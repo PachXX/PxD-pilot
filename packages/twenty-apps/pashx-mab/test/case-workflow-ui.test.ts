@@ -358,7 +358,7 @@ test('page layout is a standalone page with one front-component widget', () => {
   assert.ok(pageLayoutSource.includes('caseWorkflowWidget'));
 });
 
-test('navigation entry joins the native drawer at position two', () => {
+test('navigation entry follows the MAB workflow pipeline at position three', () => {
   assert.ok(navigationSource.includes('NavigationMenuItemType.PAGE_LAYOUT'));
-  assert.ok(navigationSource.includes('position: 2'));
+  assert.ok(navigationSource.includes('position: 3'));
 });

@@ -324,9 +324,9 @@ test('page layout is a standalone page with one front-component widget', () => {
   assert.ok(pageLayoutSource.includes('vendorComparisonOverviewTab'));
 });
 
-test('navigation entry joins the native drawer at position three', () => {
+test('navigation entry follows case workflow at position four', () => {
   assert.ok(navigationSource.includes('NavigationMenuItemType.PAGE_LAYOUT'));
-  assert.ok(navigationSource.includes('position: 3'));
+  assert.ok(navigationSource.includes('position: 4'));
   assert.ok(navigationSource.includes("icon: 'IconScale'"));
 });
 
