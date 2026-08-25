@@ -3,6 +3,8 @@ import test from 'node:test';
 
 import {
   buildMabProgressRail,
+  buildPurchaseOrderApprovalIdempotencyKey,
+  buildPurchaseOrderApprovalRequestRecordId,
   buildSupplierRisk,
   buildSupportingEvidence,
   deriveMabOperatingSteps,
@@ -12,6 +14,7 @@ import {
   getVendorPurchaseOrderCaseHref,
   getVendorPurchaseOrderCompanyHref,
   getVendorPurchaseOrderDocumentHref,
+  resolveApprovalCapabilities,
   selectApprovalPanelState,
   selectVerifiedPaymentMovements,
   validateVendorPurchaseOrderLines,
@@ -281,4 +284,52 @@ test('formats amounts and dates deterministically and safely', () => {
   assert.equal(formatVendorPurchaseOrderDate('2026-08-20', 'en').length > 0, true);
   assert.equal(formatVendorPurchaseOrderDate('bad-date', 'en'), '—');
   assert.equal(formatVendorPurchaseOrderDate(null, 'en'), '—');
+});
+
+test('approval request identity is deterministic so a timeout retry is byte-identical', () => {
+  const idempotencyKey = buildPurchaseOrderApprovalIdempotencyKey(PO_ID);
+  assert.equal(
+    buildPurchaseOrderApprovalIdempotencyKey(PO_ID),
+    idempotencyKey,
+  );
+  assert.notEqual(
+    buildPurchaseOrderApprovalIdempotencyKey(PO_ID),
+    buildPurchaseOrderApprovalIdempotencyKey('bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb'),
+  );
+  assert.equal(idempotencyKey, `purchaseOrder.approval:${PO_ID}`);
+
+  const digest = 'a'.repeat(64);
+  const recordId = buildPurchaseOrderApprovalRequestRecordId(digest);
+  assert.equal(buildPurchaseOrderApprovalRequestRecordId(digest), recordId);
+  assert.notEqual(
+    buildPurchaseOrderApprovalRequestRecordId(digest),
+    buildPurchaseOrderApprovalRequestRecordId('b'.repeat(64)),
+  );
+  assert.match(
+    recordId,
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+  );
+});
+
+test('approval capabilities map the frozen D5 role matrix', () => {
+  const admin = resolveApprovalCapabilities([
+    'pashx.approval.request',
+    'pashx.approval.decide',
+  ]);
+  assert.deepEqual(admin, { canRequest: true, canDecide: true });
+
+  const operator = resolveApprovalCapabilities([
+    'pashx.approval.request',
+    'pashx.approval.decide',
+  ]);
+  assert.deepEqual(operator, { canRequest: true, canDecide: true });
+
+  const viewer = resolveApprovalCapabilities([]);
+  assert.deepEqual(viewer, { canRequest: false, canDecide: false });
+
+  const evidenceAgent = resolveApprovalCapabilities([]);
+  assert.deepEqual(evidenceAgent, { canRequest: false, canDecide: false });
+
+  const requestOnly = resolveApprovalCapabilities(['pashx.approval.request']);
+  assert.deepEqual(requestOnly, { canRequest: true, canDecide: false });
 });

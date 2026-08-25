@@ -1,4 +1,5 @@
 import {
+  PASHX_MAB_CAPABILITIES,
   PASHX_MAB_WORKFLOW_DOCUMENT_RULES,
   PASHX_PURCHASE_ORDER_APPROVAL_ACTION_CODE,
   type PashxProcurementCaseStage,
@@ -284,6 +285,48 @@ export const selectApprovalPanelState = (
   }
 
   return { status: latest.status, approvalRecordId: latest.id };
+};
+
+// D5: map the current user's MAB capability flag keys to the approval actions
+// the UI may present. Admin and Operator carry both; Viewer and Evidence Agent
+// carry neither and stay read-only.
+export const resolveApprovalCapabilities = (
+  permissionFlagKeys: readonly string[],
+): Readonly<{ canRequest: boolean; canDecide: boolean }> => ({
+  canRequest: permissionFlagKeys.includes(
+    PASHX_MAB_CAPABILITIES.approvalRequest,
+  ),
+  canDecide: permissionFlagKeys.includes(PASHX_MAB_CAPABILITIES.approvalDecide),
+});
+
+// D4: the approval request identity is deterministic so a timeout retry resends
+// a byte-identical request and hits the audited idempotency replay no-op. The
+// idempotency key is stable per PO + action; the record id is a v4 UUID derived
+// from the canonical digest, so the same payload always yields the same record.
+export const buildPurchaseOrderApprovalIdempotencyKey = (
+  commercialDocumentRecordId: string,
+): string => `purchaseOrder.approval:${commercialDocumentRecordId}`;
+
+export const buildPurchaseOrderApprovalRequestRecordId = (
+  payloadDigest: string,
+): string => {
+  const hex = payloadDigest.slice(0, 32);
+  const bytes = hex.match(/.{2}/g) ?? [];
+  if (bytes.length !== 16) {
+    throw new Error('Approval payload digest must be a full SHA-256 hex string.');
+  }
+  const values = bytes.map((pair) => Number.parseInt(pair, 16));
+  values[6] = (values[6]! & 0x0f) | 0x40; // version 4
+  values[8] = (values[8]! & 0x3f) | 0x80; // RFC 4122 variant
+  const toHex = (value: number): string => value.toString(16).padStart(2, '0');
+
+  return [
+    values.slice(0, 4).map(toHex).join(''),
+    values.slice(4, 6).map(toHex).join(''),
+    values.slice(6, 8).map(toHex).join(''),
+    values.slice(8, 10).map(toHex).join(''),
+    values.slice(10).map(toHex).join(''),
+  ].join('-');
 };
 
 export const getVendorPurchaseOrderCaseHref = (caseRecordId: string): string =>

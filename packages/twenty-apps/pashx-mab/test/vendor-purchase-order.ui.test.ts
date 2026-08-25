@@ -295,6 +295,36 @@ test('component stays source-backed with native links, honest states and no mock
   assert.ok(!componentSource.includes('mutation'));
 });
 
+test('approval request reuses a deterministic identity for safe timeout retries', () => {
+  assert.ok(componentSource.includes('buildPurchaseOrderApprovalIdempotencyKey'));
+  assert.ok(componentSource.includes('buildPurchaseOrderApprovalRequestRecordId'));
+  // The request record id and idempotency key must be deterministic, not fresh
+  // random uuids, so a timeout retry resends the byte-identical request.
+  assert.ok(
+    componentSource.includes(
+      'approvalRequestRecordId: buildPurchaseOrderApprovalRequestRecordId(digest)',
+    ),
+  );
+  assert.ok(
+    componentSource.includes(
+      'idempotencyKey: buildPurchaseOrderApprovalIdempotencyKey(document.id)',
+    ),
+  );
+  assert.ok(
+    !componentSource.includes('approvalRequestRecordId: createUuid()'),
+  );
+});
+
+test('approval actions are role-gated with a read-only no-permission state', () => {
+  assert.ok(componentSource.includes('resolveApprovalCapabilities'));
+  assert.ok(componentSource.includes('approvalCapabilities.canRequest'));
+  assert.ok(componentSource.includes('approvalCapabilities.canDecide'));
+  assert.ok(componentSource.includes('copy.readOnlyApproval'));
+  // Capability keys come from the contract via the model, never hardcoded here.
+  assert.ok(!componentSource.includes('pashx.approval.request'));
+  assert.ok(!componentSource.includes('pashx.approval.decide'));
+});
+
 test('page layout is a standalone page with one front-component widget', () => {
   assert.ok(pageLayoutSource.includes('PageLayoutType.STANDALONE_PAGE'));
   assert.ok(pageLayoutSource.includes('FRONT_COMPONENT'));

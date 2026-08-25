@@ -78,6 +78,7 @@ export type VendorPurchaseOrderCopy = Readonly<{
   riskBody: string;
   approvalTitle: string;
   approvalDescription: string;
+  readOnlyApproval: string;
   noRequest: string;
   requesterLabel: string;
   approverLabel: string;
@@ -210,6 +211,7 @@ export const vendorPurchaseOrderCopy: Readonly<
     approvalTitle: 'Human approval',
     approvalDescription:
       'Approval decisions go through the audited command boundary; the requester may not approve their own request.',
+    readOnlyApproval: 'Your role is read-only for purchase-order approvals.',
     noRequest: 'No approval request recorded for this order.',
     requesterLabel: 'Requester',
     approverLabel: 'Approver',
@@ -371,6 +373,7 @@ export const vendorPurchaseOrderCopy: Readonly<
     approvalTitle: 'الاعتماد البشري',
     approvalDescription:
       'تحدث قرارات الاعتماد عبر حدود الأوامر الموثقة؛ ولا يجوز لطالب الاعتماد اعتماد طلبه.',
+    readOnlyApproval: 'دورك للقراءة فقط بالنسبة لاعتمادات أوامر الشراء.',
     noRequest: 'لا يوجد طلب اعتماد مسجل لهذا الطلب.',
     requesterLabel: 'الطالب',
     approverLabel: 'المعتمد',
