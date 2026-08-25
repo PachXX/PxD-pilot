@@ -52,7 +52,7 @@ flowchart LR
 | **WF2** | Codex (executed via DeepSeek harness) | Idempotent commands, human approval, audit and transition tests. | **complete in source 2026-08-24 — 14/14 integration suites, 109/109 assertions** |
 | **WF3** | Codex (executed via DeepSeek harness) | Native case timeline, price comparison, delivery and invoice-readiness UI matching the approved mockups. | **complete in source 2026-08-25 — native case timeline, price comparison, delivery and invoice-readiness UI; app suite 69/69; evidence docs/execution/evidence/WF3-case-workflow-ui.md** |
 | **WF4** | Claude | Publish/install and live data/permission/rollback QA. | **complete per Claude 2026-08-25 — app 0.2.11 published/installed; live /healthz rechecked 200 by DeepSeek; Claude's detailed evidence commit (shasum/digest/rollback) expected** |
-| **WF5** | Codex + Claude | End-to-end bilingual acceptance using one disposable case plus verified MAB evidence. | **ready — Codex side may begin source prep; Claude leads live acceptance** |
+| **WF5** | Codex + Claude | End-to-end bilingual acceptance using one disposable case plus verified MAB evidence. | **Codex side ready 2026-08-25 — harness, matrix and visual-parity checklist committed; Claude executes live after Shahil's fixture authority** |
 
 ## WF4 handoff to Claude (assigned 2026-08-24)
 
