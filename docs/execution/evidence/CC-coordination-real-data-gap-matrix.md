@@ -100,3 +100,19 @@ historical invoices do not fabricate an eligible chain. Stage-null remains an op
 decision for Shahil; the rail renders the honest no-current state until then. Recommended
 option if stages are ever assigned: derive candidate stages from finalized document evidence
 per case and confirm with Shahil before any write.
+
+## 8. Vendors page recompute (2026-08-25)
+
+Via `packages/twenty-apps/pashx-mab/scripts/recompute-vendor-directory-from-live.ts` (the UI's
+own `buildVendorDirectoryRows` + `buildRfqEligibleCases` against the live dump):
+
+- **Exactly 7 suppliers with role** render: Smart Decision, PowerTech, DBMS Steel, Attieh,
+  Asia Oruba, Excellence & Success, Sana. The 15 roleless companies (Notion, Stripe, Figma,
+  PashX test suppliers, …) are excluded.
+- DBMS Steel shows honest activity: **1 open RFQ + 1 quote + active case
+  MAB-META-MAB-PO-2026-4141** (its supplier RFQ `3a7c0336` + vendor quote `cd4e4a56`).
+- **RFQ-eligible cases: 0.** No live case is in Intake/Sourcing with a client RFQ (all imported
+  cases have stage null; none carries a `customerRfq`). The Vendors page will render the honest
+  "no eligible case" state. The supplier-RFQ flow becomes exercisable with real data only after
+  either (a) stages are assigned to the imported cases (Shahil decision), or (b) a new case is
+  created through the proper intake flow with an explicit stage and a client RFQ record.

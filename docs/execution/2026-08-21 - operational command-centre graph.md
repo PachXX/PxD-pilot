@@ -194,4 +194,7 @@ real imported cases (CASE_CUSTOMER_MISSING on `3af759e7`, CASE_OWNER_MISSING on 
 `docs/execution/evidence/CC-coordination-real-data-gap-matrix.md` §6. Case workflow
 surfaces verified the same way (§7): stage-null rails on all three real cases, real quote total
 SAR 127,544.20, delivery NOT_STARTED everywhere, readiness gates derived from finalized
-evidence only (ASHM shows 2 finalized invoices but no finalized CPO → not ready).
+evidence only (ASHM shows 2 finalized invoices but no finalized CPO → not ready). Vendors page
+verified (§8): exactly 7 role suppliers, DBMS Steel 1 open RFQ + 1 quote, RFQ-eligible cases 0
+(all imported cases stage-null) — the RFQ flow renders its honest unavailable state until
+stages are assigned or a properly-staged case is created.
