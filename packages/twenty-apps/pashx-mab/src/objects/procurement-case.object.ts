@@ -208,5 +208,16 @@ export default defineObject({
       description: 'Agreed delivery deadline maintained by the delivery command.',
       icon: 'IconCalendarDue',
     },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.procurementCase
+          .supplierResponseDeadlineAt,
+      type: FieldType.DATE_TIME,
+      name: 'supplierResponseDeadlineAt',
+      label: 'Supplier response deadline',
+      description:
+        'Authoritative deadline for supplier responses to this sourcing round.',
+      icon: 'IconCalendarDue',
+    },
   ],
 });

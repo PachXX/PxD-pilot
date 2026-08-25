@@ -235,6 +235,36 @@ export default defineObject({
     },
     {
       universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.commercialDocument.leadTimeDays,
+      type: FieldType.NUMBER,
+      name: 'leadTimeDays',
+      label: 'Lead time (days)',
+      description:
+        'Supplier-stated delivery lead time in whole days; absent until the supplier records it.',
+      icon: 'IconClock',
+    },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.commercialDocument.paymentTerms,
+      type: FieldType.TEXT,
+      name: 'paymentTerms',
+      label: 'Payment terms',
+      description:
+        'Supplier-stated payment terms as free text; displayed, never ordinally ranked.',
+      icon: 'IconReceipt',
+    },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.commercialDocument.validUntil,
+      type: FieldType.DATE,
+      name: 'validUntil',
+      label: 'Valid until',
+      description:
+        'Business date after which the quotation is treated as expired in the comparison.',
+      icon: 'IconCalendarDue',
+    },
+    {
+      universalIdentifier:
         PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.commercialDocument
           .complianceStatus,
       type: FieldType.SELECT,
