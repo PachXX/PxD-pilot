@@ -204,15 +204,14 @@ describe('PashxApprovalCommandService', () => {
   it.each([
     ['APPROVE', 'APPROVED', 'approval.approve'],
     ['REJECT', 'REJECTED', 'approval.reject'],
-    ['CANCEL', 'CANCELLED', 'approval.cancel'],
   ] as const)(
-    'applies %s with CAS and a typed audit command',
+    'applies %s with CAS and a typed audit command for the assigned approver',
     async (choice, status, commandName) => {
       const harness = buildHarness();
       harness.repository.findOne.mockResolvedValue({
         id: approvalRequestRecordId,
         status: 'PENDING',
-        requesterRecordId: actorRecordId,
+        requesterRecordId: '77777777-7777-4777-8777-777777777777',
         approverRecordId: actorRecordId,
       });
 
@@ -238,6 +237,61 @@ describe('PashxApprovalCommandService', () => {
       expect(
         harness.commandSupport.persistApprovalReceiptAndAudit,
       ).toHaveBeenCalledWith(expect.objectContaining({ commandName }));
+    },
+  );
+
+  it('lets the requester cancel their own pending request', async () => {
+    const harness = buildHarness();
+    harness.repository.findOne.mockResolvedValue({
+      id: approvalRequestRecordId,
+      status: 'PENDING',
+      requesterRecordId: actorRecordId,
+      approverRecordId: null,
+    });
+
+    const result = await harness.service.decide({
+      workspaceId,
+      actorId,
+      actorRecordId,
+      approvalRequestRecordId,
+      correlationId,
+      request: decision('CANCEL'),
+    });
+
+    expect(result.result.status).toBe('CANCELLED');
+    expect(
+      harness.commandSupport.persistApprovalReceiptAndAudit,
+    ).toHaveBeenCalledWith(expect.objectContaining({ commandName: 'approval.cancel' }));
+  });
+
+  it.each(['APPROVE', 'REJECT'] as const)(
+    'rejects the requester %s their own request with no partial write',
+    async (choice) => {
+      const harness = buildHarness();
+      harness.repository.findOne.mockResolvedValue({
+        id: approvalRequestRecordId,
+        status: 'PENDING',
+        requesterRecordId: actorRecordId,
+        approverRecordId: actorRecordId,
+      });
+
+      await expect(
+        harness.service.decide({
+          workspaceId,
+          actorId,
+          actorRecordId,
+          approvalRequestRecordId,
+          correlationId,
+          request: decision(choice),
+        }),
+      ).rejects.toMatchObject({
+        code: PASHX_COMMAND_EXCEPTION_CODES.forbiddenCapability,
+      });
+      expect(harness.queryRunner.rollbackTransaction).toHaveBeenCalledTimes(1);
+      expect(harness.repository.update).not.toHaveBeenCalled();
+      expect(
+        harness.commandSupport.persistApprovalReceiptAndAudit,
+      ).not.toHaveBeenCalled();
     },
   );
 

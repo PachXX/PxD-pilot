@@ -1,4 +1,5 @@
 import {
+  PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS,
   PASHX_MAB_LABEL_FIELD_UNIVERSAL_IDENTIFIERS,
   PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS,
 } from 'pashx-mab-contract';
@@ -23,6 +24,99 @@ export default defineObject({
       name: 'name',
       label: 'Line description',
       icon: 'IconAbc',
+    },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.documentLine
+          .commercialDocumentRecordId,
+      type: FieldType.UUID,
+      name: 'commercialDocumentRecordId',
+      label: 'Document ID',
+      description:
+        'Owning commercial-document record; one workspace boundary only.',
+      icon: 'IconFileInvoice',
+    },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.documentLine.position,
+      type: FieldType.NUMBER,
+      name: 'position',
+      label: 'Position',
+      description: 'Integer display order of the line on the source document.',
+      icon: 'IconListNumbers',
+    },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.documentLine.description,
+      type: FieldType.TEXT,
+      name: 'description',
+      label: 'Description',
+      description: 'Stored line description, never narrated or re-keyed.',
+      icon: 'IconAbc',
+    },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.documentLine.specification,
+      type: FieldType.TEXT,
+      name: 'specification',
+      label: 'Specification',
+      description: 'Stored technical specification for this line.',
+      icon: 'IconListDetails',
+    },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.documentLine.quantity,
+      type: FieldType.NUMERIC,
+      name: 'quantity',
+      label: 'Quantity',
+      description: 'Ordered quantity; must be greater than zero.',
+      icon: 'IconNumber',
+    },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.documentLine.unit,
+      type: FieldType.TEXT,
+      name: 'unit',
+      label: 'Unit',
+      description: 'Unit of measure for the ordered quantity.',
+      icon: 'IconRuler',
+    },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.documentLine.unitPriceMicros,
+      type: FieldType.NUMBER,
+      name: 'unitPriceMicros',
+      label: 'Unit price (micros)',
+      description: 'Unit price in integer micros.',
+      icon: 'IconCurrencyRiyal',
+    },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.documentLine.lineTotalMicros,
+      type: FieldType.NUMBER,
+      name: 'lineTotalMicros',
+      label: 'Line total (micros)',
+      description: 'Line total in integer micros; quantity × unit price.',
+      icon: 'IconCurrencyRiyal',
+    },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.documentLine.currencyCode,
+      type: FieldType.TEXT,
+      name: 'currencyCode',
+      label: 'Currency',
+      description: 'ISO 4217 currency code shared by every line.',
+      icon: 'IconCurrencyRiyal',
+    },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.documentLine.sourceFileReference,
+      type: FieldType.TEXT,
+      name: 'sourceFileReference',
+      label: 'Source file reference',
+      description:
+        'Traceable location of the source document line for verification.',
+      icon: 'IconLink',
     },
   ],
 });

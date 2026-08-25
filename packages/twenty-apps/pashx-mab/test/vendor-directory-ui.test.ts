@@ -280,9 +280,9 @@ test('component requests RFQs through the REST command boundary only', () => {
   assert.ok(vendorDirectoryStyles.includes('pxd-vendor__table'));
 });
 
-test('page layout is a standalone page and navigation sits at position three', () => {
+test('page layout is a standalone page and navigation sits at position six', () => {
   assert.ok(pageLayoutSource.includes('PageLayoutType.STANDALONE_PAGE'));
   assert.ok(pageLayoutSource.includes('FRONT_COMPONENT'));
   assert.ok(navigationSource.includes('NavigationMenuItemType.PAGE_LAYOUT'));
-  assert.ok(navigationSource.includes('position: 5'));
+  assert.ok(navigationSource.includes('position: 6'));
 });

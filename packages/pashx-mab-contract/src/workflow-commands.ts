@@ -13,6 +13,86 @@ import { type PashxMabContractVersion } from './version.js';
 // source records.
 export const PASHX_CASE_TRANSITION_ACTION_CODE = 'case.transition';
 
+// The allowlisted action code for a Vendor Purchase Order human approval. A PO
+// approval is satisfied only when an APPROVED request carries exactly this code
+// and the canonical PO payload digest below.
+export const PASHX_PURCHASE_ORDER_APPROVAL_ACTION_CODE = 'purchaseOrder.approval';
+
+export type PashxPurchaseOrderApprovalPayload = Readonly<{
+  procurementCaseRecordId: string;
+  commercialDocumentRecordId: string;
+  expectedVersion: number;
+  totalAmountMicros: number;
+  currencyCode: string;
+}>;
+
+// Canonical serialization: key order is frozen so requesters and any future
+// enforcing service agree on the digest without shared runtime state.
+export const serializePurchaseOrderApprovalPayload = (
+  payload: PashxPurchaseOrderApprovalPayload,
+): string =>
+  JSON.stringify({
+    procurementCaseRecordId: payload.procurementCaseRecordId,
+    commercialDocumentRecordId: payload.commercialDocumentRecordId,
+    expectedVersion: payload.expectedVersion,
+    totalAmountMicros: payload.totalAmountMicros,
+    currencyCode: payload.currencyCode,
+  });
+
+const bytesToHex = (bytes: Uint8Array): string =>
+  [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+
+// SHA-256 over the canonical serialization. Uses the Web Crypto digest so the
+// same implementation resolves in the browser app bundle and the server,
+// without a node:crypto import the browser cannot load.
+export const buildPurchaseOrderApprovalPayloadDigest = async (
+  payload: PashxPurchaseOrderApprovalPayload,
+): Promise<string> => {
+  const digest = await globalThis.crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(serializePurchaseOrderApprovalPayload(payload)),
+  );
+
+  return bytesToHex(new Uint8Array(digest));
+};
+
+export type PashxPurchaseOrderApprovalPayloadValidationResult =
+  | Readonly<{ valid: true; value: PashxPurchaseOrderApprovalPayload }>
+  | Readonly<{ valid: false; fieldPaths: readonly string[] }>;
+
+const ISO_CURRENCY_PATTERN = /^[A-Z]{3}$/;
+
+export const validatePurchaseOrderApprovalPayload = (
+  input: unknown,
+): PashxPurchaseOrderApprovalPayloadValidationResult => {
+  if (!isRecord(input)) {
+    return { valid: false, fieldPaths: ['$'] };
+  }
+
+  const checks: readonly [boolean, string][] = [
+    [isUuid(input.procurementCaseRecordId), 'procurementCaseRecordId'],
+    [isUuid(input.commercialDocumentRecordId), 'commercialDocumentRecordId'],
+    [isValidExpectedVersion(input.expectedVersion), 'expectedVersion'],
+    [
+      typeof input.totalAmountMicros === 'number' &&
+        Number.isSafeInteger(input.totalAmountMicros),
+      'totalAmountMicros',
+    ],
+    [
+      typeof input.currencyCode === 'string' &&
+        ISO_CURRENCY_PATTERN.test(input.currencyCode),
+      'currencyCode',
+    ],
+  ];
+  const fieldPaths = checks
+    .filter(([valid]) => !valid)
+    .map(([, fieldPath]) => fieldPath);
+
+  return fieldPaths.length === 0
+    ? { valid: true, value: input as PashxPurchaseOrderApprovalPayload }
+    : { valid: false, fieldPaths };
+};
+
 export const PASHX_SUPPLIER_RFQ_ROW_LIMIT = 20;
 
 export type PashxSupplierRfqRequestRow = Readonly<{
