@@ -35,12 +35,26 @@ If these disagree, stop at the smallest conflicting decision and record it.
 
 ## Lane protocol (isolated worktrees)
 
-- **Codex lane (source/UI):** bounded changes to `packages/pashx-mab-contract`,
-  `packages/twenty-apps/pashx-mab`, `packages/twenty-server/src/modules/pashx-mab` and their
-  tests, in a dedicated `git worktree` off `codex/pashx-pilot-cx3-cx4`. Exit: narrow tests →
-  package suites → lint → typecheck → official app `dev:build`.
-- **Claude lane (QA/release):** browser/runtime acceptance, publish/install, Cloud SQL read-only
-  verification, rollback evidence, in a separate worktree. Exit: live evidence doc committed.
+Established worktrees (reconciled 2026-08-25 — do not create parallel ones):
+
+- **Codex lane (source/UI):** `twenty-cc-live-codex` on `deepseek/cc-live-codex` — bounded
+  changes to `packages/pashx-mab-contract`, `packages/twenty-apps/pashx-mab`,
+  `packages/twenty-server/src/modules/pashx-mab` and their tests. Exit: narrow tests → package
+  suites → lint → typecheck → official app `dev:build`.
+- **Claude lane (QA/release):** `twenty-cc-live-claude` on `deepseek/cc-live-claude` —
+  browser/runtime acceptance, publish/install, Cloud SQL read-only verification, rollback
+  evidence. Exit: live evidence doc committed.
+- **Integration base:** `twenty-cc-live-integration` on `deepseek/cc-live-integration`.
+
+### 2026-08-25 coordinator review — in-flight Codex-lane overview builder
+
+`command-centre/build-command-centre-overview.ts` (worktree, uncommitted): **PASS** — composes
+only frozen models (`buildOperationalWorkQueue`, `buildVendorComparisonSummary` /
+`buildVendorComparisonRecommendation`, `aggregateVerifiedCashFlow`); quotation recommendation
+maps to honest statuses; cash state is capability-gated (`UNAVAILABLE`) with `NOT_RECORDED`
+when no contributions; stage summaries count stage-null cases as `unrecordedCount` (matching the
+gap matrix §7); native links only. No fabrication path found. Live pilot has no cash capability
+yet, so the cash band will render its honest unavailable state.
 - One node `in_progress` per lane at a time; parallel work only on disjoint files with
   independent exit conditions.
 - No lane may publish, install, mutate live data, enable OCR/email, or change compliance state
