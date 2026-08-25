@@ -7,6 +7,7 @@ import {
   type PashxProcurementCaseStage,
   type PashxRecordDeliveryRequest,
   type PashxRequestApprovalRequest,
+  type PashxRequestSupplierRfqsRequest,
   type PashxTransitionCaseRequest,
 } from 'pashx-mab-contract';
 
@@ -96,6 +97,23 @@ export const createRecordDeliveryFingerprint = (
       deliveryNoteRecordId: request.payload.deliveryNoteRecordId,
       deliveryStatus: request.payload.deliveryStatus,
       dueAt: request.payload.dueAt,
+    },
+  });
+
+export const createSupplierRfqsFingerprint = (
+  request: PashxRequestSupplierRfqsRequest,
+): string =>
+  sha256Json({
+    contractVersion: request.contractVersion,
+    procurementCaseRecordId: request.procurementCaseRecordId,
+    expectedVersion: request.expectedVersion,
+    payload: {
+      dueAt: request.payload.dueAt,
+      vendorRows: request.payload.vendorRows.map((row) => ({
+        supplierRfqRecordId: row.supplierRfqRecordId,
+        supplierRecordId: row.supplierRecordId,
+        vendorReference: row.vendorReference ?? null,
+      })),
     },
   });
 

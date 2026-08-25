@@ -238,7 +238,7 @@ export const readCommercialDocumentState = async (
   | undefined
 > =>
   pashxQueryOne(
-    `SELECT id, "documentType", "lifecycleStatus", "aggregateVersion",
+    `SELECT id, name, "documentType", "lifecycleStatus", "aggregateVersion",
             "procurementCaseRecordId", "supplierRecordId",
             "totalAmountAmountMicros"::text AS "totalAmountMicros"
      FROM ${pashxTable('commercialDocument')} WHERE id = $1`,

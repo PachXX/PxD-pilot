@@ -193,6 +193,7 @@ export const PASHX_MAB_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS = {
   caseWorkflow: 'f3b8c1d5-4a2e-4f9c-9d7a-2c5e6f8a1b3d',
   vendorComparison: 'b4405431-752b-43ff-8c75-d1115b324dbe',
   workflowPipeline: 'd8172718-88ac-4b1f-8cd1-c521de7516b4',
+  vendorDirectory: '6d4a8f2c-9e3b-4c1a-8f5d-2b7e6a4c9d31',
 } as const;
 
 export const PASHX_MAB_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIERS = {
@@ -216,6 +217,9 @@ export const PASHX_MAB_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS = {
   workflowPipeline: 'db786f76-6b3e-474f-b869-3f94bab0541c',
   workflowPipelineOverviewTab: '9e4719a3-1496-41b4-8d5b-170517196381',
   workflowPipelineWidget: '957179e3-6e90-4dfe-b284-def0a792c402',
+  vendorDirectory: '2c9e7d4b-5a1f-4e8c-9b3d-6f2a8c5e7b14',
+  vendorDirectoryTab: '8b4f6d2a-7c3e-4a9b-8d1f-5e2c9b7a4d36',
+  vendorDirectoryWidget: '3d7a9c5f-1b6e-4d2a-9c4f-8a2b6e5d1c79',
 } as const;
 
 export const PASHX_MAB_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS = {
@@ -224,6 +228,7 @@ export const PASHX_MAB_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS = {
   caseWorkflow: 'd4f7a1c8-3b6e-4d2a-8f5c-1e9b7c3a6d24',
   vendorComparison: '4d87cab5-b423-47e5-ab4f-211ec7f689c1',
   workflowPipeline: 'b7b6c363-d4a0-40f1-9243-6166b3395371',
+  vendorDirectory: '5e8c2b7a-4d9f-4e1b-9a3c-7f6d2a8c4e51',
 } as const;
 
 export type PashxMabObjectName =

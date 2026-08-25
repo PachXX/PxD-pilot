@@ -23,6 +23,7 @@ export type PashxWorkflowRepositories = Readonly<{
   procurementCase: WorkspaceRepository<ObjectLiteral>;
   commercialDocument: WorkspaceRepository<ObjectLiteral>;
   approvalRequest: WorkspaceRepository<ObjectLiteral>;
+  company: WorkspaceRepository<ObjectLiteral>;
 }>;
 
 export type PashxWorkflowProcurementCaseRecord = Readonly<{
@@ -88,6 +89,11 @@ export class PashxWorkflowPersistenceService {
           'approvalRequest',
           permission,
         ),
+      company: await this.globalWorkspaceOrmManager.getRepository<ObjectLiteral>(
+        workspaceId,
+        'company',
+        permission,
+      ),
     };
   }
 
@@ -229,5 +235,47 @@ export class PashxWorkflowPersistenceService {
         ? row.sourceRecordIds.includes(procurementCaseRecordId)
         : false,
     );
+  }
+
+  async loadCompany(
+    repositories: PashxWorkflowRepositories,
+    queryRunner: WorkspaceQueryRunner,
+    companyRecordId: string,
+  ): Promise<void> {
+    const row = await repositories.company.findOne(
+      { where: { id: companyRecordId } },
+      queryRunner.manager,
+    );
+
+    if (row === null) {
+      throw new PashxMabException(
+        PASHX_COMMAND_EXCEPTION_CODES.recordNotFound,
+        ['payload.vendorRows.supplierRecordId'],
+      );
+    }
+  }
+
+  async countCaseDocumentsByType({
+    repositories,
+    queryRunner,
+    procurementCaseRecordId,
+    documentType,
+  }: {
+    repositories: PashxWorkflowRepositories;
+    queryRunner: WorkspaceQueryRunner;
+    procurementCaseRecordId: string;
+    documentType: string;
+  }): Promise<number> {
+    const rows = await repositories.commercialDocument.find(
+      {
+        where: {
+          procurementCaseRecordId,
+          documentType,
+        },
+      },
+      queryRunner.manager,
+    );
+
+    return rows.length;
   }
 }

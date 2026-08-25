@@ -324,6 +324,40 @@ export class PashxCommandSupportService {
     return `MAB-VPO-${period}-${row.current_value.padStart(4, '0')}`;
   }
 
+  async allocateSupplierRfqNumber({
+    queryRunner,
+    schema,
+    workspaceId,
+    period,
+  }: {
+    queryRunner: WorkspaceQueryRunner;
+    schema: string;
+    workspaceId: string;
+    period: string;
+  }): Promise<string> {
+    await this.takeTransactionLock(
+      queryRunner,
+      `number:${workspaceId}:supplierRfq:${period}`,
+    );
+    const row = firstRow<PashxNumberRow>(
+      await queryRunner.query(
+        `INSERT INTO ${schema}.pashx_number_counter
+          (document_type, period, current_value)
+         VALUES ('supplierRfq', $1, 1)
+         ON CONFLICT (document_type, period)
+         DO UPDATE SET current_value = pashx_number_counter.current_value + 1
+         RETURNING current_value::text`,
+        [period],
+      ),
+    );
+
+    if (row === undefined) {
+      throw new PashxMabException(PASHX_COMMAND_EXCEPTION_CODES.numberConflict);
+    }
+
+    return `MAB-SRFQ-${period}-${row.current_value.padStart(4, '0')}`;
+  }
+
   async persistReceiptAndAudit({
     queryRunner,
     schema,

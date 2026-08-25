@@ -3,9 +3,11 @@ import test from 'node:test';
 
 import {
   PASHX_CASE_TRANSITION_ACTION_CODE,
+  PASHX_SUPPLIER_RFQ_ROW_LIMIT,
   validateCancelDocumentRequest,
   validateFinalizeDocumentRequest,
   validateRecordDeliveryRequest,
+  validateRequestSupplierRfqsRequest,
   validateTransitionCaseRequest,
 } from '../dist/index.js';
 
@@ -285,6 +287,187 @@ test('delivery record validator reports every invalid field', () => {
         'payload.deliveryNoteRecordId',
         'payload.deliveryStatus',
         'payload.dueAt',
+      ],
+    },
+  );
+});
+
+test('supplier RFQ request validator accepts a well-formed multi-vendor request', () => {
+  const request = {
+    contractVersion: CONTRACT_VERSION,
+    procurementCaseRecordId: CASE_ID,
+    idempotencyKey: 'supplier-rfq-key-1',
+    expectedVersion: 1,
+    payload: {
+      dueAt: '2026-09-05T12:00:00.000Z',
+      vendorRows: [
+        {
+          supplierRfqRecordId: 'aaaaaaaa-1111-4111-8111-111111111111',
+          supplierRecordId: 'bbbbbbbb-2222-4222-8222-222222222222',
+        },
+        {
+          supplierRfqRecordId: 'cccccccc-3333-4333-8333-333333333333',
+          supplierRecordId: 'dddddddd-4444-4444-8444-444444444444',
+          vendorReference: 'MAB-SO-001',
+        },
+      ],
+    },
+  };
+
+  assert.deepEqual(validateRequestSupplierRfqsRequest(request), {
+    valid: true,
+    value: request,
+  });
+  assert.equal(PASHX_SUPPLIER_RFQ_ROW_LIMIT, 20);
+});
+
+test('supplier RFQ request validator reports every invalid field', () => {
+  const base = {
+    contractVersion: CONTRACT_VERSION,
+    procurementCaseRecordId: CASE_ID,
+    idempotencyKey: 'supplier-rfq-key-1',
+    expectedVersion: 1,
+    payload: {
+      dueAt: '2026-09-05T12:00:00.000Z',
+      vendorRows: [
+        {
+          supplierRfqRecordId: 'aaaaaaaa-1111-4111-8111-111111111111',
+          supplierRecordId: 'bbbbbbbb-2222-4222-8222-222222222222',
+        },
+      ],
+    },
+  };
+
+  assert.deepEqual(validateRequestSupplierRfqsRequest('nope'), {
+    valid: false,
+    fieldPaths: ['$'],
+  });
+  assert.deepEqual(
+    validateRequestSupplierRfqsRequest({ ...base, contractVersion: 2 }),
+    { valid: false, fieldPaths: ['contractVersion'] },
+  );
+  assert.deepEqual(
+    validateRequestSupplierRfqsRequest({ ...base, procurementCaseRecordId: 'x' }),
+    { valid: false, fieldPaths: ['procurementCaseRecordId'] },
+  );
+  assert.deepEqual(
+    validateRequestSupplierRfqsRequest({ ...base, idempotencyKey: '' }),
+    { valid: false, fieldPaths: ['idempotencyKey'] },
+  );
+  assert.deepEqual(
+    validateRequestSupplierRfqsRequest({ ...base, expectedVersion: -1 }),
+    { valid: false, fieldPaths: ['expectedVersion'] },
+  );
+  assert.deepEqual(
+    validateRequestSupplierRfqsRequest({ ...base, payload: undefined }),
+    { valid: false, fieldPaths: ['payload'] },
+  );
+  assert.deepEqual(
+    validateRequestSupplierRfqsRequest({
+      ...base,
+      payload: { ...base.payload, dueAt: 'not-a-date' },
+    }),
+    { valid: false, fieldPaths: ['payload.dueAt'] },
+  );
+  assert.deepEqual(
+    validateRequestSupplierRfqsRequest({
+      ...base,
+      payload: { ...base.payload, vendorRows: [] },
+    }),
+    { valid: false, fieldPaths: ['payload.vendorRows'] },
+  );
+  assert.deepEqual(
+    validateRequestSupplierRfqsRequest({
+      ...base,
+      payload: { ...base.payload, vendorRows: Array.from({ length: 21 }, (_, i) => ({
+        supplierRfqRecordId: `aaaaaaaa-1111-4111-8111-1111111111${String(i).padStart(2, '0')}`,
+        supplierRecordId: `bbbbbbbb-2222-4222-8222-2222222222${String(i).padStart(2, '0')}`,
+      })) },
+    }),
+    { valid: false, fieldPaths: ['payload.vendorRows'] },
+  );
+  assert.deepEqual(
+    validateRequestSupplierRfqsRequest({
+      ...base,
+      payload: {
+        ...base.payload,
+        vendorRows: [{ supplierRfqRecordId: 'bad', supplierRecordId: 'also-bad' }],
+      },
+    }),
+    { valid: false, fieldPaths: ['payload.vendorRows'] },
+  );
+  assert.deepEqual(
+    validateRequestSupplierRfqsRequest({
+      ...base,
+      payload: { ...base.payload, vendorRows: ['not-a-row'] },
+    }),
+    { valid: false, fieldPaths: ['payload.vendorRows'] },
+  );
+  assert.deepEqual(
+    validateRequestSupplierRfqsRequest({
+      ...base,
+      payload: {
+        ...base.payload,
+        vendorRows: [
+          ...base.payload.vendorRows,
+          {
+            supplierRfqRecordId: 'aaaaaaaa-1111-4111-8111-111111111111',
+            supplierRecordId: 'eeeeeeee-5555-4555-8555-555555555555',
+          },
+        ],
+      },
+    }),
+    { valid: false, fieldPaths: ['payload.vendorRows'] },
+  );
+  assert.deepEqual(
+    validateRequestSupplierRfqsRequest({
+      ...base,
+      payload: {
+        ...base.payload,
+        vendorRows: [
+          ...base.payload.vendorRows,
+          {
+            supplierRfqRecordId: 'eeeeeeee-5555-4555-8555-555555555555',
+            supplierRecordId: 'bbbbbbbb-2222-4222-8222-222222222222',
+          },
+        ],
+      },
+    }),
+    { valid: false, fieldPaths: ['payload.vendorRows'] },
+  );
+  assert.deepEqual(
+    validateRequestSupplierRfqsRequest({
+      ...base,
+      payload: {
+        ...base.payload,
+        vendorRows: [
+          {
+            supplierRfqRecordId: 'aaaaaaaa-1111-4111-8111-111111111111',
+            supplierRecordId: 'bbbbbbbb-2222-4222-8222-222222222222',
+            vendorReference: 'x'.repeat(201),
+          },
+        ],
+      },
+    }),
+    { valid: false, fieldPaths: ['payload.vendorRows'] },
+  );
+  assert.deepEqual(
+    validateRequestSupplierRfqsRequest({
+      contractVersion: 2,
+      procurementCaseRecordId: 'bad',
+      idempotencyKey: '',
+      expectedVersion: -2,
+      payload: { dueAt: 'yesterday', vendorRows: [] },
+    }),
+    {
+      valid: false,
+      fieldPaths: [
+        'contractVersion',
+        'procurementCaseRecordId',
+        'idempotencyKey',
+        'expectedVersion',
+        'payload.dueAt',
+        'payload.vendorRows',
       ],
     },
   );

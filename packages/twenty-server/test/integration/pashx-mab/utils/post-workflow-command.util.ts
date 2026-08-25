@@ -21,6 +21,9 @@ export const caseTransitionPath = (procurementCaseRecordId: string): string =>
 export const deliveryPath = (procurementCaseRecordId: string): string =>
   `/pashx-mab/procurement-cases/${procurementCaseRecordId}/delivery`;
 
+export const supplierRfqsPath = (procurementCaseRecordId: string): string =>
+  `/pashx-mab/procurement-cases/${procurementCaseRecordId}/supplier-rfqs`;
+
 export const finalizeDocumentPath = (
   commercialDocumentRecordId: string,
 ): string =>
@@ -226,6 +229,55 @@ export const postDecideApproval = ({
   makeRestAPIRequest({
     method: 'post',
     path: `${PASHX_APPROVAL_REQUESTS_PATH}/${approvalRequestRecordId}/decisions`,
+    bearer: bearer ?? APPLE_JANE_ADMIN_ACCESS_TOKEN,
+    body,
+  });
+
+export const buildSupplierRfqsRequest = ({
+  procurementCaseRecordId,
+  expectedVersion,
+  dueAt,
+  vendorRows,
+  idempotencyKey,
+}: {
+  procurementCaseRecordId: string;
+  expectedVersion: number;
+  dueAt?: string;
+  vendorRows: ReadonlyArray<{
+    supplierRfqRecordId: string;
+    supplierRecordId: string;
+    vendorReference?: string;
+  }>;
+  idempotencyKey?: string;
+}) => ({
+  contractVersion: PASHX_MAB_CONTRACT_VERSION,
+  procurementCaseRecordId,
+  idempotencyKey: idempotencyKey ?? randomUUID(),
+  expectedVersion,
+  payload: {
+    dueAt: dueAt ?? DATE_TIME_NOW,
+    vendorRows: vendorRows.map((row) => ({
+      supplierRfqRecordId: row.supplierRfqRecordId,
+      supplierRecordId: row.supplierRecordId,
+      ...(row.vendorReference === undefined
+        ? {}
+        : { vendorReference: row.vendorReference }),
+    })),
+  },
+});
+
+export const postSupplierRfqs = ({
+  procurementCaseRecordId,
+  body,
+  bearer,
+}: {
+  procurementCaseRecordId: string;
+  body: unknown;
+  bearer?: string;
+}) =>
+  makeRestAPIRequest({
+    method: 'post',
+    path: supplierRfqsPath(procurementCaseRecordId),
     bearer: bearer ?? APPLE_JANE_ADMIN_ACCESS_TOKEN,
     body,
   });

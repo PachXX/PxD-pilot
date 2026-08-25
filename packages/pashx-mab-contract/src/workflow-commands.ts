@@ -13,6 +13,33 @@ import { type PashxMabContractVersion } from './version.js';
 // source records.
 export const PASHX_CASE_TRANSITION_ACTION_CODE = 'case.transition';
 
+export const PASHX_SUPPLIER_RFQ_ROW_LIMIT = 20;
+
+export type PashxSupplierRfqRequestRow = Readonly<{
+  supplierRfqRecordId: string;
+  supplierRecordId: string;
+  vendorReference?: string;
+}>;
+
+export type PashxRequestSupplierRfqsRequest = Readonly<{
+  contractVersion: PashxMabContractVersion;
+  procurementCaseRecordId: string;
+  idempotencyKey: string;
+  expectedVersion: number;
+  payload: Readonly<{
+    dueAt: string;
+    vendorRows: readonly PashxSupplierRfqRequestRow[];
+  }>;
+}>;
+
+export type PashxRequestSupplierRfqsResult = Readonly<{
+  procurementCaseRecordId: string;
+  dueAt: string;
+  supplierRfqRecordIds: readonly string[];
+  supplierRecordIds: readonly string[];
+  aggregateVersion: number;
+}>;
+
 export type PashxTransitionCaseRequest = Readonly<{
   contractVersion: PashxMabContractVersion;
   procurementCaseRecordId: string;
@@ -195,6 +222,83 @@ export const validateRecordDeliveryRequest = (
     : [];
 
   return runChecks<PashxRecordDeliveryRequest>(input, [
+    [isRecord(input) && input.contractVersion === 1, 'contractVersion'],
+    [
+      isRecord(input) && isUuid(input.procurementCaseRecordId),
+      'procurementCaseRecordId',
+    ],
+    [
+      isRecord(input) && isNonEmptyBoundedText(input.idempotencyKey, 200),
+      'idempotencyKey',
+    ],
+    [
+      isRecord(input) && isValidExpectedVersion(input.expectedVersion),
+      'expectedVersion',
+    ],
+    [isRecord(payload), 'payload'],
+    ...payloadChecks,
+  ]);
+};
+
+const isSupplierRfqRequestRow = (
+  value: unknown,
+): value is PashxSupplierRfqRequestRow => {
+  if (!isRecord(value)) return false;
+
+  return (
+    isUuid(value.supplierRfqRecordId) &&
+    isUuid(value.supplierRecordId) &&
+    (value.vendorReference === undefined ||
+      isNonEmptyBoundedText(value.vendorReference, 200))
+  );
+};
+
+// A single request may address each supplier once and must not reuse a record
+// id, so a retry can never silently overwrite a sibling row.
+const hasDuplicateRowIdentity = (
+  rows: readonly PashxSupplierRfqRequestRow[],
+): boolean => {
+  const supplierRfqRecordIds = new Set<string>();
+  const supplierRecordIds = new Set<string>();
+
+  for (const row of rows) {
+    if (supplierRfqRecordIds.has(row.supplierRfqRecordId)) return true;
+    if (supplierRecordIds.has(row.supplierRecordId)) return true;
+    supplierRfqRecordIds.add(row.supplierRfqRecordId);
+    supplierRecordIds.add(row.supplierRecordId);
+  }
+
+  return false;
+};
+
+export const validateRequestSupplierRfqsRequest = (
+  input: unknown,
+): PashxWorkflowValidationResult<PashxRequestSupplierRfqsRequest> => {
+  const payload = isRecord(input) ? input.payload : undefined;
+  const payloadChecks: [boolean, string][] = [];
+
+  if (isRecord(payload)) {
+    payloadChecks.push([isIsoUtcDateTime(payload.dueAt), 'payload.dueAt']);
+    const rows = payload.vendorRows;
+    const hasValidRows =
+      Array.isArray(rows) &&
+      rows.length > 0 &&
+      rows.length <= PASHX_SUPPLIER_RFQ_ROW_LIMIT;
+
+    payloadChecks.push([hasValidRows, 'payload.vendorRows']);
+    if (hasValidRows) {
+      payloadChecks.push([
+        rows.every((row) => isSupplierRfqRequestRow(row)),
+        'payload.vendorRows',
+      ]);
+      payloadChecks.push([
+        !hasDuplicateRowIdentity(rows as readonly PashxSupplierRfqRequestRow[]),
+        'payload.vendorRows',
+      ]);
+    }
+  }
+
+  return runChecks<PashxRequestSupplierRfqsRequest>(input, [
     [isRecord(input) && input.contractVersion === 1, 'contractVersion'],
     [
       isRecord(input) && isUuid(input.procurementCaseRecordId),

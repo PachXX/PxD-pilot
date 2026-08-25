@@ -24,6 +24,7 @@ const statusForCode = (code: PashxCommandExceptionCode): HttpStatus => {
     case PASHX_COMMAND_EXCEPTION_CODES.invalidTransition:
     case PASHX_COMMAND_EXCEPTION_CODES.transitionEvidenceMissing:
     case PASHX_COMMAND_EXCEPTION_CODES.documentEvidenceMissing:
+    case PASHX_COMMAND_EXCEPTION_CODES.clientRequirementMissing:
     case PASHX_COMMAND_EXCEPTION_CODES.approvalGateUnsatisfied:
     case PASHX_COMMAND_EXCEPTION_CODES.finalizedDocumentImmutable:
     case PASHX_COMMAND_EXCEPTION_CODES.staleVersion:

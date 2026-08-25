@@ -3,6 +3,7 @@ export const PASHX_COMMAND_EXCEPTION_CODES = {
   invalidTransition: 'PASHX_INVALID_TRANSITION',
   transitionEvidenceMissing: 'PASHX_TRANSITION_EVIDENCE_MISSING',
   documentEvidenceMissing: 'PASHX_DOCUMENT_EVIDENCE_MISSING',
+  clientRequirementMissing: 'PASHX_CLIENT_REQUIREMENT_MISSING',
   approvalGateUnsatisfied: 'PASHX_APPROVAL_GATE_UNSATISFIED',
   forbiddenCapability: 'PASHX_FORBIDDEN_CAPABILITY',
   staleVersion: 'PASHX_STALE_VERSION',
@@ -58,6 +59,13 @@ export const PASHX_COMMAND_ERROR_DEFINITIONS = {
     messages: {
       en: 'Required document data is missing before finalization.',
       ar: 'بيانات المستند المطلوبة غير مكتملة قبل الاعتماد.',
+    },
+  },
+  PASHX_CLIENT_REQUIREMENT_MISSING: {
+    retryable: false,
+    messages: {
+      en: 'Record the client RFQ before requesting vendor quotations.',
+      ar: 'سجّل طلب عرض العميل قبل طلب عروض الموردين.',
     },
   },
   PASHX_APPROVAL_GATE_UNSATISFIED: {

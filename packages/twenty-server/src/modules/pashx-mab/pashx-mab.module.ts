@@ -9,6 +9,7 @@ import { PashxApprovalCommandController } from 'src/modules/pashx-mab/controller
 import { PashxCaseTransitionController } from 'src/modules/pashx-mab/controllers/pashx-case-transition.controller';
 import { PashxDeliveryRecordController } from 'src/modules/pashx-mab/controllers/pashx-delivery-record.controller';
 import { PashxDocumentLifecycleController } from 'src/modules/pashx-mab/controllers/pashx-document-lifecycle.controller';
+import { PashxSupplierRfqController } from 'src/modules/pashx-mab/controllers/pashx-supplier-rfq.controller';
 import { PashxVendorPurchaseOrderController } from 'src/modules/pashx-mab/controllers/pashx-vendor-purchase-order.controller';
 import { PashxApprovalCommandService } from 'src/modules/pashx-mab/services/pashx-approval-command.service';
 import { PashxCapabilityService } from 'src/modules/pashx-mab/services/pashx-capability.service';
@@ -16,6 +17,7 @@ import { PashxCaseTransitionService } from 'src/modules/pashx-mab/services/pashx
 import { PashxCommandSupportService } from 'src/modules/pashx-mab/services/pashx-command-support.service';
 import { PashxDeliveryRecordService } from 'src/modules/pashx-mab/services/pashx-delivery-record.service';
 import { PashxDocumentLifecycleService } from 'src/modules/pashx-mab/services/pashx-document-lifecycle.service';
+import { PashxSupplierRfqService } from 'src/modules/pashx-mab/services/pashx-supplier-rfq.service';
 import { PashxVendorPurchaseOrderService } from 'src/modules/pashx-mab/services/pashx-vendor-purchase-order.service';
 import { PashxVendorPurchaseOrderPersistenceService } from 'src/modules/pashx-mab/services/pashx-vendor-purchase-order-persistence.service';
 import { PashxWorkflowPersistenceService } from 'src/modules/pashx-mab/services/pashx-workflow-persistence.service';
@@ -48,6 +50,7 @@ import { PashxWorkspaceSchemaService } from 'src/modules/pashx-mab/services/pash
     PashxCaseTransitionController,
     PashxDeliveryRecordController,
     PashxDocumentLifecycleController,
+    PashxSupplierRfqController,
     PashxVendorPurchaseOrderController,
   ],
   providers: [
@@ -57,6 +60,7 @@ import { PashxWorkspaceSchemaService } from 'src/modules/pashx-mab/services/pash
     PashxCommandSupportService,
     PashxDeliveryRecordService,
     PashxDocumentLifecycleService,
+    PashxSupplierRfqService,
     PashxVendorPurchaseOrderService,
     PashxVendorPurchaseOrderPersistenceService,
     PashxWorkflowPersistenceService,
