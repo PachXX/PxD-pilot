@@ -315,3 +315,12 @@ No new commits; the supplier-RFQ host redeploy is still pending (endpoint return
 REST-core "Query path invalid" — Claude-lane infra item, acceptance recipe in
 `CC-release-gate-0-2-15.md`); §10 browser/operator QA not yet recorded. Healthz 200; data
 intact (3/8/2). 0.2.16 remains the live version with the evidence-led Command Centre.
+
+### 2026-08-25 round-21 coordinator tooling maintenance check
+
+The deterministic §10 recompute tool (`scripts/recompute-command-centre-from-live.ts`) still
+runs correctly against the merged, released code (the lane changed the classifier/types in the
+overview merge): band **0/0/3/0**, ledger = the three real cases (updatedAt now reflects the
+stage application). The QA foundation remains usable for the Claude lane's §10 checks. Other
+coordinator tools (case-workflow, vendor-directory, profitability, vendor-comparison) touch
+code untouched by the merge. Host redeploy + §10 browser QA remain pending (Claude lane).
