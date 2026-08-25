@@ -116,3 +116,39 @@ own `buildVendorDirectoryRows` + `buildRfqEligibleCases` against the live dump):
   "no eligible case" state. The supplier-RFQ flow becomes exercisable with real data only after
   either (a) stages are assigned to the imported cases (Shahil decision), or (b) a new case is
   created through the proper intake flow with an explicit stage and a client RFQ record.
+
+## 9. Operational profitability recompute — live cash evidence (2026-08-25)
+
+Via `packages/twenty-apps/pashx-mab/scripts/recompute-profitability-from-live.ts` (the frozen
+`aggregateOperationalProfitability` + inclusion rules over the live dump):
+
+| Metric | SAR | Source rows |
+|---|---|---|
+| Finalized revenue | **153,651.50** | MAB-0560 47,537.10 + MAB-0521 102,804.24 + MAB-INV-254 3,310.16 (all CUSTOMER_INVOICE FINALIZED + CLEARED) |
+| Direct cost | **127,544.20** | MAB-PO-2026-4141 VENDOR_PURCHASE_ORDER FINALIZED |
+| Gross profit | **26,107.30** | revenue − cost |
+| Gross margin | **16.99%** (1699 bps, frozen rounding) | deterministic |
+| Excluded | 4 DRAFT documents | customer quote, customer PO, supplier RFQ, vendor quote — counted, not hidden |
+
+No other currency appears; currencies remain separated. These are the exact totals the
+Operational profitability dashboard derives from stored records.
+
+## 10. Release-gate QA expectations (Claude lane, after next approved install)
+
+Deterministic checks derived from the verified inventory — the live page must match every row
+or the mismatch is a regression to fix, never a number to adjust:
+
+1. Command Centre band: Compliance 0 · Approvals 0 · Blocked **3** · Your actions 0; ledger =
+   exactly the three real cases (`3af759e7` customer missing; `780c98af` + `47e1d3ee` owner
+   missing) with native drill-through.
+2. Case workflow page per case: stage-null rail (all upcoming, no current marker); price
+   comparison shows the single real quote SAR 127,544.20 DRAFT on `3af759e7`; delivery
+   NOT_STARTED everywhere; ASHM (`780c98af`) shows 2/2 finalized invoices but readiness "missing"
+   (CPO still DRAFT).
+3. Operational profitability: SAR revenue 153,651.50 / cost 127,544.20 / profit 26,107.30 /
+   margin 16.99%; 4 DRAFT exclusions visible; no other currency.
+4. Vendors page (after the new app version installs): exactly the 7 role suppliers; DBMS Steel
+   1 open RFQ + 1 quote + active case MAB-META-MAB-PO-2026-4141; RFQ request panel shows the
+   honest "no eligible case" state; the 15 roleless companies never appear.
+5. Insights and expenses panels: honest empty states; OCR/email unavailable states.
+6. Bilingual English/Arabic, RTL, a11y, 44px, 200%-equivalent reflow, console clean.
