@@ -51,7 +51,7 @@ flowchart LR
 | **WF1** | Codex | Typed document/transition contract for RFQ, supplier RFQ, quotation, client PO, vendor PO, delivery note and invoice. | **complete 2026-08-24 — source only** |
 | **WF2** | Codex (executed via DeepSeek harness) | Idempotent commands, human approval, audit and transition tests. | **complete in source 2026-08-24 — 14/14 integration suites, 109/109 assertions** |
 | **WF3** | Codex (executed via DeepSeek harness) | Native case timeline, price comparison, delivery and invoice-readiness UI matching the approved mockups. | **complete in source 2026-08-25 — native case timeline, price comparison, delivery and invoice-readiness UI; app suite 69/69; evidence docs/execution/evidence/WF3-case-workflow-ui.md** |
-| **WF4** | Claude | Publish/install and live data/permission/rollback QA. | **assigned to Claude 2026-08-24 — blocked on WF3-published state** |
+| **WF4** | Claude | Publish/install and live data/permission/rollback QA. | **assigned to Claude 2026-08-24 — ready: WF2 + WF3 complete in source; publish/install remains Claude-owned** |
 | **WF5** | Codex + Claude | End-to-end bilingual acceptance using one disposable case plus verified MAB evidence. | blocked on WF4 |
 
 ## WF4 handoff to Claude (assigned 2026-08-24)

@@ -52,12 +52,15 @@ and preserves keyboard, screen-reader, 200%-zoom, dark-theme and reduced-motion 
 - `cd packages/twenty-apps/pashx-mab && yarn twenty dev:build .` — **✓ Build succeeded
   (20 files)**; manifest and application typecheck pass (the 18-file count in the WF1/WF2
   records grew to 20 with the case-workflow front-component bundle).
-- `cd packages/twenty-apps/pashx-mab && yarn typecheck` — **fails with 7 pre-existing baseline
-  errors unrelated to WF3**, all in files this node did not touch: `create-vendor-purchase-order.front-component.tsx`
-  (2), `approval-request.object.ts` (1), `operational-insight.object.ts` (1), and the pre-existing
-  option arrays of `procurement-case.object.ts` (3, lines 74/102/141 — outside the WF2
-  `deliveryStatus`/`deliveryDueAt` additions). No case-workflow source emits a type error; these
-  are reported separately and left for their owning lanes rather than fixed here.
+- `cd packages/twenty-apps/pashx-mab && yarn typecheck` — **passes with zero errors as of
+  2026-08-24 (baseline repair).** The standalone typecheck previously reported 7 pre-existing
+  `noUncheckedIndexedAccess` strictness errors: two `Uint8Array` index reads in
+  `create-vendor-purchase-order.front-component.tsx` (fixed with explicit non-null reads) and five
+  `string | undefined` option-map spreads in `approval-request.object.ts`,
+  `operational-insight.object.ts` and the `stage`/`nextActionCode`/`blockedReasonCode` arrays of
+  `procurement-case.object.ts` (fixed by making the tuple arrays `as const`). Behavior and
+  option values are unchanged; the app suite (69/69), lint and the official 20-file build all
+  still pass.
 - `git diff --check` — pass on the staged files.
 - Integration suites are not re-run here (they require live infrastructure); the WF2 evidence doc
   records **14/14 suites, 109/109 assertions**.
@@ -67,3 +70,18 @@ and preserves keyboard, screen-reader, 200%-zoom, dark-theme and reduced-motion 
 WF3 contains no publish, install, live-data mutation, or version bump — that remains WF4
 (Claude). **WF4 stays assigned to Claude and blocked on the WF3-published state.** Visual parity
 against the approved mockups is flagged for WF5 review alongside bilingual/RTL acceptance.
+
+## DeepSeek verification addendum (2026-08-24, local test workspace)
+
+Independent check after the source verification above, against the seeded local `test` database:
+
+- `yarn workspace pashx-mab twenty dev . -r cl2-local` — **37/37 entities synced**, overall
+  status `✓ Synced`.
+- `core.pageLayout` contains the **`Case workflow` STANDALONE_PAGE** row; `core.navigationMenuItem`
+  contains **`Case workflow` at position 2** — the new metadata is server-valid, not just
+  build-valid.
+- `yarn workspace pashx-mab lint` — 0 warnings, 0 errors; `yarn workspace pashx-mab test` —
+  69/69; `yarn workspace pashx-mab-contract test` — 100% coverage maintained.
+- `yarn workspace pashx-mab typecheck` — 0 errors after the baseline repair above.
+- No publish or install occurred; the live pilot remains untouched. WF4 (Claude) publishes the
+  next app version carrying WF1 + WF2 + WF3 source.
