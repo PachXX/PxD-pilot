@@ -133,10 +133,10 @@ if [ -n "${FIXTURE_IDS:-}" ]; then
   for id in $FIXTURE_IDS; do
     # PLACEHOLDER: replace with the actual deletion command for the record type.
     # Must never run against the live pilot; VPO-QA-DISPOSABLE-<run-id> only.
-    echo "deleting fixture $id (placeholder — fill in real command before VPO6)"
+    echo "fixture $id noted (placeholder — replace with the real deletion command before VPO6; no deletion runs here)"
   done
-  echo "verify absence of each ID (REST 404 + SQL zero-row + pre/post counts), then reload and confirm honest counts"
-  ok "cleanup proof recorded for: $FIXTURE_IDS"
+  echo "REQUIRED at VPO6-A: verify absence of each ID (REST 404 + SQL zero-row + pre/post counts), then reload and confirm honest counts"
+  ok "fixture IDs noted: $FIXTURE_IDS (cleanup proof deferred to VPO6-A)"
 else
   ok "no fixtures provided; cleanup proof skipped"
 fi
