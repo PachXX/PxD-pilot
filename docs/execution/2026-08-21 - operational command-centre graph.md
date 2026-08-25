@@ -290,3 +290,13 @@ in the lane worktree: app tests **133/133**, lint **0/0**, official build **26 f
 Next steps: merge the lane branch into `codex/pashx-pilot-cx3-cx4`, bump to 0.2.16, publish/
 install, then §10 browser/operator QA (Claude lane). Host redeploy for the supplier-RFQ
 endpoint remains pending (Claude lane, recipe in the release-gate evidence).
+
+### 2026-08-25 round-18 overview merged into mainline
+
+Coordinator merged `deepseek/cc-live-codex` into `codex/pashx-pilot-cx3-cx4`
+(`7b4c88fd1a` merge(pashx): integrate evidence-led command centre overview into mainline).
+Merge-tree preview was conflict-free; the merge delta is exactly the overview commit
+(+2712/−613), version stays 0.2.15. Post-merge battery on the shared branch: app tests
+**134/134**, lint **0/0**, official build **26 files**, contract **100% coverage**. Next:
+bump to 0.2.16 → publish/install → §10 browser/operator QA (Claude lane); supplier-RFQ host
+redeploy remains pending (Claude lane).
