@@ -209,13 +209,23 @@ export class PashxApprovalCommandService {
               PASHX_COMMAND_EXCEPTION_CODES.forbiddenCapability,
             );
           }
-        } else if (
-          approval.approverRecordId !== null &&
-          approval.approverRecordId !== actorRecordId
-        ) {
-          throw new PashxMabException(
-            PASHX_COMMAND_EXCEPTION_CODES.forbiddenCapability,
-          );
+        } else {
+          // Assigned-approver enforcement: the requester may never decide their
+          // own request, and when an approver is assigned only that approver
+          // may decide. Both fail closed with no partial write.
+          if (approval.requesterRecordId === actorRecordId) {
+            throw new PashxMabException(
+              PASHX_COMMAND_EXCEPTION_CODES.forbiddenCapability,
+            );
+          }
+          if (
+            approval.approverRecordId !== null &&
+            approval.approverRecordId !== actorRecordId
+          ) {
+            throw new PashxMabException(
+              PASHX_COMMAND_EXCEPTION_CODES.forbiddenCapability,
+            );
+          }
         }
 
         const status = approvalStatusForDecision(request.decision);
