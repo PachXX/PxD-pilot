@@ -1,4 +1,4 @@
-# WP1 — MAB workflow pipeline
+# WP1 — MAB deals pipeline (Kanban deal tracking)
 
 - Date: 2026-08-25
 - Owner: Codex
@@ -9,15 +9,21 @@
 ## Outcome
 
 WP1 replaces the generic sales-opportunity mental model with a dedicated MAB operating pipeline.
-The standalone native page follows the approved seven-step process:
+The standalone native Kanban page tracks MAB deals through the deal-facing stage names requested
+by Shahil:
 
-1. Client RFQ
-2. Supplier sourcing
-3. Quotation to client
-4. Client PO
-5. Vendor procurement
-6. Delivery
-7. Client invoice
+1. RFQ Received
+2. Quotation Requested from Vendor
+3. Quotation Sent to Client
+4. PO Approved from Client
+5. PO Approved to Vendor
+6. Delivery Note
+7. Invoice
+
+Each column is bound to the authoritative `procurementCase.stage` underneath (intake, sourcing,
+quoted, customer-order, vendor-order, delivery, invoicing), so the deal-tracking names are a
+display vocabulary, not a parallel state machine. Stage changes still go through the audited WF2
+transition commands.
 
 Closed and cancelled cases remain available behind an explicit archive toggle. Every card is built
 from the role-scoped Procurement Case, Company and Commercial Document records already visible to
