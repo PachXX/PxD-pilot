@@ -9,12 +9,12 @@ import {
 
 export default defineNavigationMenuItem({
   universalIdentifier:
-    PASHX_MAB_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS.vendorDirectory,
-  name: 'Vendors',
-  icon: 'IconBuildingFactory2',
+    PASHX_MAB_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS.vendorPurchaseOrder,
+  name: 'Vendor PO detail',
+  icon: 'IconFileInvoice',
   color: 'green',
-  position: 6,
+  position: 5,
   type: NavigationMenuItemType.PAGE_LAYOUT,
   pageLayoutUniversalIdentifier:
-    PASHX_MAB_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.vendorDirectory,
+    PASHX_MAB_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.vendorPurchaseOrder,
 });
