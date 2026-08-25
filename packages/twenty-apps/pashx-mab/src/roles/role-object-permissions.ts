@@ -39,6 +39,7 @@ export const PASHX_MAB_ROLE_OBJECT_PERMISSIONS = {
     ),
     permission(PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS.documentLine, readWrite),
     permission(PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS.expense, readOnly),
+    permission(PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS.cashMovement, readOnly),
     permission(
       PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS.approvalRequest,
       readOnly,
@@ -63,6 +64,7 @@ export const PASHX_MAB_ROLE_OBJECT_PERMISSIONS = {
     ),
     permission(PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS.documentLine, readWrite),
     permission(PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS.expense, readWrite),
+    permission(PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS.cashMovement, readWrite),
     permission(
       PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS.approvalRequest,
       readOnly,

@@ -57,23 +57,24 @@ export type ProfitabilityEvidenceRow = Readonly<{
   count: number;
 }>;
 
-const EXCLUSION_LABELS: Readonly<Record<ProfitabilityExclusionReason, string>> = {
-  OUTSIDE_PERIOD: 'Outside selected period',
-  FILTERED_OUT: 'Outside selected dimensions',
-  MISSING_CASE: 'Missing procurement case',
-  MISSING_DATE: 'Missing reporting date',
-  MISSING_AMOUNT: 'Missing amount',
-  UNSAFE_AMOUNT: 'Unsafe amount boundary',
-  INVALID_CURRENCY: 'Invalid or missing currency',
-  DRAFT: 'Draft documents',
-  CANCELLED: 'Cancelled documents',
-  CREDITED: 'Credited originals',
-  ZATCA_PENDING: 'ZATCA pending',
-  ZATCA_REJECTED: 'ZATCA rejected',
-  UNSUPPORTED_DOCUMENT_TYPE: 'Unsupported document type',
-  EXPENSE_PENDING: 'Pending direct expenses',
-  EXPENSE_REJECTED: 'Rejected direct expenses',
-};
+const EXCLUSION_LABELS: Readonly<Record<ProfitabilityExclusionReason, string>> =
+  {
+    OUTSIDE_PERIOD: 'Outside selected period',
+    FILTERED_OUT: 'Outside selected dimensions',
+    MISSING_CASE: 'Missing procurement case',
+    MISSING_DATE: 'Missing reporting date',
+    MISSING_AMOUNT: 'Missing amount',
+    UNSAFE_AMOUNT: 'Unsafe amount boundary',
+    INVALID_CURRENCY: 'Invalid or missing currency',
+    DRAFT: 'Draft documents',
+    CANCELLED: 'Cancelled documents',
+    CREDITED: 'Credited originals',
+    ZATCA_PENDING: 'ZATCA pending',
+    ZATCA_REJECTED: 'ZATCA rejected',
+    UNSUPPORTED_DOCUMENT_TYPE: 'Unsupported document type',
+    EXPENSE_PENDING: 'Pending direct expenses',
+    EXPENSE_REJECTED: 'Rejected direct expenses',
+  };
 
 const parseIsoDay = (value: string): Date => {
   const parsed = new Date(`${value}T00:00:00.000Z`);
@@ -163,15 +164,23 @@ export const findCurrencySummary = (
   result: OperationalProfitabilityResult,
   currencyCode: string,
 ): ProfitabilityCurrencySummary | null =>
-  result.currencies.find(
-    (summary) => summary.currencyCode === currencyCode,
-  ) ?? null;
+  result.currencies.find((summary) => summary.currencyCode === currencyCode) ??
+  null;
 
 export const getAvailableCurrencies = (
   current: OperationalProfitabilityResult,
   previous: OperationalProfitabilityResult,
 ): readonly string[] =>
-  [...new Set([...current.currencies, ...previous.currencies].map(({ currencyCode }) => currencyCode))].sort();
+  [
+    ...new Set(
+      [
+        ...current.currencies,
+        ...previous.currencies,
+        ...(current.cashFlow?.currencies ?? []),
+        ...(previous.cashFlow?.currencies ?? []),
+      ].map(({ currencyCode }) => currencyCode),
+    ),
+  ].sort();
 
 const countContributions = (
   result: OperationalProfitabilityResult,
@@ -325,14 +334,23 @@ const formatSignedBasisPoints = (value: bigint): string => {
 
 export const getMetricComparison = (
   metric: ProfitabilityMetric,
-): Readonly<{ copy: string; direction: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL' }> => {
+): Readonly<{
+  copy: string;
+  direction: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL';
+}> => {
   const comparison = getMetricComparisonData(metric);
 
   switch (comparison.kind) {
     case 'NO_COMPARABLE_PRIOR_MARGIN':
-      return { copy: 'No comparable prior margin', direction: comparison.direction };
+      return {
+        copy: 'No comparable prior margin',
+        direction: comparison.direction,
+      };
     case 'NO_CHANGE':
-      return { copy: 'No change vs prior period', direction: comparison.direction };
+      return {
+        copy: 'No change vs prior period',
+        direction: comparison.direction,
+      };
     case 'NO_POSITIVE_PRIOR_BASELINE':
       return {
         copy: 'No positive prior-period baseline',
@@ -344,7 +362,9 @@ export const getMetricComparison = (
         direction: comparison.direction,
       };
     case 'POINT_CHANGE': {
-      const formatted = formatSignedBasisPoints(comparison.signedChangeBasisPoints!);
+      const formatted = formatSignedBasisPoints(
+        comparison.signedChangeBasisPoints!,
+      );
       return {
         copy: `${formatted.slice(0, -1)} pp vs prior period`,
         direction: comparison.direction,
@@ -359,13 +379,15 @@ export const getTrendPoints = (
 ): readonly ProfitabilityTrendPoint[] =>
   result.breakdowns.PERIOD.filter(
     (row) => row.summary.currencyCode === currencyCode,
-  ).map((row) => ({
-    period: row.key,
-    revenueMicros: row.summary.finalizedRevenueMicros,
-    directCostMicros: row.summary.directCostMicros,
-    grossProfitMicros: row.summary.grossProfitMicros,
-    contributionCount: row.summary.contributionRecordIds.length,
-  }));
+  )
+    .sort((left, right) => left.key.localeCompare(right.key))
+    .map((row) => ({
+      period: row.key,
+      revenueMicros: row.summary.finalizedRevenueMicros,
+      directCostMicros: row.summary.directCostMicros,
+      grossProfitMicros: row.summary.grossProfitMicros,
+      contributionCount: row.summary.contributionRecordIds.length,
+    }));
 
 const absoluteBigInt = (value: bigint): bigint =>
   value < BIGINT_ZERO ? -value : value;
@@ -411,9 +433,7 @@ export const getRelativeBarWidth = (
   const absoluteValue = absoluteBigInt(value);
   const maximum = values.reduce(
     (largest, candidate) =>
-      absoluteBigInt(candidate) > largest
-        ? absoluteBigInt(candidate)
-        : largest,
+      absoluteBigInt(candidate) > largest ? absoluteBigInt(candidate) : largest,
     BIGINT_ZERO,
   );
 
@@ -455,7 +475,9 @@ export const getTrendPolylinePoints = (
 
 export const isDashboardResultEmpty = (
   result: OperationalProfitabilityResult,
-): boolean => result.quality.includedRecordCount === 0;
+): boolean =>
+  result.quality.includedRecordCount === 0 &&
+  (result.cashFlow?.quality.includedRecordCount ?? 0) === 0;
 
 export const countVisibleCurrencyRecords = (
   result: OperationalProfitabilityResult,
