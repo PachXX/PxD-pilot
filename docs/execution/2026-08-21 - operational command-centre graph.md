@@ -222,3 +222,9 @@ Logic deltas reviewed (compliance helper semantics preserved; overview loader wi
 placeholders in the old loader are inert). Lane app suite 125 pass / 4 fail: the 4 failures are
 stale assertions in the old command-centre UI tests, expected mid-flight; lane updates them
 before landing. Full detail: gap matrix §14.
+
+### 2026-08-25 round-10 release-readiness check
+
+Overview loader field selection verified against the live GraphQL schema: every field
+resolves (delivery/cash/terms/validity), real values confirmed — no schema-side unknown when
+the lane's overview UI lands. Detail: gap matrix §15.

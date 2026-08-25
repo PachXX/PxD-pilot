@@ -226,3 +226,14 @@ Logic deltas in `twenty-cc-live-codex` reviewed (classifier/model/loader/pipelin
   command-centre UI tests (copy/states/styles/source) that predate the UI rework; expected
   mid-flight. Lane should update those tests before landing.
 - Live state unchanged (3 cases, stages still null) — no stage decision applied yet.
+
+## 15. Round-10 release-readiness: overview loader vs live schema (2026-08-25)
+
+The lane's `loadCommandCentreOverview` field selection was run against the live `/graphql`
+schema (installed app): **all fields resolve** — `deliveryStatus`, `deliveryDueAt`,
+`supplierResponseDeadlineAt`, `totalAmount { amountMicros currencyCode }`, `leadTimeDays`,
+`paymentTerms`, `validUntil`. Real values through the UI's data path: case deliveryStatus
+`NOT_STARTED`; doc totals/terms/validity columns present. When the overview UI lands and is
+released, its data query will succeed against the current live schema — no schema-side unknown
+at the release gate. (Note: `paymentTerms` returns `""` on live rows; the lane's `toNullable`
+normalizes empty strings to null — no mismatch.)
