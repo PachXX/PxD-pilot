@@ -37,3 +37,17 @@
 - Browser QA per §10 (bilingual/RTL/a11y/200%, drill-through) — remains Claude-lane.
 - The in-flight overview UI (lane worktree) is not part of 0.2.15; it will be its own release
   when it lands.
+
+## Redeploy acceptance recipe (for the Claude lane, after the host image redeploy)
+
+After the host redeploy carrying the current `twenty-server` module, every probe below must
+flip to the typed `PASHX_INVALID_INPUT` (400, `ok:false`, expected `fieldPaths`):
+
+1. `POST /rest/pashx-mab/procurement-cases/<uuid>/supplier-rfqs` with `{}` →
+   fieldPaths `["contractVersion","procurementCaseRecordId","idempotencyKey","expectedVersion","payload"]`
+   (currently returns the REST-core "Query path invalid" — the redeploy signal).
+2. The WF2 endpoints must keep answering as before (`transitions`, `delivery`, `finalize`).
+3. Vendors page RFQ request end-to-end on a disposable staged case (create case with stage
+   `INTAKE` + a client RFQ record, request RFQs for the 7 real suppliers, verify the 7
+   `MAB-SRFQ-<period>-<nnnn>` drafts, delete fixtures, verify 404).
+4. `/healthz` 200 after deploy; record the host digest + keep the previous host as rollback.
