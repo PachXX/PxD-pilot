@@ -238,3 +238,10 @@ live (incl. Vendors); WF2 endpoints live (transitions/delivery/finalize probed w
 validation-only requests). **Release gap: `supplier-rfqs` endpoint is not on the live host
 server** — app releases do not ship server code; a Claude-lane host redeploy is required
 before the Vendors RFQ flow works live. Data unchanged; §10 predictions still hold.
+
+### 2026-08-25 stage decision applied
+
+Shahil approved the §11 candidates; applied and verified via the standard record API:
+MAB-PO → vendor-order, SEN-EPO → invoicing, ASHM → invoicing (contradiction documented).
+Case-workflow rails now show real current markers; band stays 0/0/3/0; RFQ eligibility
+remains 0. Detail: gap matrix §16.

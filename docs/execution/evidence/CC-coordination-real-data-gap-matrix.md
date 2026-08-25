@@ -237,3 +237,20 @@ schema (installed app): **all fields resolve** — `deliveryStatus`, `deliveryDu
 released, its data query will succeed against the current live schema — no schema-side unknown
 at the release gate. (Note: `paymentTerms` returns `""` on live rows; the lane's `toNullable`
 normalizes empty strings to null — no mismatch.)
+
+## 16. Stage decision applied (2026-08-25, Shahil-approved)
+
+The §11 candidates were applied to the three real cases via the standard record API (explicit
+approval; documented as a data repair, not a workflow command — the transition graph has no
+null→X edge):
+
+| Case | Stage applied | Verified |
+|---|---|---|
+| MAB-META-MAB-PO-2026-4141 (`3af759e7`) | vendor-order | rail `vendor-order:current` |
+| MAB-META-SEN-EPO-2026-1102 (`47e1d3ee`) | invoicing | rail `invoicing:current` |
+| MAB-META-ASHM-004151-1 (`780c98af`) | invoicing | rail `invoicing:current` (contradiction remains documented: customer PO still DRAFT) |
+
+Post-apply battery: Command Centre band unchanged **0/0/3/0** (blocked-data signals are
+customer/owner-missing data fields, not stage-dependent); case-workflow rails now show real
+current markers. RFQ eligibility stays **0** (vendor-order/invoicing are not intake/sourcing) —
+the RFQ flow becomes exercisable with a properly-staged new case.
