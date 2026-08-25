@@ -184,3 +184,11 @@ Assigned as Command Centre coordinator. Mandate and lane protocol:
   the release gate.
 - **Next nodes:** Codex lane = honest blocked-data recompute + stage-null rendering decision
   (data owner: Shahil); Claude lane = live QA after the next release-gated install.
+
+### 2026-08-25 recompute — honest four-signal prediction
+
+`scripts/recompute-command-centre-from-live.ts` ran the UI's own classifier + queue builder
+against the live dump: **Compliance 0 · Approvals 0 · Blocked 3 · Actions 0**, ledger = the three
+real imported cases (CASE_CUSTOMER_MISSING on `3af759e7`, CASE_OWNER_MISSING on `780c98af` and
+`47e1d3ee`). DS6-era "Blocked data 10" is stale and must not be quoted. Full derivation:
+`docs/execution/evidence/CC-coordination-real-data-gap-matrix.md` §6.

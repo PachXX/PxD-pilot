@@ -54,3 +54,29 @@ on. No new sheet read is required for the UI; the live imported records are auth
 ## 5. Evidence
 
 Probes: `GET /healthz` 200; `GET /rest/{procurementCases,commercialDocuments,companies,approvalRequests,operationalInsights,expenses}?limit=500` with the pilot API key (read-only), 2026-08-25. Raw dumps retained at `/tmp/live-inventory/` for this node's audit.
+
+## 6. Honest Command Centre recompute (2026-08-25) — stale DS6 count corrected
+
+The Command Centre's bounded classifier + work-queue builder
+(`classifyCommandCentre` + `buildOperationalWorkQueue`, the same pure functions the UI uses)
+were executed against the live dump via
+`packages/twenty-apps/pashx-mab/scripts/recompute-command-centre-from-live.ts`.
+
+**Predicted four-signal band from stored records:**
+
+| Signal | Count | Source rows |
+|---|---|---|
+| Compliance exceptions | 0 | No REJECTED/RETRYABLE compliance states (3 invoices CLEARED, rest NOT_REQUIRED) |
+| Pending approvals | 0 | 2 approvals both decided (APPROVED / CANCELLED) |
+| Blocked data | **3** | `3af759e7` CASE_CUSTOMER_MISSING; `780c98af` + `47e1d3ee` CASE_OWNER_MISSING |
+| Your actions | 0 | No expenses; imported cases have no owner so draft-document review items do not fire |
+
+Ledger rows (deterministic order): exactly the three blocked-data rows above, drill-through to
+the real case records. **The DS6-era "Blocked data 10" was measured against the old 0.2.10 data
+state and must not be quoted as a current number.**
+
+Observed nuance: four DRAFT documents exist (customer quote, customer PO, supplier RFQ, vendor
+quote); none produces an action item because the imported cases carry no owner — the honest band
+shows the underlying `CASE_OWNER_MISSING` blockers instead of inventing per-document tasks.
+
+Tool usage: `node --import tsx scripts/recompute-command-centre-from-live.ts <dumpDir> [currentUserRecordId]`.
