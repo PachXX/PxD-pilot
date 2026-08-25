@@ -172,3 +172,25 @@ The UI's own data path produces the same honest band.
 
 Applying any candidate requires Shahil's explicit confirmation; until then the UI keeps the
 honest stage-null rendering.
+
+## 12. Vendor comparison page recompute + live page wiring (2026-08-25)
+
+**Live wiring:** the referenced page `/page/cfb3c81e-3acd-47a3-83e9-6f35b358c386` resolves to
+page layout universal `52f71f82-…` (Command centre) under the pashx application
+(`058263f0-…`) with the `commandCentreQueueTab` (`e2bc827a-…`) attached — the URL the
+coordinator mandate names is wired to the Command Centre front component.
+
+**Vendor comparison** via
+`packages/twenty-apps/pashx-mab/scripts/recompute-vendor-comparison-from-live.ts` (the parallel
+lane's own model functions over the live dump):
+
+| Case | Finalized quotes | Recommendation | Evidence completeness |
+|---|---|---|---|
+| MAB-META-MAB-PO-2026-4141 | 0 (1 quote exists, **DRAFT**) | `no-finalized-quotes` | 3 docs, 1 finalized, 0 finalized quotes |
+| MAB-META-SEN-EPO-2026-1102 | 0 | `no-finalized-quotes` | 1 doc, 1 finalized (invoice) |
+| MAB-META-ASHM-004151-1 | 0 | `no-finalized-quotes` | 4 docs, 2 finalized (invoices) |
+
+The page renders the honest no-recommendation state: the only real vendor quote is DRAFT, so no
+comparison or recommendation is fabricated. Every live surface is now verified against stored
+records (Command Centre band, Case workflow, Vendors, Vendor comparison, Operational
+profitability).
