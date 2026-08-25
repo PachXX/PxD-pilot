@@ -167,3 +167,20 @@ The bounded harness contract and Codex/Claude ownership split are recorded in
 `I approve ADR-0003 and OC0: deterministic tasks/compliance, audited human approvals, read-only
 evidence agents, and review-before-create synchronized email intake. Agents may not approve,
 send/delete email, finalize financial documents, or change compliance state.`
+
+## DeepSeek coordination status — 2026-08-25
+
+Assigned as Command Centre coordinator. Mandate and lane protocol:
+`docs/execution/2026-08-25 - command-centre coordinator brief.md`. Real-data gap matrix:
+`docs/execution/evidence/CC-coordination-real-data-gap-matrix.md` (read-only probes, 2026-08-25).
+
+- **Clean-base check:** branch `codex/pashx-pilot-cx3-cx4`, HEAD `b15b33c4d6`; worktree clean
+  except the incidental app version bump (uncommitted) and the local `.env.test.cl2-backup`.
+- **Live inventory (verified):** 3 cases (stage null — MI never infers), 8 documents, 25
+  companies (7 suppliers + 3 customers with roles), 2 decided approvals (0 pending), 0 insights,
+  0 expenses. Deleted OC3 fixture case `787c8781-…` must never reappear.
+- **Live surface:** Command centre page `/page/cfb3c81e-3acd-47a3-83e9-6f35b358c386` runs the
+  updated app; the Vendors page and supplier-RFQ command are source/sync-verified only and await
+  the release gate.
+- **Next nodes:** Codex lane = honest blocked-data recompute + stage-null rendering decision
+  (data owner: Shahil); Claude lane = live QA after the next release-gated install.
