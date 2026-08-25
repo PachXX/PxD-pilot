@@ -198,3 +198,20 @@ evidence only (ASHM shows 2 finalized invoices but no finalized CPO → not read
 verified (§8): exactly 7 role suppliers, DBMS Steel 1 open RFQ + 1 quote, RFQ-eligible cases 0
 (all imported cases stage-null) — the RFQ flow renders its honest unavailable state until
 stages are assigned or a properly-staged case is created.
+
+### Coordinator status roll-up (2026-08-25, rounds 6–8 — full detail in the gap matrix)
+
+- §9 profitability: SAR 153,651.50 revenue / 127,544.20 cost / 26,107.30 profit / 16.99% margin,
+  4 DRAFT exclusions (verified with the frozen aggregate).
+- §10 release-gate QA expectations frozen for the Claude lane (six deterministic checks).
+- §11 stage candidates proposed for Shahil: MAB-PO → vendor-order, SEN-EPO → invoicing,
+  ASHM → invoicing (contradiction: finalized invoices while CPO DRAFT).
+- §12 vendor comparison verified: `no-finalized-quotes` on every case; live page wiring
+  confirmed (`/page/cfb3c81e-…` → Command centre layout + queue tab).
+- Round 6: live-state freshness re-check — predictions identical, WF5 residue absent.
+- Round 7: lane worktrees reconciled to the established convention; in-flight
+  `buildCommandCentreOverview` reviewed PASS.
+- Round 8: executed the lane's uncommitted overview builder against the live dump — stage
+  summary `unrecordedCount: 3`, work queue 3× BLOCKED_DATA, quotation states
+  `AWAITING_FINALIZED_RESPONSES` with the real draft counts, cash `UNAVAILABLE` (capability-
+  gated), 38 native links exact. Lane worktree left pristine.
