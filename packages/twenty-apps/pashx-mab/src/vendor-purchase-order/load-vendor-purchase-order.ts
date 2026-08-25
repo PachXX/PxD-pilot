@@ -70,7 +70,7 @@ type LineNode = Readonly<{
   id: string;
   name: string;
   commercialDocumentRecordId: string;
-  position?: number | null;
+  linePosition?: number | null;
   description?: string | null;
   specification?: string | null;
   quantity?: number | null;
@@ -204,7 +204,7 @@ const toLineRecord = (node: LineNode): VendorPurchaseOrderLineRecord => ({
   id: node.id,
   name: node.name,
   commercialDocumentRecordId: node.commercialDocumentRecordId,
-  position: node.position ?? null,
+  linePosition: node.linePosition ?? null,
   description: node.description ?? null,
   specification: node.specification ?? null,
   quantity: node.quantity ?? null,
@@ -304,7 +304,7 @@ export const loadVendorPurchaseOrder = async ({
           id: true,
           name: true,
           commercialDocumentRecordId: true,
-          position: true,
+          linePosition: true,
           description: true,
           specification: true,
           quantity: true,

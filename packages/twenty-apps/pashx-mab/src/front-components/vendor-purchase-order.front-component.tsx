@@ -637,9 +637,9 @@ const VendorPurchaseOrder = () => {
                           {lines.map((line) => (
                             <tr key={line.id}>
                               <td data-numeric className="pxd-vpo__table-num">
-                                {line.position === null
+                                {line.linePosition === null
                                   ? copy.notRecorded
-                                  : line.position}
+                                  : line.linePosition}
                               </td>
                               <td>
                                 {line.description === null ? (

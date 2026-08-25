@@ -100,7 +100,7 @@ export const PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS = {
   },
   documentLine: {
     commercialDocumentRecordId: 'ba229708-78dc-4d2a-a448-f8672cc6dae9',
-    position: '833863b2-a5b7-4d79-81ac-c36189b4dd79',
+    linePosition: '833863b2-a5b7-4d79-81ac-c36189b4dd79',
     description: 'd7804164-b632-4074-bec2-e6a4ec3e76ed',
     specification: 'f731fedf-37bb-4066-aa06-f6be3dbd7a31',
     quantity: '0aa5ee3a-185c-4dbd-bf16-f539ce81d095',

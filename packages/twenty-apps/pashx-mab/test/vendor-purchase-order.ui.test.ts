@@ -161,7 +161,7 @@ test('loader never surfaces a line from another document', async () => {
             id: 'other-line',
             name: 'Other',
             commercialDocumentRecordId: 'eeeeeeee-5555-4555-8555-eeeeeeeeeeee',
-            position: 1,
+          linePosition: 1,
           },
         },
         {
@@ -169,7 +169,7 @@ test('loader never surfaces a line from another document', async () => {
             id: 'mine-line',
             name: 'Mine',
             commercialDocumentRecordId: PO_ID,
-            position: 1,
+          linePosition: 1,
             quantity: 2,
             unitPriceMicros: 10_000_000,
             lineTotalMicros: 20_000_000,

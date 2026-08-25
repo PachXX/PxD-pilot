@@ -38,9 +38,12 @@ export default defineObject({
     },
     {
       universalIdentifier:
-        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.documentLine.position,
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.documentLine.linePosition,
+      // `position` is an engine-reserved system field name on every object
+      // (id, createdAt, updatedAt, deletedAt, createdBy, updatedBy, position),
+      // so the manifest field uses the explicit `linePosition` name instead.
       type: FieldType.NUMBER,
-      name: 'position',
+      name: 'linePosition',
       label: 'Position',
       description: 'Integer display order of the line on the source document.',
       icon: 'IconListNumbers',
@@ -66,7 +69,10 @@ export default defineObject({
     {
       universalIdentifier:
         PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.documentLine.quantity,
-      type: FieldType.NUMERIC,
+      // The metadata engine rejects NUMERIC field creation for custom apps
+      // ("Use NUMBER instead"), and NUMBER maps to a float64 column, so decimal
+      // quantities remain representable; money stays in integer micros.
+      type: FieldType.NUMBER,
       name: 'quantity',
       label: 'Quantity',
       description: 'Ordered quantity; must be greater than zero.',

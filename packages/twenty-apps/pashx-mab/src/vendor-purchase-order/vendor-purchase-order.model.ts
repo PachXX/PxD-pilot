@@ -126,7 +126,7 @@ export const validateVendorPurchaseOrderLines = ({
         !Number.isFinite(line.quantity) ||
         !(line.quantity > 0),
     )
-    .map((line) => line.position)
+    .map((line) => line.linePosition)
     .filter((position): position is number => position !== null);
 
   if (invalidQuantityPositions.length > 0) {
@@ -139,7 +139,7 @@ export const validateVendorPurchaseOrderLines = ({
         !isSafeMicros(line.lineTotalMicros) ||
         (line.unitPriceMicros !== null && !isSafeMicros(line.unitPriceMicros)),
     )
-    .map((line) => line.position)
+    .map((line) => line.linePosition)
     .filter((position): position is number => position !== null);
 
   if (unsafeAmountPositions.length > 0) {
@@ -158,7 +158,7 @@ export const validateVendorPurchaseOrderLines = ({
 
       return product !== line.lineTotalMicros;
     })
-    .map((line) => line.position)
+    .map((line) => line.linePosition)
     .filter((position): position is number => position !== null);
 
   if (productMismatchPositions.length > 0) {

@@ -54,7 +54,7 @@ const line = (
   id: 'line-1',
   name: 'Line 1',
   commercialDocumentRecordId: PO_ID,
-  position: 1,
+  linePosition: 1,
   description: 'Pump',
   specification: 'Model X',
   quantity: 2,
@@ -143,7 +143,7 @@ test('line validation accepts matching integer-micros lines', () => {
         line({ id: 'line-1', lineTotalMicros: 20_000_000 }),
         line({
           id: 'line-2',
-          position: 2,
+          linePosition: 2,
           quantity: 1,
           lineTotalMicros: 10_000_000,
         }),
@@ -157,7 +157,7 @@ test('line validation accepts matching integer-micros lines', () => {
 test('line validation rejects zero and negative quantity', () => {
   assert.deepEqual(
     validateVendorPurchaseOrderLines({
-      lines: [line({ id: 'line-1', quantity: 0 }), line({ id: 'line-2', position: 2, quantity: -1 })],
+      lines: [line({ id: 'line-1', quantity: 0 }), line({ id: 'line-2', linePosition: 2, quantity: -1 })],
       document: document(),
     }),
     { status: 'invalid-quantity', positions: [1, 2] },
@@ -169,7 +169,7 @@ test('line validation rejects mixed currencies fail-closed', () => {
     validateVendorPurchaseOrderLines({
       lines: [
         line({ id: 'line-1', currencyCode: 'SAR' }),
-        line({ id: 'line-2', position: 2, currencyCode: 'USD' }),
+        line({ id: 'line-2', linePosition: 2, currencyCode: 'USD' }),
       ],
       document: document(),
     }),
@@ -210,7 +210,7 @@ test('line validation rejects a canceling per-line product inconsistency', () =>
         line({ id: 'line-a', lineTotalMicros: 20_000_001 }),
         line({
           id: 'line-b',
-          position: 2,
+          linePosition: 2,
           quantity: 1,
           lineTotalMicros: 9_999_999,
         }),

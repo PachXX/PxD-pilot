@@ -40,7 +40,7 @@ export type VendorPurchaseOrderLineRecord = Readonly<{
   id: string;
   name: string;
   commercialDocumentRecordId: string;
-  position: number | null;
+  linePosition: number | null;
   description: string | null;
   specification: string | null;
   quantity: number | null;
