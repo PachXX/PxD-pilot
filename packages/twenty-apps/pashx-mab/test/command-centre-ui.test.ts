@@ -24,6 +24,7 @@ import {
   groupOperationalWorkItems,
   resolveInsightSourceLinks,
 } from '../src/command-centre/command-centre.model';
+import { COMMAND_CENTRE_PARTIAL_SOURCES } from '../src/command-centre/command-centre.types';
 import {
   commandCentreCopy,
   toCommandCentreLocale,
@@ -122,10 +123,26 @@ test('frozen operational precedence is compliance, approvals, blocked data, acti
 
 test('operational groups preserve approved precedence and items within each signal', () => {
   const groups = groupOperationalWorkItems([
-    { signal: 'ACTION_REQUIRED', source: 'COMMAND_CENTRE', item: commandItem('ACTION_REQUIRED', 'action') },
-    { signal: 'COMPLIANCE_EXCEPTION', source: 'COMMAND_CENTRE', item: commandItem('COMPLIANCE_EXCEPTION', 'compliance') },
-    { signal: 'APPROVAL_REQUIRED', source: 'APPROVAL_REQUEST', item: approval('approval') },
-    { signal: 'BLOCKED_DATA', source: 'COMMAND_CENTRE', item: commandItem('BLOCKED_DATA', 'blocked') },
+    {
+      signal: 'ACTION_REQUIRED',
+      source: 'COMMAND_CENTRE',
+      item: commandItem('ACTION_REQUIRED', 'action'),
+    },
+    {
+      signal: 'COMPLIANCE_EXCEPTION',
+      source: 'COMMAND_CENTRE',
+      item: commandItem('COMPLIANCE_EXCEPTION', 'compliance'),
+    },
+    {
+      signal: 'APPROVAL_REQUIRED',
+      source: 'APPROVAL_REQUEST',
+      item: approval('approval'),
+    },
+    {
+      signal: 'BLOCKED_DATA',
+      source: 'COMMAND_CENTRE',
+      item: commandItem('BLOCKED_DATA', 'blocked'),
+    },
   ]);
 
   assert.deepEqual(
@@ -137,9 +154,10 @@ test('operational groups preserve approved precedence and items within each sign
       'ACTION_REQUIRED',
     ],
   );
-  assert.deepEqual(groups[1]?.items.map(({ source }) => source), [
-    'APPROVAL_REQUEST',
-  ]);
+  assert.deepEqual(
+    groups[1]?.items.map(({ source }) => source),
+    ['APPROVAL_REQUEST'],
+  );
 });
 
 test('command-item groups retain the three-signal model', () => {
@@ -194,7 +212,12 @@ test('evidence links target native Twenty records and dates are render-safe', ()
 test('insight source links resolve only against loaded records and stay honest otherwise', () => {
   const links = resolveInsightSourceLinks(insight(), result());
   assert.deepEqual(links, [
-    { kind: 'link', objectName: 'procurementCase', recordId: 'case-1', href: '/object/procurementCase/case-1' },
+    {
+      kind: 'link',
+      objectName: 'procurementCase',
+      recordId: 'case-1',
+      href: '/object/procurementCase/case-1',
+    },
     { kind: 'plain', recordId: 'unknown-record' },
   ]);
 });
@@ -205,8 +228,18 @@ test('insight sources resolve approvals and insights as well as command records'
     result(),
   );
   assert.deepEqual(links, [
-    { kind: 'link', objectName: 'approvalRequest', recordId: 'approval-1', href: '/object/approvalRequest/approval-1' },
-    { kind: 'link', objectName: 'operationalInsight', recordId: 'insight-1', href: '/object/operationalInsight/insight-1' },
+    {
+      kind: 'link',
+      objectName: 'approvalRequest',
+      recordId: 'approval-1',
+      href: '/object/approvalRequest/approval-1',
+    },
+    {
+      kind: 'link',
+      objectName: 'operationalInsight',
+      recordId: 'insight-1',
+      href: '/object/operationalInsight/insight-1',
+    },
   ]);
 });
 
@@ -217,14 +250,12 @@ test('English and Arabic copy exhaust every signal, reason, stage, insight type,
   );
   for (const locale of ['en', 'ar'] as const) {
     const copy = commandCentreCopy[locale];
-    assert.deepEqual(
-      Object.keys(copy.signals),
-      [...PASHX_OPERATIONAL_WORK_SIGNALS],
-    );
-    assert.deepEqual(
-      Object.keys(copy.signalDescriptions),
-      [...PASHX_OPERATIONAL_WORK_SIGNALS],
-    );
+    assert.deepEqual(Object.keys(copy.signals), [
+      ...PASHX_OPERATIONAL_WORK_SIGNALS,
+    ]);
+    assert.deepEqual(Object.keys(copy.signalDescriptions), [
+      ...PASHX_OPERATIONAL_WORK_SIGNALS,
+    ]);
     assert.deepEqual(
       Object.keys(copy.reasons).sort(),
       [...PASHX_COMMAND_CENTRE_REASON_CODES].sort(),
@@ -241,6 +272,9 @@ test('English and Arabic copy exhaust every signal, reason, stage, insight type,
       Object.keys(copy.confidenceLabels).sort(),
       [...PASHX_INSIGHT_CONFIDENCE_LEVELS].sort(),
     );
+    assert.deepEqual(Object.keys(copy.partialSourceLabels), [
+      ...COMMAND_CENTRE_PARTIAL_SOURCES,
+    ]);
     for (const value of [
       ...Object.values(copy.signals),
       ...Object.values(copy.signalDescriptions),
@@ -248,12 +282,16 @@ test('English and Arabic copy exhaust every signal, reason, stage, insight type,
       ...Object.values(copy.stages),
       ...Object.values(copy.insightTypeLabels),
       ...Object.values(copy.confidenceLabels),
+      ...Object.values(copy.partialSourceLabels),
       copy.insightsTitle,
       copy.insightsEmpty,
-      copy.unavailableTitle,
       copy.unavailableState,
-      copy.emailUnavailableReason,
-      copy.ocrUnavailableReason,
+      copy.emailIntakeLabel,
+      copy.ocrLabel,
+      copy.vendorRiskLabel,
+      copy.paymentStatusLabel,
+      copy.documentLinesLabel,
+      copy.stageNotRecorded,
       copy.insightTypeUnknown,
       copy.confidenceUnknown,
       copy.confidenceLabel,
@@ -262,6 +300,9 @@ test('English and Arabic copy exhaust every signal, reason, stage, insight type,
     }
   }
   assert.match(commandCentreCopy.ar.title, /\p{Script=Arabic}/u);
+  for (const value of Object.values(commandCentreCopy.ar.partialSourceLabels)) {
+    assert.match(value, /\p{Script=Arabic}/u);
+  }
   assert.equal(
     commandCentreCopy.en.welcomeTitle,
     'Welcome, MAB Indus Solutions',
@@ -274,8 +315,6 @@ test('English and Arabic copy exhaust every signal, reason, stage, insight type,
 test('unavailable states are honest: never simulated email or OCR capabilities', () => {
   assert.match(commandCentreCopy.en.unavailableState, /Unavailable/);
   assert.match(commandCentreCopy.ar.unavailableState, /\p{Script=Arabic}/u);
-  assert.match(commandCentreCopy.en.emailUnavailableReason, /OC5/);
-  assert.match(commandCentreCopy.en.ocrUnavailableReason, /OC5-OCR/);
   assert.doesNotMatch(componentSource, /PashxEmailIntakeCandidate/);
   assert.doesNotMatch(componentSource, /proposal/i);
   assert.doesNotMatch(componentSource, /simulate/i);
@@ -290,20 +329,22 @@ test('native page is source-only, evidence-linked, and exposes complete runtime 
     /aria-live="polite"/,
     /role="alert"/,
     /role="status"/,
-    /workQueue\.length === 0/,
     /result\?\.isPartial/,
     /target="_top"/,
-    /getOperationalWorkItemHref\(item\)/,
+    /loadCommandCentreOverview/,
     /<table className="pxd-command__table">/,
     /<th scope="col">/,
-    /workQueue\.map/,
-    /buildOperationalWorkQueue\(\{/,
-    /resolveInsightSourceLinks\(/,
+    /visibleCases\.map/,
+    /resolveOverviewInsightSourceLinks\(/,
     /getInsightRecordHref\(/,
     /result\.insights/,
     /copy\.unavailableState/,
-    /copy\.emailUnavailableReason/,
-    /copy\.ocrUnavailableReason/,
+    /copy\.stageNotRecorded/,
+    /copy\.documentLinesLabel/,
+    /copy\.paymentStatusLabel/,
+    /copy\.partialSourceLabels\[source\]/,
+    /copy\.commercialRegistrationLabel/,
+    /copy\.vatRegistrationLabel/,
     /getPublicAssetUrl\(\s*'brand\/mab-indus-solutions-logo\.jpg'/,
     /copy\.welcomeTitle/,
     /alt=""/,
@@ -315,6 +356,8 @@ test('native page is source-only, evidence-linked, and exposes complete runtime 
     componentSource,
     /\.(create|update|delete|destroy|mutate)\s*\(/,
   );
+  assert.doesNotMatch(componentSource, /ownerRecordId|approverRecordId/);
+  assert.match(componentSource, /if \(permissionFailure\) setResult\(null\)/);
   // Precedence lives in the shared queue builder, never re-implemented in JSX.
   assert.doesNotMatch(componentSource, /SIGNAL_PRIORITY|signalRank/);
   assert.match(pageLayoutSource, /PageLayoutType\.STANDALONE_PAGE/);
@@ -336,17 +379,19 @@ test('styles preserve keyboard, touch, RTL, dark-theme, reduced-motion, and zoom
     /\.pxd-command\[data-color-scheme="dark"\]/,
     /prefers-reduced-motion: reduce/,
     /overflow-wrap: anywhere/,
-    /@media \(max-width: 900px\)/,
-    /@media \(max-width: 560px\)/,
-    /grid-template-columns: minmax\(0, 3fr\) minmax\(240px, 1fr\)/,
+    /@media \(max-width: 1100px\)/,
+    /@media \(max-width: 760px\)/,
+    /grid-template-columns: minmax\(0, 3fr\) minmax\(260px, 1fr\)/,
     /border-collapse: collapse/,
     /repeat\(4, minmax\(0, 1fr\)\)/,
-    /\.pxd-command__signal-dot--approval_required/,
     /unicode-bidi: isolate/,
   ]) {
     assert.match(commandCentreStyles, pattern);
   }
   assert.doesNotMatch(commandCentreStyles, /outline:\s*none/);
   assert.doesNotMatch(commandCentreStyles, /box-shadow/);
-  assert.doesNotMatch(commandCentreStyles, /border-radius:\s*(?:1[0-9]|[2-9][0-9])px/);
+  assert.doesNotMatch(
+    commandCentreStyles,
+    /border-radius:\s*(?:1[0-9]|[2-9][0-9])px/,
+  );
 });

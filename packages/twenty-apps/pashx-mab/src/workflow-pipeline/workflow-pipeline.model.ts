@@ -13,6 +13,7 @@ import type {
   WorkflowPipelineResult,
   WorkflowPipelineSummary,
 } from './workflow-pipeline.types';
+import { isAcceptedComplianceException } from '../command-centre/compliance-status';
 
 export const getNextWorkflowPipelineStage = (
   stage: PashxProcurementCaseStage,
@@ -125,9 +126,7 @@ const resolveDueAt = (
 
 const isComplianceException = (
   document: WorkflowPipelineDocumentRecord,
-): boolean =>
-  document.complianceStatus === 'PENDING' ||
-  document.complianceStatus === 'REJECTED';
+): boolean => isAcceptedComplianceException(document.complianceStatus);
 
 export const buildWorkflowPipelineCards = (
   result: WorkflowPipelineResult,
@@ -147,8 +146,9 @@ export const buildWorkflowPipelineCards = (
     documentsByCaseId.set(document.procurementCaseRecordId, bucket);
   }
 
-  return result.cases.map((caseRecord) => {
-    const stage = caseRecord.stage ?? 'intake';
+  return result.cases.flatMap((caseRecord) => {
+    if (caseRecord.stage === null) return [];
+    const stage = caseRecord.stage;
     const documents = documentsByCaseId.get(caseRecord.id) ?? [];
     const dueAt = resolveDueAt(
       stage,
@@ -157,23 +157,26 @@ export const buildWorkflowPipelineCards = (
       caseRecord.deliveryDueAt,
     );
 
-    return {
-      caseRecord,
-      stage,
-      customerName:
-        caseRecord.customerRecordId === null
-          ? null
-          : customerNameById.get(caseRecord.customerRecordId) ?? null,
-      dueAt,
-      isOverdue:
-        ACTIVE_STAGES.has(stage) &&
-        isValidDate(dueAt) &&
-        Date.parse(dueAt) < now.getTime(),
-      documentCount: documents.length,
-      finalizedDocumentCount: documents.filter(isFinalized).length,
-      complianceExceptionCount: documents.filter(isComplianceException).length,
-      latestEvidence: selectLatestPipelineEvidence(documents),
-    };
+    return [
+      {
+        caseRecord,
+        stage,
+        customerName:
+          caseRecord.customerRecordId === null
+            ? null
+            : (customerNameById.get(caseRecord.customerRecordId) ?? null),
+        dueAt,
+        isOverdue:
+          ACTIVE_STAGES.has(stage) &&
+          isValidDate(dueAt) &&
+          Date.parse(dueAt) < now.getTime(),
+        documentCount: documents.length,
+        finalizedDocumentCount: documents.filter(isFinalized).length,
+        complianceExceptionCount: documents.filter(isComplianceException)
+          .length,
+        latestEvidence: selectLatestPipelineEvidence(documents),
+      },
+    ];
   });
 };
 

@@ -8,6 +8,7 @@ import {
   type PashxOperationalWorkItem,
   type PashxOperationalWorkSignal,
 } from 'pashx-mab-contract';
+import type { CommandCentreNativeLink } from './command-centre.types';
 
 export type CommandCentreGroup = Readonly<{
   signal: PashxCommandCentreSignal;
@@ -93,6 +94,27 @@ export const resolveInsightSourceLinks = (
           };
     },
   );
+};
+
+export const resolveOverviewInsightSourceLinks = (
+  insight: PashxEvidenceInsight,
+  recordLinks: readonly CommandCentreNativeLink[],
+): readonly InsightSourceLink[] => {
+  const linkByRecordId = new Map(
+    recordLinks.map((link) => [link.recordId, link]),
+  );
+
+  return [...new Set(insight.sourceRecordIds)].map((recordId) => {
+    const link = linkByRecordId.get(recordId);
+    return link === undefined
+      ? { kind: 'plain' as const, recordId }
+      : {
+          kind: 'link' as const,
+          objectName: link.objectName,
+          recordId,
+          href: link.href,
+        };
+  });
 };
 
 export const formatCommandCentreDateTime = (

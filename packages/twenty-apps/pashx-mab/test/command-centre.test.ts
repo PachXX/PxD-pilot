@@ -24,6 +24,9 @@ const caseRecord = (
   nextActionCode: 'REVIEW_DRAFT_DOCUMENT',
   actionDueAt: null,
   blockedReasonCode: null,
+  deliveryStatus: 'notStarted',
+  deliveryDueAt: null,
+  supplierResponseDeadlineAt: null,
   updatedAt: UPDATED_AT,
   ...overrides,
 });
@@ -32,13 +35,19 @@ const documentRecord = (
   overrides: Partial<CommandCentreDocumentRecord> = {},
 ): CommandCentreDocumentRecord => ({
   id: 'document-1',
+  name: 'MAB-VPO-001',
   procurementCaseRecordId: 'case-1',
   documentType: 'VENDOR_PURCHASE_ORDER',
+  normalizedDocumentType: 'vendorPurchaseOrder',
   lifecycleStatus: 'DRAFT',
   complianceStatus: 'NOT_REQUIRED',
   supplierRecordId: 'supplier-1',
   issueDate: '2026-08-20',
   currencyCode: 'SAR',
+  totalAmountMicros: 100_000_000,
+  leadTimeDays: null,
+  paymentTerms: null,
+  validUntil: null,
   updatedAt: UPDATED_AT,
   ...overrides,
 });
@@ -53,9 +62,7 @@ const expenseRecord = (
   ...overrides,
 });
 
-const approvalNode = (
-  overrides: Readonly<Record<string, unknown>> = {},
-) => ({
+const approvalNode = (overrides: Readonly<Record<string, unknown>> = {}) => ({
   id: 'approval-1',
   name: 'Issue vendor PO for case-1',
   status: 'PENDING',
@@ -186,14 +193,47 @@ test('compliance exceptions outrank missing document data', () => {
   assert.equal(items[0]?.reasonCode, 'COMPLIANCE_REJECTED');
 });
 
+test('pending compliance review is not classified as an exception', () => {
+  const items = classifyCommandCentre({
+    cases: [caseRecord({ ownerRecordId: 'member-2' })],
+    documents: [
+      documentRecord({
+        complianceStatus: 'PENDING',
+        lifecycleStatus: 'FINALIZED',
+      }),
+    ],
+    expenses: [],
+    currentUserRecordId: 'member-1',
+    observedAt: OBSERVED_AT,
+  });
+
+  assert.deepEqual(items, []);
+});
+
 test('WF1 supplier-required document roles block on a missing supplier', () => {
   const items = classifyCommandCentre({
     cases: [caseRecord()],
     documents: [
-      documentRecord({ id: 'rfq-1', documentType: 'SUPPLIER_RFQ', supplierRecordId: null }),
-      documentRecord({ id: 'quote-1', documentType: 'VENDOR_QUOTE', supplierRecordId: null }),
-      documentRecord({ id: 'vendor-invoice-1', documentType: 'VENDOR_INVOICE', supplierRecordId: null }),
-      documentRecord({ id: 'credit-note-1', documentType: 'VENDOR_CREDIT_NOTE', supplierRecordId: null }),
+      documentRecord({
+        id: 'rfq-1',
+        documentType: 'SUPPLIER_RFQ',
+        supplierRecordId: null,
+      }),
+      documentRecord({
+        id: 'quote-1',
+        documentType: 'VENDOR_QUOTE',
+        supplierRecordId: null,
+      }),
+      documentRecord({
+        id: 'vendor-invoice-1',
+        documentType: 'VENDOR_INVOICE',
+        supplierRecordId: null,
+      }),
+      documentRecord({
+        id: 'credit-note-1',
+        documentType: 'VENDOR_CREDIT_NOTE',
+        supplierRecordId: null,
+      }),
     ],
     expenses: [],
     currentUserRecordId: 'member-1',
@@ -207,10 +247,26 @@ test('WF1 supplier-required document roles block on a missing supplier', () => {
       reasonCode,
     })),
     [
-      { recordId: 'credit-note-1', signal: 'BLOCKED_DATA', reasonCode: 'DRAFT_DOCUMENT_SUPPLIER_MISSING' },
-      { recordId: 'quote-1', signal: 'BLOCKED_DATA', reasonCode: 'DRAFT_DOCUMENT_SUPPLIER_MISSING' },
-      { recordId: 'rfq-1', signal: 'BLOCKED_DATA', reasonCode: 'DRAFT_DOCUMENT_SUPPLIER_MISSING' },
-      { recordId: 'vendor-invoice-1', signal: 'BLOCKED_DATA', reasonCode: 'DRAFT_DOCUMENT_SUPPLIER_MISSING' },
+      {
+        recordId: 'credit-note-1',
+        signal: 'BLOCKED_DATA',
+        reasonCode: 'DRAFT_DOCUMENT_SUPPLIER_MISSING',
+      },
+      {
+        recordId: 'quote-1',
+        signal: 'BLOCKED_DATA',
+        reasonCode: 'DRAFT_DOCUMENT_SUPPLIER_MISSING',
+      },
+      {
+        recordId: 'rfq-1',
+        signal: 'BLOCKED_DATA',
+        reasonCode: 'DRAFT_DOCUMENT_SUPPLIER_MISSING',
+      },
+      {
+        recordId: 'vendor-invoice-1',
+        signal: 'BLOCKED_DATA',
+        reasonCode: 'DRAFT_DOCUMENT_SUPPLIER_MISSING',
+      },
     ],
   );
 });
@@ -249,11 +305,20 @@ test('uses stable signal, due-date, update-time, and id ordering', () => {
     cases: [
       caseRecord({ id: 'case-blocked', customerRecordId: null }),
       caseRecord({ id: 'case-later', actionDueAt: '2026-08-25T00:00:00.000Z' }),
-      caseRecord({ id: 'case-earlier', actionDueAt: '2026-08-22T00:00:00.000Z' }),
+      caseRecord({
+        id: 'case-earlier',
+        actionDueAt: '2026-08-22T00:00:00.000Z',
+      }),
     ],
     documents: [
-      documentRecord({ id: 'doc-later', procurementCaseRecordId: 'case-later' }),
-      documentRecord({ id: 'doc-earlier', procurementCaseRecordId: 'case-earlier' }),
+      documentRecord({
+        id: 'doc-later',
+        procurementCaseRecordId: 'case-later',
+      }),
+      documentRecord({
+        id: 'doc-earlier',
+        procurementCaseRecordId: 'case-earlier',
+      }),
     ],
     expenses: [],
     currentUserRecordId: 'member-1',
@@ -463,7 +528,8 @@ test('fails closed when the authenticated workspace member is unavailable', asyn
     loadCommandCentre({
       client: { query: () => Promise.resolve({}) },
       identityClient: {
-        query: () => Promise.resolve({ currentUser: { workspaceMember: null } }),
+        query: () =>
+          Promise.resolve({ currentUser: { workspaceMember: null } }),
       },
     }),
     /cannot resolve the current workspace member identity/,
