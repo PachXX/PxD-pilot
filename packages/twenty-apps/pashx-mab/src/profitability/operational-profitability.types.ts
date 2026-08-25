@@ -60,6 +60,27 @@ export type ProfitabilitySourceRecord =
   | ProfitabilityDocumentRecord
   | ProfitabilityExpenseRecord;
 
+export type CashMovementDirection = 'INFLOW' | 'OUTFLOW';
+
+export type CashMovementVerificationStatus =
+  | 'PENDING'
+  | 'VERIFIED'
+  | 'REJECTED';
+
+export type CashMovementRecord = Readonly<{
+  recordId: string;
+  recordName: string;
+  direction: CashMovementDirection;
+  verificationStatus: CashMovementVerificationStatus;
+  occurredOn: string | null;
+  amountMicros: number | null;
+  currencyCode: string | null;
+  sourceDocumentRecordId: string | null;
+  bankReference: string | null;
+  evidenceReference: string | null;
+  caseDimension: ProfitabilityCaseDimension | null;
+}>;
+
 export type ProfitabilityFilters = Readonly<{
   periodStart: string;
   periodEndExclusive: string;
@@ -137,12 +158,71 @@ export type OperationalProfitabilityResult = Readonly<{
   currencies: readonly ProfitabilityCurrencySummary[];
   contributions: readonly ProfitabilityContribution[];
   breakdowns: Readonly<
-    Record<ProfitabilityBreakdownDimension, readonly ProfitabilityBreakdownRow[]>
+    Record<
+      ProfitabilityBreakdownDimension,
+      readonly ProfitabilityBreakdownRow[]
+    >
   >;
   quality: Readonly<{
     sourceRecordCount: number;
     includedRecordCount: number;
     excludedRecordCount: number;
     exclusions: Readonly<Record<ProfitabilityExclusionReason, number>>;
+  }>;
+  cashFlow?: VerifiedCashFlowResult;
+}>;
+
+export const CASH_FLOW_EXCLUSION_REASONS = [
+  'OUTSIDE_PERIOD',
+  'FILTERED_OUT',
+  'MISSING_CASE',
+  'MISSING_DATE',
+  'MISSING_AMOUNT',
+  'UNSAFE_AMOUNT',
+  'INVALID_CURRENCY',
+  'PENDING_VERIFICATION',
+  'REJECTED',
+  'MISSING_SOURCE_DOCUMENT',
+  'MISSING_EVIDENCE_REFERENCE',
+] as const;
+
+export type CashFlowExclusionReason =
+  (typeof CASH_FLOW_EXCLUSION_REASONS)[number];
+
+export type VerifiedCashContribution = Readonly<{
+  recordId: string;
+  recordName: string;
+  direction: CashMovementDirection;
+  occurredOn: string;
+  month: string;
+  amountMicros: bigint;
+  currencyCode: string;
+  sourceDocumentRecordId: string;
+  bankReference: string | null;
+  evidenceReference: string;
+  caseDimension: ProfitabilityCaseDimension;
+}>;
+
+export type VerifiedCashCurrencySummary = Readonly<{
+  currencyCode: string;
+  inflowMicros: bigint;
+  outflowMicros: bigint;
+  netCashMicros: bigint;
+  contributionRecordIds: readonly string[];
+}>;
+
+export type VerifiedCashTrendPoint = VerifiedCashCurrencySummary &
+  Readonly<{ period: string }>;
+
+export type VerifiedCashFlowResult = Readonly<{
+  inclusionRules: readonly string[];
+  currencies: readonly VerifiedCashCurrencySummary[];
+  contributions: readonly VerifiedCashContribution[];
+  trend: readonly VerifiedCashTrendPoint[];
+  quality: Readonly<{
+    sourceRecordCount: number;
+    includedRecordCount: number;
+    excludedRecordCount: number;
+    exclusions: Readonly<Record<CashFlowExclusionReason, number>>;
   }>;
 }>;

@@ -7,10 +7,11 @@ export type DashboardLocale = 'en' | 'ar';
 
 export const DASHBOARD_LOCALES = ['en', 'ar'] as const;
 
-export const DASHBOARD_LOCALE_TAGS: Readonly<Record<DashboardLocale, string>> = {
-  en: 'en-GB',
-  ar: 'ar-SA',
-};
+export const DASHBOARD_LOCALE_TAGS: Readonly<Record<DashboardLocale, string>> =
+  {
+    en: 'en-GB',
+    ar: 'ar-SA',
+  };
 
 export type DashboardCopy = Readonly<{
   languageName: string;
@@ -62,6 +63,18 @@ export type DashboardCopy = Readonly<{
   noTrendTitle: string;
   noTrendBody: string;
   exactMonthlyValues: string;
+  cashTitle: string;
+  cashSubtitle: string;
+  cashBoundary: string;
+  cashInflow: string;
+  cashOutflow: string;
+  netCash: string;
+  cashNotRecorded: string;
+  cashEmptyTitle: string;
+  cashEmptyBody: string;
+  cashExcluded: (count: string) => string;
+  cashChartAccessibleLabel: (currencyCode: string) => string;
+  exactCashValues: string;
   period: string;
   grossProfit: string;
   records: string;
@@ -101,7 +114,8 @@ const englishCopy: DashboardCopy = {
   dashboardLabel: 'PxD Operational profitability Evidence Ledger',
   eyebrow: 'MAB procurement / Analysis',
   title: 'Operational profitability',
-  subtitle: 'Finalized revenue, direct cost, and gross margin with traceable source records.',
+  subtitle:
+    'Finalized revenue, direct cost, and gross margin with traceable source records.',
   refresh: 'Refresh evidence',
   refreshing: 'Refreshing…',
   filtersLabel: 'Dashboard filters',
@@ -116,7 +130,8 @@ const englishCopy: DashboardCopy = {
   noCurrency: 'No currency',
   activeFiltersLabel: 'Active evidence filters',
   methodStrong: 'Management analysis, not accounting P&L.',
-  methodBody: 'Revenue and direct cost include only records allowed by the frozen UI1 rules.',
+  methodBody:
+    'Revenue and direct cost include only records allowed by the frozen UI1 rules.',
   asOf: (formattedDate, dayCount) =>
     `As of ${formattedDate} · compared with the preceding ${dayCount} days`,
   staleRefreshError: (error) =>
@@ -143,7 +158,7 @@ const englishCopy: DashboardCopy = {
   noPositivePriorBaseline: 'No positive prior-period baseline',
   percentChange: (value) => `${value} vs prior period`,
   pointChange: (value) => `${value} pp vs prior period`,
-  trendTitle: 'Profitability trend',
+  trendTitle: 'Finalized document flow',
   trendSubtitle: (currencyCode) =>
     `Monthly finalized totals · ${isolateLeftToRight(currencyCode)} · shared scale`,
   chartLegend: 'Chart legend',
@@ -152,8 +167,25 @@ const englishCopy: DashboardCopy = {
   chartAccessibleLabel: (currencyCode) =>
     `Monthly finalized revenue and direct cost in ${isolateLeftToRight(currencyCode)}`,
   noTrendTitle: 'No monthly trend yet',
-  noTrendBody: 'The selected currency has no finalized contributions in this period.',
+  noTrendBody:
+    'The selected currency has no finalized contributions in this period.',
   exactMonthlyValues: 'View exact monthly values',
+  cashTitle: 'Verified cash movement',
+  cashSubtitle: 'Actual receipts and payments, separated from document values.',
+  cashBoundary:
+    'Invoices and purchase orders are not treated as cash. Only human-verified, evidence-linked movements appear here.',
+  cashInflow: 'Cash inflow',
+  cashOutflow: 'Cash outflow',
+  netCash: 'Net cash',
+  cashNotRecorded: 'Not recorded',
+  cashEmptyTitle: 'No verified cash movements recorded',
+  cashEmptyBody:
+    'Add reviewed receipt or payment evidence before showing cash totals. The profitability totals above remain valid document-based analysis.',
+  cashExcluded: (count) =>
+    `${count} cash movement records excluded from totals`,
+  cashChartAccessibleLabel: (currencyCode) =>
+    `Monthly verified cash inflow and outflow in ${isolateLeftToRight(currencyCode)}`,
+  exactCashValues: 'View exact cash values',
   period: 'Period',
   grossProfit: 'Gross profit',
   records: 'Records',
@@ -219,7 +251,8 @@ const arabicCopy: DashboardCopy = {
   dashboardLabel: 'دفتر أدلة الربحية التشغيلية من PxD',
   eyebrow: 'مشتريات MAB / التحليل',
   title: 'الربحية التشغيلية',
-  subtitle: 'الإيرادات النهائية والتكلفة المباشرة والهامش الإجمالي مع سجلات مصدر قابلة للتتبع.',
+  subtitle:
+    'الإيرادات النهائية والتكلفة المباشرة والهامش الإجمالي مع سجلات مصدر قابلة للتتبع.',
   refresh: 'تحديث الأدلة',
   refreshing: 'جارٍ التحديث…',
   filtersLabel: 'مرشحات لوحة المعلومات',
@@ -234,7 +267,8 @@ const arabicCopy: DashboardCopy = {
   noCurrency: 'لا توجد عملة',
   activeFiltersLabel: 'مرشحات الأدلة النشطة',
   methodStrong: 'تحليل إداري وليس قائمة أرباح وخسائر محاسبية.',
-  methodBody: 'تشمل الإيرادات والتكلفة المباشرة السجلات التي تسمح بها قواعد UI1 المعتمدة فقط.',
+  methodBody:
+    'تشمل الإيرادات والتكلفة المباشرة السجلات التي تسمح بها قواعد UI1 المعتمدة فقط.',
   asOf: (formattedDate, dayCount) =>
     `حتى ${formattedDate} · مقارنةً بالأيام ${dayCount} السابقة`,
   staleRefreshError: (error) =>
@@ -261,7 +295,7 @@ const arabicCopy: DashboardCopy = {
   noPositivePriorBaseline: 'لا يوجد خط أساس موجب للفترة السابقة',
   percentChange: (value) => `${value} مقارنةً بالفترة السابقة`,
   pointChange: (value) => `${value} نقطة مئوية مقارنةً بالفترة السابقة`,
-  trendTitle: 'اتجاه الربحية',
+  trendTitle: 'تدفق المستندات النهائية',
   trendSubtitle: (currencyCode) =>
     `الإجماليات النهائية الشهرية · ${isolateLeftToRight(currencyCode)} · مقياس موحّد`,
   chartLegend: 'مفتاح الرسم البياني',
@@ -272,6 +306,22 @@ const arabicCopy: DashboardCopy = {
   noTrendTitle: 'لا يوجد اتجاه شهري بعد',
   noTrendBody: 'لا تحتوي العملة المحددة على مساهمات نهائية في هذه الفترة.',
   exactMonthlyValues: 'عرض القيم الشهرية الدقيقة',
+  cashTitle: 'حركة النقد المتحققة',
+  cashSubtitle: 'المقبوضات والمدفوعات الفعلية منفصلة عن قيم المستندات.',
+  cashBoundary:
+    'لا تُعامل الفواتير وأوامر الشراء كنقد. تظهر هنا فقط الحركات التي تحقق منها شخص وربطها بالدليل.',
+  cashInflow: 'التدفق النقدي الداخل',
+  cashOutflow: 'التدفق النقدي الخارج',
+  netCash: 'صافي النقد',
+  cashNotRecorded: 'غير مسجل',
+  cashEmptyTitle: 'لا توجد حركات نقدية متحقق منها',
+  cashEmptyBody:
+    'أضف دليل قبض أو دفع تمت مراجعته قبل عرض إجماليات النقد. تبقى إجماليات الربحية أعلاه تحليلًا صحيحًا قائمًا على المستندات.',
+  cashExcluded: (count) =>
+    `تم استبعاد ${count} من سجلات الحركة النقدية من الإجماليات`,
+  cashChartAccessibleLabel: (currencyCode) =>
+    `التدفق النقدي الداخل والخارج المتحقق منه شهريًا بعملة ${isolateLeftToRight(currencyCode)}`,
+  exactCashValues: 'عرض القيم النقدية الدقيقة',
   period: 'الفترة',
   grossProfit: 'إجمالي الربح',
   records: 'السجلات',
@@ -341,8 +391,10 @@ export const operationalProfitabilityDashboardCopy: Readonly<
 export const toDashboardLocale = (locale: string): DashboardLocale =>
   locale.startsWith('ar') ? 'ar' : 'en';
 
-export const formatDashboardCount = (value: number, locale: DashboardLocale): string =>
-  value.toLocaleString(DASHBOARD_LOCALE_TAGS[locale]);
+export const formatDashboardCount = (
+  value: number,
+  locale: DashboardLocale,
+): string => value.toLocaleString(DASHBOARD_LOCALE_TAGS[locale]);
 
 export const formatDashboardDateTime = (
   value: string,

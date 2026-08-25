@@ -19,6 +19,7 @@ export const PASHX_MAB_OBJECT_UNIVERSAL_IDENTIFIERS = {
   commercialDocument: '731a652d-a4df-40b2-a276-4c32482201e2',
   documentLine: 'cfa4531b-3536-4816-a85e-b20803f35fbf',
   expense: '504791aa-c620-4e23-a40e-77d70f06269c',
+  cashMovement: '7c104862-8385-43ea-8fb4-fffdf3c1a164',
   approvalRequest: '8b99a415-4af6-4f52-997c-26c7b47485a2',
   operationalInsight: '4b3383ff-7b9d-4ba2-9c03-234046b32207',
 } as const;
@@ -28,6 +29,7 @@ export const PASHX_MAB_LABEL_FIELD_UNIVERSAL_IDENTIFIERS = {
   commercialDocument: '498ddb03-c711-43b7-8f43-87c0ebd1bf3e',
   documentLine: '00dfdab0-8f9a-4ce6-a9ff-56be2ef191c9',
   expense: 'da77a413-6641-49ff-82e5-44490c97d057',
+  cashMovement: 'cba8d87a-6b6e-41d9-813c-63812e3a7d54',
   approvalRequest: '2cf7fec1-f39d-40c8-8a52-e3327516b851',
   operationalInsight: 'de5e9b26-0243-4133-b27e-72c0e25a6e33',
 } as const satisfies Record<PashxMabObjectName, string>;
@@ -94,6 +96,16 @@ export const PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS = {
     approvalStatus: '30ff7914-6850-44f4-b570-aafc26319bc6',
     procurementCaseRecordId: 'a293ff99-b031-453c-a4f2-2140f67eb950',
     incurredDate: 'b4a60420-8ef5-4dfc-bba2-2e3fba6a07e7',
+  },
+  cashMovement: {
+    direction: '2d8d6979-c8af-4f06-95ed-6228b7220d65',
+    verificationStatus: '0ea29140-63cc-4ecb-b96b-acd37e397783',
+    amount: '7940c9e4-3995-41ec-9e73-f2713a7576f0',
+    movementDate: '674027dc-4ab4-4d55-962a-36ba35c3f068',
+    procurementCaseRecordId: 'ff693744-912e-4a1f-b04a-60747dda6050',
+    sourceDocumentRecordId: '57bbdb22-6724-4aca-b1c2-24686f8bf142',
+    bankReference: '0cf252d9-edf8-42e0-b1f7-f3d106785b1e',
+    evidenceReference: '017923d8-d637-4916-8db9-8de422ff0206',
   },
 } as const;
 
@@ -182,6 +194,17 @@ export const PASHX_MAB_FIELD_OPTION_UNIVERSAL_IDENTIFIERS = {
       pending: 'cb48ec45-4296-4c48-93ed-1054081a66fd',
       approved: 'bf09e50f-eb16-408c-bf1d-a355afc6431a',
       rejected: 'c8a1924a-41e0-45fb-927f-c07dfa37508a',
+    },
+  },
+  cashMovement: {
+    direction: {
+      inflow: 'c68cae96-c97b-4d0c-b09f-ba6ea22f4598',
+      outflow: 'fd35178b-1b82-4ee3-a0e8-bac36677a389',
+    },
+    verificationStatus: {
+      pending: '918abe6d-0057-457b-b0b2-504ea0e2a7b0',
+      verified: '6fe5f552-c091-4beb-bde6-895416fa47c8',
+      rejected: 'cd4f85e8-fbb7-4c71-add7-201df0d2b414',
     },
   },
 } as const;
