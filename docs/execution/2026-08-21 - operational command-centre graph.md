@@ -266,3 +266,9 @@ pilot API key return `PASHX_FORBIDDEN_CAPABILITY` for both `transitions` and `de
 capability gate fails closed live for non-operator principals, exactly as designed; no data was
 written. Stage-enforcement logic itself remains verified by the local integration suites
 (11–15, green); operator-session stage probes are part of the §10 QA (Claude lane).
+
+### 2026-08-25 round-15 freshness re-check
+
+State unchanged: no new commits; lane 15 files in flight; supplier-RFQ host redeploy pending;
+live data 3/8/2 (no mutations). Fresh battery on current dumps: band 0/0/3/0 — predictions
+hold. No new coordinator action required.
