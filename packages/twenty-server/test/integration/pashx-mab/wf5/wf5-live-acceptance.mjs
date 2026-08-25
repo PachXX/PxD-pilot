@@ -58,8 +58,10 @@ const request = async (method, path, body) => {
   return { status: response.status, body: parsed };
 };
 
-const graphql = async (query) => {
-  const response = await fetch(`${BASE_URL}/graphql`, {
+// Identity (currentUser) lives on the metadata GraphQL schema at /metadata; record reads and
+// commands use the core /graphql and /rest boundaries.
+const graphql = async (path, query) => {
+  const response = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${BEARER}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ query }),
@@ -83,9 +85,15 @@ const trackKey = (body) => {
 
 const plan = (message) => console.log(`[plan] ${message}`);
 
+let planRecordCounter = 0;
+
 const createRecord = async (objectPlural, data) => {
   plan(`POST /rest/${objectPlural} ${JSON.stringify(data)}`);
-  if (!EXECUTE) return { id: null };
+  if (!EXECUTE) {
+    planRecordCounter += 1;
+
+    return { id: `PLAN-${objectPlural}-${planRecordCounter}` };
+  }
   const response = await request('POST', `/rest/${objectPlural}`, data);
   if (response.status !== 201 && response.status !== 200) {
     fail(`create ${objectPlural} returned ${response.status}: ${JSON.stringify(response.body)}`);
@@ -188,13 +196,25 @@ const main = async () => {
   console.log(`Base URL: ${BASE_URL}`);
   console.log(`Disposable prefix: ${PREFIX}`);
 
-  const identity = await graphql(
-    'query { currentUser { workspaceMember { id } } }',
-  );
-  approverMemberId =
-    approverMemberId || identity?.currentUser?.workspaceMember?.id;
-  if (approverMemberId === undefined || approverMemberId === null) {
-    fail('Cannot resolve the bearer workspace member id for approval decisions.');
+  approverMemberId = process.env.WF5_APPROVER_MEMBER_ID ?? '';
+  if (approverMemberId === '') {
+    try {
+      const identity = await graphql(
+        '/metadata',
+        'query { currentUser { workspaceMember { id } } }',
+      );
+      approverMemberId = identity?.currentUser?.workspaceMember?.id ?? '';
+    } catch {
+      approverMemberId = '';
+    }
+  }
+  if (approverMemberId === '') {
+    fail(
+      'Cannot resolve the bearer workspace member id for approval decisions. ' +
+        'Set WF5_APPROVER_MEMBER_ID (operator workspace-member UUID, readable via SQL ' +
+        'or an authenticated session).',
+      3,
+    );
   }
   console.log(`Approver workspace member: ${approverMemberId}`);
 
