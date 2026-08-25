@@ -8,6 +8,7 @@ export type WorkflowPipelineCaseRecord = Readonly<{
   id: string;
   name: string;
   stage: PashxProcurementCaseStage | null;
+  aggregateVersion: number | null;
   customerRecordId: string | null;
   projectName: string | null;
   nextActionCode: string | null;

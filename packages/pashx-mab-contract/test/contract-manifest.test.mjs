@@ -68,6 +68,7 @@ test('object and capability identifiers are valid and unique', () => {
     'commercialDocument',
     'documentLine',
     'expense',
+    'cashMovement',
     'approvalRequest',
     'operationalInsight',
   ]);

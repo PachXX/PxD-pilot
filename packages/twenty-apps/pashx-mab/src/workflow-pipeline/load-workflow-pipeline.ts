@@ -31,6 +31,7 @@ type CaseNode = Readonly<{
   id: string;
   name: string;
   stage?: string | null;
+  aggregateVersion?: number | null;
   customerRecordId?: string | null;
   projectName?: string | null;
   nextActionCode?: string | null;
@@ -92,6 +93,12 @@ const toCaseRecord = (node: CaseNode): WorkflowPipelineCaseRecord => ({
     node.stage,
     PASHX_PROCUREMENT_CASE_STAGES,
   ),
+  aggregateVersion:
+    typeof node.aggregateVersion === 'number' &&
+    Number.isSafeInteger(node.aggregateVersion) &&
+    node.aggregateVersion >= 0
+      ? node.aggregateVersion
+      : null,
   customerRecordId: node.customerRecordId ?? null,
   projectName: node.projectName ?? null,
   nextActionCode: node.nextActionCode ?? null,
@@ -152,6 +159,7 @@ export const loadWorkflowPipeline = async ({
           id: true,
           name: true,
           stage: true,
+          aggregateVersion: true,
           customerRecordId: true,
           projectName: true,
           nextActionCode: true,

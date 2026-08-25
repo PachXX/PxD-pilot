@@ -364,6 +364,7 @@ export const operationalProfitabilityDashboardStyles = `
   .pxd-dashboard__legend-item { align-items: center; color: var(--pxd-muted); display: flex; font-size: 11px; gap: 6px; }
   .pxd-dashboard__legend-line { border-top: 2px solid var(--pxd-action); display: inline-block; width: 18px; }
   .pxd-dashboard__legend-line--cost { border-color: var(--pxd-warning); border-top-style: dashed; }
+  .pxd-dashboard__legend-line--cash-out { border-color: var(--pxd-info); border-top-style: dashed; }
 
   .pxd-dashboard__chart {
     min-height: 230px;
@@ -376,7 +377,57 @@ export const operationalProfitabilityDashboardStyles = `
   .pxd-dashboard__chart-grid { stroke: var(--pxd-border); stroke-width: 1; }
   .pxd-dashboard__chart-revenue { fill: none; stroke: var(--pxd-action); stroke-width: 3; vector-effect: non-scaling-stroke; }
   .pxd-dashboard__chart-cost { fill: none; stroke: var(--pxd-warning); stroke-dasharray: 6 4; stroke-width: 2; vector-effect: non-scaling-stroke; }
+  .pxd-dashboard__chart-cash-out { fill: none; stroke: var(--pxd-info); stroke-dasharray: 6 4; stroke-width: 2; vector-effect: non-scaling-stroke; }
   .pxd-dashboard__chart-label { fill: var(--pxd-muted); font-size: 11px; }
+
+  .pxd-dashboard__cash-boundary {
+    background: color-mix(in srgb, var(--pxd-info) 7%, var(--pxd-surface));
+    border-bottom: 1px solid var(--pxd-border);
+    color: var(--pxd-ink);
+    padding: 12px 18px;
+  }
+
+  .pxd-dashboard__cash-empty {
+    display: grid;
+    gap: 18px;
+    padding: 20px 18px;
+  }
+
+  .pxd-dashboard__cash-empty h3 { font-size: 18px; margin: 0 0 5px; }
+  .pxd-dashboard__cash-empty p { color: var(--pxd-muted); margin: 0; }
+
+  .pxd-dashboard__cash-metrics {
+    border: 1px solid var(--pxd-border);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0 0 16px;
+  }
+
+  .pxd-dashboard__cash-metrics > div {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    padding: 16px;
+  }
+
+  .pxd-dashboard__cash-metrics > div + div { border-inline-start: 1px solid var(--pxd-border); }
+  .pxd-dashboard__cash-metrics dt { color: var(--pxd-muted); font-size: 12px; font-weight: 600; }
+  .pxd-dashboard__cash-metrics dd {
+    direction: ltr;
+    font-size: clamp(20px, 2vw, 30px);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    margin: 0;
+    overflow-wrap: anywhere;
+    unicode-bidi: isolate;
+  }
+
+  .pxd-dashboard__cash-excluded {
+    color: var(--pxd-warning) !important;
+    font-size: 12px;
+    font-weight: 600;
+    margin: 12px 0 0 !important;
+  }
 
   .pxd-dashboard__quality-summary {
     border-bottom: 1px solid var(--pxd-border);
@@ -524,6 +575,8 @@ export const operationalProfitabilityDashboardStyles = `
     .pxd-dashboard__header-actions { justify-content: flex-start; }
     .pxd-dashboard__filters { grid-template-columns: 1fr; }
     .pxd-dashboard__kpis, .pxd-dashboard__secondary-grid { grid-template-columns: 1fr; }
+    .pxd-dashboard__cash-metrics { grid-template-columns: 1fr; }
+    .pxd-dashboard__cash-metrics > div + div { border-inline-start: 0; border-top: 1px solid var(--pxd-border); }
     .pxd-dashboard__kpi { border-bottom: 1px solid var(--pxd-border); border-inline-end: 0; }
     .pxd-dashboard__kpi:last-child { border-bottom: 0; }
     .pxd-dashboard__context { flex-direction: column; }

@@ -267,7 +267,7 @@ test('source and styles preserve WCAG keyboard, target, state, and RTL foundatio
     /aria-hidden="true"/,
     /<DashboardSkeleton copy=\{copy\} \/>/,
     /aria-label=\{copy\.activeFiltersLabel\}/,
-    /<bdi className=/,
+    /<bdi\s+className=/,
   ];
   requiredSourcePatterns.forEach((pattern) =>
     assert.match(componentSource, pattern),

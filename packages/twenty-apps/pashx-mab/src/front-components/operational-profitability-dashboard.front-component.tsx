@@ -47,6 +47,7 @@ import {
   type OperationalProfitabilityResult,
   type ProfitabilityBreakdownRow,
   type ProfitabilityContribution,
+  type VerifiedCashFlowResult,
 } from '../profitability/operational-profitability.types';
 
 type DashboardData = Readonly<{
@@ -80,20 +81,28 @@ const DASHBOARD_SKELETON_FILTERS = [
   'currency',
 ] as const;
 
-const DASHBOARD_SKELETON_KPIS = ['revenue', 'cost', 'profit', 'margin'] as const;
+const DASHBOARD_SKELETON_KPIS = [
+  'revenue',
+  'cost',
+  'profit',
+  'margin',
+] as const;
 
 const getSelectedOptionLabel = (
   options: readonly FilterOption[],
   selectedValue: string,
-): string => options.find(({ value }) => value === selectedValue)?.label ?? selectedValue;
+): string =>
+  options.find(({ value }) => value === selectedValue)?.label ?? selectedValue;
 
 const mergeOptions = (
   current: readonly FilterOption[],
   additions: readonly FilterOption[],
 ): readonly FilterOption[] =>
-  [...new Map([...current, ...additions].map((option) => [option.value, option])).values()].sort(
-    (left, right) => left.label.localeCompare(right.label),
-  );
+  [
+    ...new Map(
+      [...current, ...additions].map((option) => [option.value, option]),
+    ).values(),
+  ].sort((left, right) => left.label.localeCompare(right.label));
 
 const getOptionsFromBreakdown = (
   rows: readonly ProfitabilityBreakdownRow[],
@@ -123,11 +132,17 @@ const formatLocalizedComparison = (
       return copy.noPositivePriorBaseline;
     case 'PERCENT_CHANGE':
       return copy.percentChange(
-        formatSignedBasisPointValue(comparison.signedChangeBasisPoints!, 'PERCENT'),
+        formatSignedBasisPointValue(
+          comparison.signedChangeBasisPoints!,
+          'PERCENT',
+        ),
       );
     case 'POINT_CHANGE':
       return copy.pointChange(
-        formatSignedBasisPointValue(comparison.signedChangeBasisPoints!, 'POINTS'),
+        formatSignedBasisPointValue(
+          comparison.signedChangeBasisPoints!,
+          'POINTS',
+        ),
       );
   }
 };
@@ -153,15 +168,21 @@ const MetricLedger = ({
 
       return (
         <article className="pxd-dashboard__kpi" key={metric.key}>
-          <span className="pxd-dashboard__kpi-label">{copy.metricLabels[metric.key]}</span>
-          <strong className="pxd-dashboard__kpi-value pxd-dashboard__isolate">{value}</strong>
+          <span className="pxd-dashboard__kpi-label">
+            {copy.metricLabels[metric.key]}
+          </span>
+          <strong className="pxd-dashboard__kpi-value pxd-dashboard__isolate">
+            {value}
+          </strong>
           <span
             className={`pxd-dashboard__delta pxd-dashboard__delta--${comparison.direction.toLowerCase()}`}
           >
             {formatLocalizedComparison(comparison, copy)}
           </span>
           <a className="pxd-dashboard__evidence-link" href="#evidence-records">
-            {copy.contributingRecords(formatDashboardCount(metric.contributionCount, locale))}
+            {copy.contributingRecords(
+              formatDashboardCount(metric.contributionCount, locale),
+            )}
           </a>
         </article>
       );
@@ -214,15 +235,44 @@ const TrendChart = ({
           role="img"
           viewBox="0 0 640 210"
         >
-          <line className="pxd-dashboard__chart-grid" x1="0" x2="640" y1="0" y2="0" />
-          <line className="pxd-dashboard__chart-grid" x1="0" x2="640" y1="90" y2="90" />
-          <line className="pxd-dashboard__chart-grid" x1="0" x2="640" y1="180" y2="180" />
-          <polyline className="pxd-dashboard__chart-revenue" points={revenuePolyline} />
-          <polyline className="pxd-dashboard__chart-cost" points={costPolyline} />
+          <line
+            className="pxd-dashboard__chart-grid"
+            x1="0"
+            x2="640"
+            y1="0"
+            y2="0"
+          />
+          <line
+            className="pxd-dashboard__chart-grid"
+            x1="0"
+            x2="640"
+            y1="90"
+            y2="90"
+          />
+          <line
+            className="pxd-dashboard__chart-grid"
+            x1="0"
+            x2="640"
+            y1="180"
+            y2="180"
+          />
+          <polyline
+            className="pxd-dashboard__chart-revenue"
+            points={revenuePolyline}
+          />
+          <polyline
+            className="pxd-dashboard__chart-cost"
+            points={costPolyline}
+          />
           <text className="pxd-dashboard__chart-label" x="0" y="204">
             {points[0]?.period}
           </text>
-          <text className="pxd-dashboard__chart-label" textAnchor="end" x="640" y="204">
+          <text
+            className="pxd-dashboard__chart-label"
+            textAnchor="end"
+            x="640"
+            y="204"
+          >
             {points[points.length - 1]?.period}
           </text>
         </svg>
@@ -244,10 +294,18 @@ const TrendChart = ({
               {points.map((point) => (
                 <tr key={point.period}>
                   <td className="pxd-dashboard__isolate">{point.period}</td>
-                  <td data-numeric>{formatMoneyMicros(point.revenueMicros, currencyCode)}</td>
-                  <td data-numeric>{formatMoneyMicros(point.directCostMicros, currencyCode)}</td>
-                  <td data-numeric>{formatMoneyMicros(point.grossProfitMicros, currencyCode)}</td>
-                  <td data-numeric>{formatDashboardCount(point.contributionCount, locale)}</td>
+                  <td data-numeric>
+                    {formatMoneyMicros(point.revenueMicros, currencyCode)}
+                  </td>
+                  <td data-numeric>
+                    {formatMoneyMicros(point.directCostMicros, currencyCode)}
+                  </td>
+                  <td data-numeric>
+                    {formatMoneyMicros(point.grossProfitMicros, currencyCode)}
+                  </td>
+                  <td data-numeric>
+                    {formatDashboardCount(point.contributionCount, locale)}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -255,6 +313,201 @@ const TrendChart = ({
         </div>
       </details>
     </>
+  );
+};
+
+const CashFlowPanel = ({
+  cashFlow,
+  currencyCode,
+  copy,
+  locale,
+}: {
+  cashFlow: VerifiedCashFlowResult | undefined;
+  currencyCode: string;
+  copy: DashboardCopy;
+  locale: DashboardLocale;
+}) => {
+  const summary = cashFlow?.currencies.find(
+    (candidate) => candidate.currencyCode === currencyCode,
+  );
+  const points = (cashFlow?.trend ?? []).filter(
+    (point) => point.currencyCode === currencyCode,
+  );
+  const inflowValues = points.map(({ inflowMicros }) => inflowMicros);
+  const outflowValues = points.map(({ outflowMicros }) => outflowMicros);
+  const sharedDomain = [...inflowValues, ...outflowValues, BigInt(0)];
+  const inflowPolyline = getTrendPolylinePoints(
+    inflowValues,
+    640,
+    180,
+    sharedDomain,
+  );
+  const outflowPolyline = getTrendPolylinePoints(
+    outflowValues,
+    640,
+    180,
+    sharedDomain,
+  );
+  const excludedCount = cashFlow?.quality.excludedRecordCount ?? 0;
+
+  return (
+    <section className="pxd-dashboard__panel" aria-labelledby="cash-flow-title">
+      <div className="pxd-dashboard__panel-header">
+        <div>
+          <h2 className="pxd-dashboard__panel-title" id="cash-flow-title">
+            {copy.cashTitle}
+          </h2>
+          <p className="pxd-dashboard__panel-subtitle">{copy.cashSubtitle}</p>
+        </div>
+        <div className="pxd-dashboard__legend" aria-label={copy.chartLegend}>
+          <span className="pxd-dashboard__legend-item">
+            <i aria-hidden="true" className="pxd-dashboard__legend-line" />{' '}
+            {copy.cashInflow}
+          </span>
+          <span className="pxd-dashboard__legend-item">
+            <i
+              aria-hidden="true"
+              className="pxd-dashboard__legend-line pxd-dashboard__legend-line--cash-out"
+            />{' '}
+            {copy.cashOutflow}
+          </span>
+        </div>
+      </div>
+      <div className="pxd-dashboard__cash-boundary" role="note">
+        {copy.cashBoundary}
+      </div>
+
+      {summary === undefined ? (
+        <div className="pxd-dashboard__cash-empty">
+          <div>
+            <h3>{copy.cashEmptyTitle}</h3>
+            <p>{copy.cashEmptyBody}</p>
+          </div>
+          <dl className="pxd-dashboard__cash-metrics">
+            {[copy.cashInflow, copy.cashOutflow, copy.netCash].map((label) => (
+              <div key={label}>
+                <dt>{label}</dt>
+                <dd>{copy.cashNotRecorded}</dd>
+              </div>
+            ))}
+          </dl>
+          {excludedCount > 0 ? (
+            <p className="pxd-dashboard__cash-excluded">
+              {copy.cashExcluded(formatDashboardCount(excludedCount, locale))}
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <div className="pxd-dashboard__panel-body">
+          <dl className="pxd-dashboard__cash-metrics">
+            <div>
+              <dt>{copy.cashInflow}</dt>
+              <dd>{formatMoneyMicros(summary.inflowMicros, currencyCode)}</dd>
+            </div>
+            <div>
+              <dt>{copy.cashOutflow}</dt>
+              <dd>{formatMoneyMicros(summary.outflowMicros, currencyCode)}</dd>
+            </div>
+            <div>
+              <dt>{copy.netCash}</dt>
+              <dd>{formatMoneyMicros(summary.netCashMicros, currencyCode)}</dd>
+            </div>
+          </dl>
+          <div className="pxd-dashboard__chart">
+            <svg
+              aria-label={copy.cashChartAccessibleLabel(currencyCode)}
+              direction="ltr"
+              role="img"
+              viewBox="0 0 640 210"
+            >
+              <line
+                className="pxd-dashboard__chart-grid"
+                x1="0"
+                x2="640"
+                y1="0"
+                y2="0"
+              />
+              <line
+                className="pxd-dashboard__chart-grid"
+                x1="0"
+                x2="640"
+                y1="90"
+                y2="90"
+              />
+              <line
+                className="pxd-dashboard__chart-grid"
+                x1="0"
+                x2="640"
+                y1="180"
+                y2="180"
+              />
+              <polyline
+                className="pxd-dashboard__chart-revenue"
+                points={inflowPolyline}
+              />
+              <polyline
+                className="pxd-dashboard__chart-cash-out"
+                points={outflowPolyline}
+              />
+              <text className="pxd-dashboard__chart-label" x="0" y="204">
+                {points[0]?.period}
+              </text>
+              <text
+                className="pxd-dashboard__chart-label"
+                textAnchor="end"
+                x="640"
+                y="204"
+              >
+                {points[points.length - 1]?.period}
+              </text>
+            </svg>
+          </div>
+          <details className="pxd-dashboard__rules">
+            <summary>{copy.exactCashValues}</summary>
+            <div className="pxd-dashboard__table-wrap">
+              <table className="pxd-dashboard__table">
+                <thead>
+                  <tr>
+                    <th>{copy.period}</th>
+                    <th data-numeric>{copy.cashInflow}</th>
+                    <th data-numeric>{copy.cashOutflow}</th>
+                    <th data-numeric>{copy.netCash}</th>
+                    <th data-numeric>{copy.records}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {points.map((point) => (
+                    <tr key={point.period}>
+                      <td className="pxd-dashboard__isolate">{point.period}</td>
+                      <td data-numeric>
+                        {formatMoneyMicros(point.inflowMicros, currencyCode)}
+                      </td>
+                      <td data-numeric>
+                        {formatMoneyMicros(point.outflowMicros, currencyCode)}
+                      </td>
+                      <td data-numeric>
+                        {formatMoneyMicros(point.netCashMicros, currencyCode)}
+                      </td>
+                      <td data-numeric>
+                        {formatDashboardCount(
+                          point.contributionRecordIds.length,
+                          locale,
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+          {excludedCount > 0 ? (
+            <p className="pxd-dashboard__cash-excluded">
+              {copy.cashExcluded(formatDashboardCount(excludedCount, locale))}
+            </p>
+          ) : null}
+        </div>
+      )}
+    </section>
   );
 };
 
@@ -270,13 +523,21 @@ const EvidenceCoverage = ({
   const evidenceRows = getEvidenceRows(result);
 
   return (
-    <section className="pxd-dashboard__panel" aria-labelledby="evidence-coverage-title">
+    <section
+      className="pxd-dashboard__panel"
+      aria-labelledby="evidence-coverage-title"
+    >
       <div className="pxd-dashboard__panel-header">
         <div>
-          <h2 className="pxd-dashboard__panel-title" id="evidence-coverage-title">
+          <h2
+            className="pxd-dashboard__panel-title"
+            id="evidence-coverage-title"
+          >
             {copy.evidenceTitle}
           </h2>
-          <p className="pxd-dashboard__panel-subtitle">{copy.evidenceSubtitle}</p>
+          <p className="pxd-dashboard__panel-subtitle">
+            {copy.evidenceSubtitle}
+          </p>
         </div>
       </div>
       <div className="pxd-dashboard__quality-summary">
@@ -329,20 +590,37 @@ const MarginBridge = ({
   copy: DashboardCopy;
 }) => {
   const rows = [
-    { label: copy.finalizedRevenue, value: summary?.finalizedRevenueMicros ?? BigInt(0), kind: 'revenue' },
-    { label: copy.lessDirectCost, value: summary?.directCostMicros ?? BigInt(0), kind: 'cost' },
-    { label: copy.grossProfit, value: summary?.grossProfitMicros ?? BigInt(0), kind: 'profit' },
+    {
+      label: copy.finalizedRevenue,
+      value: summary?.finalizedRevenueMicros ?? BigInt(0),
+      kind: 'revenue',
+    },
+    {
+      label: copy.lessDirectCost,
+      value: summary?.directCostMicros ?? BigInt(0),
+      kind: 'cost',
+    },
+    {
+      label: copy.grossProfit,
+      value: summary?.grossProfitMicros ?? BigInt(0),
+      kind: 'profit',
+    },
   ] as const;
   const values = rows.map(({ value }) => value);
 
   return (
-    <section className="pxd-dashboard__panel" aria-labelledby="margin-bridge-title">
+    <section
+      className="pxd-dashboard__panel"
+      aria-labelledby="margin-bridge-title"
+    >
       <div className="pxd-dashboard__panel-header">
         <div>
           <h2 className="pxd-dashboard__panel-title" id="margin-bridge-title">
             {copy.marginBridgeTitle}
           </h2>
-          <p className="pxd-dashboard__panel-subtitle">{copy.marginBridgeSubtitle}</p>
+          <p className="pxd-dashboard__panel-subtitle">
+            {copy.marginBridgeSubtitle}
+          </p>
         </div>
       </div>
       <div className="pxd-dashboard__panel-body">
@@ -380,33 +658,52 @@ const RankedCases = ({
   const values = visibleRows.map(({ summary }) => summary.grossProfitMicros);
 
   return (
-    <section className="pxd-dashboard__panel" aria-labelledby="ranked-cases-title">
+    <section
+      className="pxd-dashboard__panel"
+      aria-labelledby="ranked-cases-title"
+    >
       <div className="pxd-dashboard__panel-header">
         <div>
           <h2 className="pxd-dashboard__panel-title" id="ranked-cases-title">
             {copy.rankedCasesTitle}
           </h2>
-          <p className="pxd-dashboard__panel-subtitle">{copy.rankedCasesSubtitle}</p>
+          <p className="pxd-dashboard__panel-subtitle">
+            {copy.rankedCasesSubtitle}
+          </p>
         </div>
       </div>
       <div className="pxd-dashboard__panel-body">
         {visibleRows.length === 0 ? (
-          <p className="pxd-dashboard__panel-subtitle">{copy.noCaseContributors}</p>
+          <p className="pxd-dashboard__panel-subtitle">
+            {copy.noCaseContributors}
+          </p>
         ) : (
           visibleRows.map((row) => (
-            <div className="pxd-dashboard__rank-row" key={`${row.key}-${row.summary.currencyCode}`}>
+            <div
+              className="pxd-dashboard__rank-row"
+              key={`${row.key}-${row.summary.currencyCode}`}
+            >
               <div className="pxd-dashboard__bar-label">
-                <a className="pxd-dashboard__record-link" href={`/object/procurementCase/${row.key}`} target="_top">
+                <a
+                  className="pxd-dashboard__record-link"
+                  href={`/object/procurementCase/${row.key}`}
+                  target="_top"
+                >
                   {row.label}
                 </a>
                 <span className="pxd-dashboard__bar-value pxd-dashboard__isolate">
-                  {formatMoneyMicros(row.summary.grossProfitMicros, currencyCode)}
+                  {formatMoneyMicros(
+                    row.summary.grossProfitMicros,
+                    currencyCode,
+                  )}
                 </span>
               </div>
               <div className="pxd-dashboard__bar-track">
                 <div
                   className={`pxd-dashboard__bar-fill${row.summary.grossProfitMicros < BigInt(0) ? ' pxd-dashboard__bar-fill--negative' : ''}`}
-                  style={{ width: `${getRelativeBarWidth(row.summary.grossProfitMicros, values)}%` }}
+                  style={{
+                    width: `${getRelativeBarWidth(row.summary.grossProfitMicros, values)}%`,
+                  }}
                 />
               </div>
             </div>
@@ -431,7 +728,11 @@ const EvidenceTable = ({
   const visibleContributions = contributions.slice(0, 100);
 
   return (
-    <section className="pxd-dashboard__panel" id="evidence-records" aria-labelledby="records-title">
+    <section
+      className="pxd-dashboard__panel"
+      id="evidence-records"
+      aria-labelledby="records-title"
+    >
       <div className="pxd-dashboard__panel-header">
         <div>
           <h2 className="pxd-dashboard__panel-title" id="records-title">
@@ -467,7 +768,9 @@ const EvidenceTable = ({
                   >
                     {contribution.recordName}
                   </a>
-                  <div className="pxd-dashboard__mono">{contribution.recordId}</div>
+                  <div className="pxd-dashboard__mono">
+                    {contribution.recordId}
+                  </div>
                 </td>
                 <td>{copy.contributionKinds[contribution.kind]}</td>
                 <td>
@@ -479,8 +782,15 @@ const EvidenceTable = ({
                     {contribution.caseDimension.caseName}
                   </a>
                 </td>
-                <td className="pxd-dashboard__isolate">{contribution.occurredOn}</td>
-                <td data-numeric>{formatMoneyMicros(contribution.signedAmountMicros, currencyCode)}</td>
+                <td className="pxd-dashboard__isolate">
+                  {contribution.occurredOn}
+                </td>
+                <td data-numeric>
+                  {formatMoneyMicros(
+                    contribution.signedAmountMicros,
+                    currencyCode,
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -524,7 +834,11 @@ const FilterSelect = ({
 );
 
 const DashboardSkeleton = ({ copy }: { copy: DashboardCopy }) => (
-  <section aria-live="polite" aria-label={copy.loading} className="pxd-dashboard__loading">
+  <section
+    aria-live="polite"
+    aria-label={copy.loading}
+    className="pxd-dashboard__loading"
+  >
     <p className="pxd-dashboard__loading-status">{copy.loading}</p>
     <div aria-hidden="true" className="pxd-dashboard__loading">
       <div className="pxd-dashboard__filters">
@@ -558,10 +872,15 @@ const DashboardSkeleton = ({ copy }: { copy: DashboardCopy }) => (
 );
 
 const OperationalProfitabilityDashboard = () => {
-  const defaultPeriod = useMemo(() => getDefaultDashboardPeriod(new Date()), []);
+  const defaultPeriod = useMemo(
+    () => getDefaultDashboardPeriod(new Date()),
+    [],
+  );
   const hostLocale = useLocale();
   const colorScheme = useColorScheme();
-  const [localeOverride, setLocaleOverride] = useState<DashboardLocale | null>(null);
+  const [localeOverride, setLocaleOverride] = useState<DashboardLocale | null>(
+    null,
+  );
   const locale = localeOverride ?? toDashboardLocale(hostLocale);
   const [startDate, setStartDate] = useState(defaultPeriod.startDate);
   const [endDate, setEndDate] = useState(defaultPeriod.endDate);
@@ -578,7 +897,9 @@ const OperationalProfitabilityDashboard = () => {
   const copy = operationalProfitabilityDashboardCopy[locale];
   const fontStyles = getOperationalProfitabilityDashboardFontStyles({
     sansRegular: getPublicAssetUrl('fonts/ibm-plex/IBMPlexSans-Regular.woff2'),
-    sansSemiBold: getPublicAssetUrl('fonts/ibm-plex/IBMPlexSans-SemiBold.woff2'),
+    sansSemiBold: getPublicAssetUrl(
+      'fonts/ibm-plex/IBMPlexSans-SemiBold.woff2',
+    ),
     sansArabicRegular: getPublicAssetUrl(
       'fonts/ibm-plex/IBMPlexSansArabic-Regular.woff2',
     ),
@@ -601,7 +922,14 @@ const OperationalProfitabilityDashboard = () => {
       ...(projectName === '' ? {} : { projectName }),
       ...(ownerRecordId === '' ? {} : { ownerRecordId }),
     }),
-    [caseRecordId, customerRecordId, endDate, ownerRecordId, projectName, startDate],
+    [
+      caseRecordId,
+      customerRecordId,
+      endDate,
+      ownerRecordId,
+      projectName,
+      startDate,
+    ],
   );
 
   const refresh = useCallback(async () => {
@@ -627,7 +955,9 @@ const OperationalProfitabilityDashboard = () => {
       setCurrencyCode((selected) =>
         currencies.includes(selected)
           ? selected
-          : (currencies.find((currency) => currency === 'SAR') ?? currencies[0] ?? 'SAR'),
+          : (currencies.find((currency) => currency === 'SAR') ??
+            currencies[0] ??
+            'SAR'),
       );
       setOptions((currentOptions) => ({
         cases: mergeOptions(
@@ -649,7 +979,9 @@ const OperationalProfitabilityDashboard = () => {
       }));
     } catch (loadError) {
       if (requestId.current !== activeRequest) return;
-      setError(loadError instanceof Error ? loadError.message : String(loadError));
+      setError(
+        loadError instanceof Error ? loadError.message : String(loadError),
+      );
     } finally {
       if (requestId.current === activeRequest) setLoading(false);
     }
@@ -669,14 +1001,22 @@ const OperationalProfitabilityDashboard = () => {
     setOwnerRecordId('');
   };
 
-  const currencies = data === null ? [] : getAvailableCurrencies(data.current, data.previous);
-  const currentSummary = data === null ? null : findCurrencySummary(data.current, currencyCode);
+  const currencies =
+    data === null ? [] : getAvailableCurrencies(data.current, data.previous);
+  const currentSummary =
+    data === null ? null : findCurrencySummary(data.current, currencyCode);
   const metrics =
     data === null
       ? []
-      : buildProfitabilityMetrics({ current: data.current, previous: data.previous, currencyCode });
-  const trendPoints = data === null ? [] : getTrendPoints(data.current, currencyCode);
-  const caseRows = data === null ? [] : getRankedCaseRows(data.current, currencyCode);
+      : buildProfitabilityMetrics({
+          current: data.current,
+          previous: data.previous,
+          currencyCode,
+        });
+  const trendPoints =
+    data === null ? [] : getTrendPoints(data.current, currencyCode);
+  const caseRows =
+    data === null ? [] : getRankedCaseRows(data.current, currencyCode);
   const contributions =
     data === null ? [] : getRankedContributions(data.current, currencyCode);
   const activeFilters = [
@@ -763,53 +1103,89 @@ const OperationalProfitabilityDashboard = () => {
 
       <main aria-busy={loading} className="pxd-dashboard__content">
         {loading && data === null ? null : (
-          <section className="pxd-dashboard__filters" aria-label={copy.filtersLabel}>
-          <div className="pxd-dashboard__field">
-            <label htmlFor="pxd-start-date">{copy.periodStart}</label>
-            <input
-              className="pxd-dashboard__control"
-              id="pxd-start-date"
-              onChange={(event) => setStartDate(event.target.value)}
-              type="date"
-              value={startDate}
+          <section
+            className="pxd-dashboard__filters"
+            aria-label={copy.filtersLabel}
+          >
+            <div className="pxd-dashboard__field">
+              <label htmlFor="pxd-start-date">{copy.periodStart}</label>
+              <input
+                className="pxd-dashboard__control"
+                id="pxd-start-date"
+                onChange={(event) => setStartDate(event.target.value)}
+                type="date"
+                value={startDate}
+              />
+            </div>
+            <div className="pxd-dashboard__field">
+              <label htmlFor="pxd-end-date">{copy.periodEnd}</label>
+              <input
+                className="pxd-dashboard__control"
+                id="pxd-end-date"
+                onChange={(event) => setEndDate(event.target.value)}
+                type="date"
+                value={endDate}
+              />
+            </div>
+            <FilterSelect
+              allLabel={copy.all}
+              id="pxd-case"
+              label={copy.case}
+              onChange={setCaseRecordId}
+              options={options.cases}
+              value={caseRecordId}
             />
-          </div>
-          <div className="pxd-dashboard__field">
-            <label htmlFor="pxd-end-date">{copy.periodEnd}</label>
-            <input
-              className="pxd-dashboard__control"
-              id="pxd-end-date"
-              onChange={(event) => setEndDate(event.target.value)}
-              type="date"
-              value={endDate}
+            <FilterSelect
+              allLabel={copy.all}
+              id="pxd-customer"
+              label={copy.customer}
+              onChange={setCustomerRecordId}
+              options={options.customers}
+              value={customerRecordId}
             />
-          </div>
-          <FilterSelect allLabel={copy.all} id="pxd-case" label={copy.case} onChange={setCaseRecordId} options={options.cases} value={caseRecordId} />
-          <FilterSelect allLabel={copy.all} id="pxd-customer" label={copy.customer} onChange={setCustomerRecordId} options={options.customers} value={customerRecordId} />
-          <FilterSelect allLabel={copy.all} id="pxd-project" label={copy.project} onChange={setProjectName} options={options.projects} value={projectName} />
-          <FilterSelect allLabel={copy.all} id="pxd-owner" label={copy.owner} onChange={setOwnerRecordId} options={options.owners} value={ownerRecordId} />
-          <div className="pxd-dashboard__field">
-            <label htmlFor="pxd-currency">{copy.currency}</label>
-            <select
-              className="pxd-dashboard__control pxd-dashboard__isolate"
-              disabled={currencies.length === 0}
-              id="pxd-currency"
-              onChange={(event) => setCurrencyCode(event.target.value)}
-              value={currencyCode}
-            >
-              {currencies.length === 0 ? <option value="SAR">{copy.noCurrency}</option> : null}
-              {currencies.map((currency) => (
-                <option key={currency} value={currency}>
-                  {currency}
-                </option>
-              ))}
-            </select>
-          </div>
+            <FilterSelect
+              allLabel={copy.all}
+              id="pxd-project"
+              label={copy.project}
+              onChange={setProjectName}
+              options={options.projects}
+              value={projectName}
+            />
+            <FilterSelect
+              allLabel={copy.all}
+              id="pxd-owner"
+              label={copy.owner}
+              onChange={setOwnerRecordId}
+              options={options.owners}
+              value={ownerRecordId}
+            />
+            <div className="pxd-dashboard__field">
+              <label htmlFor="pxd-currency">{copy.currency}</label>
+              <select
+                className="pxd-dashboard__control pxd-dashboard__isolate"
+                disabled={currencies.length === 0}
+                id="pxd-currency"
+                onChange={(event) => setCurrencyCode(event.target.value)}
+                value={currencyCode}
+              >
+                {currencies.length === 0 ? (
+                  <option value="SAR">{copy.noCurrency}</option>
+                ) : null}
+                {currencies.map((currency) => (
+                  <option key={currency} value={currency}>
+                    {currency}
+                  </option>
+                ))}
+              </select>
+            </div>
           </section>
         )}
 
         {data !== null ? (
-          <section className="pxd-dashboard__context" aria-label={copy.methodStrong}>
+          <section
+            className="pxd-dashboard__context"
+            aria-label={copy.methodStrong}
+          >
             <p className="pxd-dashboard__context-copy">
               <strong>{copy.methodStrong}</strong> {copy.methodBody}
             </p>
@@ -817,7 +1193,10 @@ const OperationalProfitabilityDashboard = () => {
               <span className="pxd-dashboard__as-of">
                 {copy.asOf(
                   formatDashboardDateTime(data.current.asOf, locale),
-                  formatDashboardCount(getPeriodDayCount(data.current.filters), locale),
+                  formatDashboardCount(
+                    getPeriodDayCount(data.current.filters),
+                    locale,
+                  ),
                 )}
               </span>
               <div
@@ -825,9 +1204,18 @@ const OperationalProfitabilityDashboard = () => {
                 className="pxd-dashboard__active-filters"
               >
                 {activeFilters.map((filter) => (
-                  <span className="pxd-dashboard__active-filter" key={filter.label}>
+                  <span
+                    className="pxd-dashboard__active-filter"
+                    key={filter.label}
+                  >
                     {filter.label}:{' '}
-                    <bdi className={filter.forceLeftToRight ? 'pxd-dashboard__isolate' : undefined}>
+                    <bdi
+                      className={
+                        filter.forceLeftToRight
+                          ? 'pxd-dashboard__isolate'
+                          : undefined
+                      }
+                    >
                       {filter.value}
                     </bdi>
                   </span>
@@ -843,15 +1231,17 @@ const OperationalProfitabilityDashboard = () => {
           </div>
         ) : null}
 
-        {loading && data === null ? (
-          <DashboardSkeleton copy={copy} />
-        ) : null}
+        {loading && data === null ? <DashboardSkeleton copy={copy} /> : null}
 
         {error !== null && data === null ? (
           <section className="pxd-dashboard__state" role="alert">
             <h2>{copy.errorTitle}</h2>
             <p className="pxd-dashboard__isolate">{error}</p>
-            <button className="pxd-dashboard__refresh" onClick={() => void refresh()} type="button">
+            <button
+              className="pxd-dashboard__refresh"
+              onClick={() => void refresh()}
+              type="button"
+            >
               {copy.retry}
             </button>
           </section>
@@ -861,7 +1251,11 @@ const OperationalProfitabilityDashboard = () => {
           <section className="pxd-dashboard__state">
             <h2>{copy.emptyTitle}</h2>
             <p>{copy.emptyBody}</p>
-            <button className="pxd-dashboard__refresh" onClick={resetFilters} type="button">
+            <button
+              className="pxd-dashboard__refresh"
+              onClick={resetFilters}
+              type="button"
+            >
               {copy.resetFilters}
             </button>
           </section>
@@ -872,15 +1266,33 @@ const OperationalProfitabilityDashboard = () => {
             {hasPartialEvidence(data.current) ? (
               <div className="pxd-dashboard__partial" role="status">
                 {copy.partialEvidence(
-                  formatDashboardCount(data.current.quality.excludedRecordCount, locale),
+                  formatDashboardCount(
+                    data.current.quality.excludedRecordCount,
+                    locale,
+                  ),
                 )}
               </div>
             ) : null}
 
-            <MetricLedger copy={copy} currencyCode={currencyCode} locale={locale} metrics={metrics} />
+            <MetricLedger
+              copy={copy}
+              currencyCode={currencyCode}
+              locale={locale}
+              metrics={metrics}
+            />
+
+            <CashFlowPanel
+              cashFlow={data.current.cashFlow}
+              copy={copy}
+              currencyCode={currencyCode}
+              locale={locale}
+            />
 
             <div className="pxd-dashboard__analysis-grid">
-              <section className="pxd-dashboard__panel" aria-labelledby="trend-title">
+              <section
+                className="pxd-dashboard__panel"
+                aria-labelledby="trend-title"
+              >
                 <div className="pxd-dashboard__panel-header">
                   <div>
                     <h2 className="pxd-dashboard__panel-title" id="trend-title">
@@ -890,9 +1302,15 @@ const OperationalProfitabilityDashboard = () => {
                       {copy.trendSubtitle(currencyCode)}
                     </p>
                   </div>
-                  <div className="pxd-dashboard__legend" aria-label={copy.chartLegend}>
+                  <div
+                    className="pxd-dashboard__legend"
+                    aria-label={copy.chartLegend}
+                  >
                     <span className="pxd-dashboard__legend-item">
-                      <i aria-hidden="true" className="pxd-dashboard__legend-line" />{' '}
+                      <i
+                        aria-hidden="true"
+                        className="pxd-dashboard__legend-line"
+                      />{' '}
                       {copy.chartRevenue}
                     </span>
                     <span className="pxd-dashboard__legend-item">
@@ -913,12 +1331,24 @@ const OperationalProfitabilityDashboard = () => {
                   />
                 </div>
               </section>
-              <EvidenceCoverage copy={copy} locale={locale} result={data.current} />
+              <EvidenceCoverage
+                copy={copy}
+                locale={locale}
+                result={data.current}
+              />
             </div>
 
             <div className="pxd-dashboard__secondary-grid">
-              <MarginBridge copy={copy} currencyCode={currencyCode} summary={currentSummary} />
-              <RankedCases copy={copy} currencyCode={currencyCode} rows={caseRows} />
+              <MarginBridge
+                copy={copy}
+                currencyCode={currencyCode}
+                summary={currentSummary}
+              />
+              <RankedCases
+                copy={copy}
+                currencyCode={currencyCode}
+                rows={caseRows}
+              />
             </div>
 
             <EvidenceTable
@@ -939,7 +1369,10 @@ const OperationalProfitabilityDashboard = () => {
 
             <p className="pxd-dashboard__panel-subtitle">
               {copy.includedCurrencyRecords(
-                formatDashboardCount(countVisibleCurrencyRecords(data.current, currencyCode), locale),
+                formatDashboardCount(
+                  countVisibleCurrencyRecords(data.current, currencyCode),
+                  locale,
+                ),
                 currencyCode,
               )}{' '}
               · {copy.noCurrencyConversion}.
