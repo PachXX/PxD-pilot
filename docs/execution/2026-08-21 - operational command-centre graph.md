@@ -258,3 +258,11 @@ The Codex lane's app suite now passes **133/133** in its worktree (the four stal
 failures from round 9 are resolved; the lane updated its tests with the UI rework). The lane
 has its own working dependency install; 15 uncommitted files remain (overview UI in flight).
 Supplier-RFQ host redeploy still pending (Claude lane). No new lane commits landed.
+
+### 2026-08-25 round-14 capability fail-closed verification
+
+Validation-only command probes on the staged live case `3af759e7` (vendor-order) using the
+pilot API key return `PASHX_FORBIDDEN_CAPABILITY` for both `transitions` and `delivery` — the
+capability gate fails closed live for non-operator principals, exactly as designed; no data was
+written. Stage-enforcement logic itself remains verified by the local integration suites
+(11–15, green); operator-session stage probes are part of the §10 QA (Claude lane).
