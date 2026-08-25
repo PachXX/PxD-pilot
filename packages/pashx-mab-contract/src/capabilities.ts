@@ -56,6 +56,7 @@ export const PASHX_MAB_ROLE_CAPABILITIES = {
     PASHX_MAB_CAPABILITIES.procurementIssue,
     PASHX_MAB_CAPABILITIES.deliveryRecord,
     PASHX_MAB_CAPABILITIES.approvalRequest,
+    PASHX_MAB_CAPABILITIES.approvalDecide,
     PASHX_MAB_CAPABILITIES.emailIntakeReview,
   ],
   finance: [

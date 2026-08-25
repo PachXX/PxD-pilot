@@ -239,7 +239,7 @@ test('role capability mappings are valid and least-privileged', () => {
     PASHX_MAB_ROLE_CAPABILITIES.operator.includes(
       PASHX_MAB_CAPABILITIES.approvalDecide,
     ),
-    false,
+    true,
   );
   assert.equal(
     PASHX_MAB_ROLE_CAPABILITIES.finance.includes(

@@ -76,6 +76,7 @@ export const PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS = {
     deliveryStatus: 'd0b2a56c-9f51-4a3f-b6c7-2f1c64a8d3e2',
     deliveryDueAt: 'e7a1f30d-5c24-4b77-9d58-8a2b1e6c4f09',
     supplierResponseDeadlineAt: 'cac02a45-571f-45ad-83af-413d83907b6f',
+    requiredBy: '36bd316c-02ec-4b71-887c-e505e4e6b303',
   },
   commercialDocument: {
     documentType: '6358e709-68e0-4201-a018-5280a56810da',
@@ -96,6 +97,18 @@ export const PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS = {
     approvalStatus: '30ff7914-6850-44f4-b570-aafc26319bc6',
     procurementCaseRecordId: 'a293ff99-b031-453c-a4f2-2140f67eb950',
     incurredDate: 'b4a60420-8ef5-4dfc-bba2-2e3fba6a07e7',
+  },
+  documentLine: {
+    commercialDocumentRecordId: 'ba229708-78dc-4d2a-a448-f8672cc6dae9',
+    position: '833863b2-a5b7-4d79-81ac-c36189b4dd79',
+    description: 'd7804164-b632-4074-bec2-e6a4ec3e76ed',
+    specification: 'f731fedf-37bb-4066-aa06-f6be3dbd7a31',
+    quantity: '0aa5ee3a-185c-4dbd-bf16-f539ce81d095',
+    unit: '1944b68b-97d5-45e1-a11e-62e6ed70afa6',
+    unitPriceMicros: 'aebbc257-a039-40b2-8cb4-50a115b7035f',
+    lineTotalMicros: 'f30cee9f-eb21-4070-a887-3230a8f1abd2',
+    currencyCode: '1c3abcf9-a87e-4cb6-8ee8-1e1f311ef309',
+    sourceFileReference: '7ff0a80c-56ba-40cc-b688-08bf88817b30',
   },
   cashMovement: {
     direction: '2d8d6979-c8af-4f06-95ed-6228b7220d65',
@@ -217,6 +230,7 @@ export const PASHX_MAB_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS = {
   vendorComparison: 'b4405431-752b-43ff-8c75-d1115b324dbe',
   workflowPipeline: 'd8172718-88ac-4b1f-8cd1-c521de7516b4',
   vendorDirectory: '6d4a8f2c-9e3b-4c1a-8f5d-2b7e6a4c9d31',
+  vendorPurchaseOrder: '0c56c0d5-afac-437d-8434-4d94072d36b6',
 } as const;
 
 export const PASHX_MAB_COMMAND_MENU_ITEM_UNIVERSAL_IDENTIFIERS = {
@@ -243,6 +257,9 @@ export const PASHX_MAB_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS = {
   vendorDirectory: '2c9e7d4b-5a1f-4e8c-9b3d-6f2a8c5e7b14',
   vendorDirectoryTab: '8b4f6d2a-7c3e-4a9b-8d1f-5e2c9b7a4d36',
   vendorDirectoryWidget: '3d7a9c5f-1b6e-4d2a-9c4f-8a2b6e5d1c79',
+  vendorPurchaseOrder: '1bdc9a8a-a892-4ef4-bf4d-e81ad7db2907',
+  vendorPurchaseOrderOverviewTab: '77316cec-d66b-4342-b0d4-bd868c791956',
+  vendorPurchaseOrderWidget: '66e04884-960f-497b-b8cb-ead1d32bb4a9',
 } as const;
 
 export const PASHX_MAB_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS = {
@@ -252,6 +269,7 @@ export const PASHX_MAB_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS = {
   vendorComparison: '4d87cab5-b423-47e5-ab4f-211ec7f689c1',
   workflowPipeline: 'b7b6c363-d4a0-40f1-9243-6166b3395371',
   vendorDirectory: '5e8c2b7a-4d9f-4e1b-9a3c-7f6d2a8c4e51',
+  vendorPurchaseOrder: 'f90e66d2-8039-46ec-86b4-9198c567a03e',
 } as const;
 
 export type PashxMabObjectName =

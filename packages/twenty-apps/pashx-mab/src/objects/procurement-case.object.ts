@@ -219,5 +219,15 @@ export default defineObject({
         'Authoritative deadline for supplier responses to this sourcing round.',
       icon: 'IconCalendarDue',
     },
+    {
+      universalIdentifier:
+        PASHX_MAB_FIELD_UNIVERSAL_IDENTIFIERS.procurementCase.requiredBy,
+      type: FieldType.DATE,
+      name: 'requiredBy',
+      label: 'Required by',
+      description:
+        'Deal-level commitment date. Missing renders Not recorded; never derived silently.',
+      icon: 'IconCalendarDue',
+    },
   ],
 });
