@@ -1,4 +1,5 @@
 import {
+  PASHX_MAB_CAPABILITIES,
   PASHX_MAB_WORKFLOW_DOCUMENT_RULES,
   PASHX_PURCHASE_ORDER_APPROVAL_ACTION_CODE,
   type PashxProcurementCaseStage,
@@ -83,9 +84,10 @@ const distinctNonEmpty = (values: readonly (string | null)[]): readonly string[]
   [...new Set(values.filter((value): value is string => value !== null && value.trim() !== ''))].sort();
 
 // Integer-micros line validation. Gate order is part of the frozen contract:
-// no lines, mixed currency, invalid quantity, unsafe micros, then the summed
-// total against the document total. Missing values never fabricate a number;
-// they fail closed to their explicit state.
+// no lines, mixed currency, invalid quantity, unsafe micros, per-line product
+// (quantity × unit price in integer micros), then the summed total against the
+// document total. Missing values never fabricate a number; they fail closed to
+// their explicit state.
 export const validateVendorPurchaseOrderLines = ({
   lines,
   document,
@@ -132,12 +134,35 @@ export const validateVendorPurchaseOrderLines = ({
   }
 
   const unsafeAmountPositions = lines
-    .filter((line) => !isSafeMicros(line.lineTotalMicros))
+    .filter(
+      (line) =>
+        !isSafeMicros(line.lineTotalMicros) ||
+        (line.unitPriceMicros !== null && !isSafeMicros(line.unitPriceMicros)),
+    )
     .map((line) => line.position)
     .filter((position): position is number => position !== null);
 
   if (unsafeAmountPositions.length > 0) {
     return { status: 'unsafe-amount', positions: unsafeAmountPositions };
+  }
+
+  // Per-line product gate: recompute quantity × unit price in integer micros
+  // and fail closed when it mismatches the stored line total. The stored total
+  // is trusted only if it reproduces from its own line, so a canceling pair of
+  // errors cannot escape through the sum check below.
+  const productMismatchPositions = lines
+    .filter((line) => {
+      if (line.quantity === null || !(line.quantity > 0)) return false;
+      if (line.unitPriceMicros === null) return false;
+      const product = Math.round(line.quantity * line.unitPriceMicros);
+
+      return product !== line.lineTotalMicros;
+    })
+    .map((line) => line.position)
+    .filter((position): position is number => position !== null);
+
+  if (productMismatchPositions.length > 0) {
+    return { status: 'line-product-mismatch', positions: productMismatchPositions };
   }
 
   const summedTotalMicros = lines.reduce(
@@ -284,6 +309,48 @@ export const selectApprovalPanelState = (
   }
 
   return { status: latest.status, approvalRecordId: latest.id };
+};
+
+// D5: map the current user's MAB capability flag keys to the approval actions
+// the UI may present. Admin and Operator carry both; Viewer and Evidence Agent
+// carry neither and stay read-only.
+export const resolveApprovalCapabilities = (
+  permissionFlagKeys: readonly string[],
+): Readonly<{ canRequest: boolean; canDecide: boolean }> => ({
+  canRequest: permissionFlagKeys.includes(
+    PASHX_MAB_CAPABILITIES.approvalRequest,
+  ),
+  canDecide: permissionFlagKeys.includes(PASHX_MAB_CAPABILITIES.approvalDecide),
+});
+
+// D4: the approval request identity is deterministic so a timeout retry resends
+// a byte-identical request and hits the audited idempotency replay no-op. The
+// idempotency key is stable per PO + action; the record id is a v4 UUID derived
+// from the canonical digest, so the same payload always yields the same record.
+export const buildPurchaseOrderApprovalIdempotencyKey = (
+  commercialDocumentRecordId: string,
+): string => `purchaseOrder.approval:${commercialDocumentRecordId}`;
+
+export const buildPurchaseOrderApprovalRequestRecordId = (
+  payloadDigest: string,
+): string => {
+  const hex = payloadDigest.slice(0, 32);
+  const bytes = hex.match(/.{2}/g) ?? [];
+  if (bytes.length !== 16) {
+    throw new Error('Approval payload digest must be a full SHA-256 hex string.');
+  }
+  const values = bytes.map((pair) => Number.parseInt(pair, 16));
+  values[6] = (values[6]! & 0x0f) | 0x40; // version 4
+  values[8] = (values[8]! & 0x3f) | 0x80; // RFC 4122 variant
+  const toHex = (value: number): string => value.toString(16).padStart(2, '0');
+
+  return [
+    values.slice(0, 4).map(toHex).join(''),
+    values.slice(4, 6).map(toHex).join(''),
+    values.slice(6, 8).map(toHex).join(''),
+    values.slice(8, 10).map(toHex).join(''),
+    values.slice(10).map(toHex).join(''),
+  ].join('-');
 };
 
 export const getVendorPurchaseOrderCaseHref = (caseRecordId: string): string =>

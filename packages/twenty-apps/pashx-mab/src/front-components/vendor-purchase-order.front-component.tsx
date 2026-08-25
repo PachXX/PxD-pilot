@@ -23,6 +23,8 @@ import { getPublicAssetUrl } from 'twenty-sdk/utils';
 import { loadVendorPurchaseOrder } from '../vendor-purchase-order/load-vendor-purchase-order';
 import {
   buildMabProgressRail,
+  buildPurchaseOrderApprovalIdempotencyKey,
+  buildPurchaseOrderApprovalRequestRecordId,
   buildSupplierRisk,
   buildSupportingEvidence,
   formatVendorPurchaseOrderAmount,
@@ -33,6 +35,7 @@ import {
   getVendorPurchaseOrderCaseHref,
   getVendorPurchaseOrderCompanyHref,
   getVendorPurchaseOrderDocumentHref,
+  resolveApprovalCapabilities,
   selectApprovalPanelState,
   validateVendorPurchaseOrderLines,
 } from '../vendor-purchase-order/vendor-purchase-order.model';
@@ -123,6 +126,8 @@ const describeLineValidation = (
       );
     case 'unsafe-amount':
       return copy.unsafeAmountBody(validation.positions.join(', '));
+    case 'line-product-mismatch':
+      return copy.lineProductMismatchBody(validation.positions.join(', '));
   }
 };
 
@@ -143,6 +148,10 @@ const VendorPurchaseOrder = () => {
   const [currentUserRecordId, setCurrentUserRecordId] = useState<string | null>(
     null,
   );
+  const [approvalCapabilities, setApprovalCapabilities] = useState<Readonly<{
+    canRequest: boolean;
+    canDecide: boolean;
+  }>>({ canRequest: false, canDecide: false });
   const requestId = useRef(0);
 
   const poRecordId =
@@ -173,15 +182,36 @@ const VendorPurchaseOrder = () => {
     void (async () => {
       try {
         const identity = (await new MetadataApiClient().query({
-          currentUser: { workspaceMember: { id: true } },
+          currentUser: {
+            workspaceMember: {
+              id: true,
+              roles: { permissionFlags: { flag: true } },
+            },
+          },
         })) as {
-          currentUser?: { workspaceMember?: { id?: string } | null };
+          currentUser?: {
+            workspaceMember?: {
+              id?: string;
+              roles?: readonly {
+                permissionFlags?: readonly { flag?: string }[];
+              }[];
+            } | null;
+          };
         };
-        setCurrentUserRecordId(
-          identity.currentUser?.workspaceMember?.id ?? null,
-        );
+        const member = identity.currentUser?.workspaceMember;
+        const flags =
+          member?.roles?.flatMap(
+            (role) =>
+              role.permissionFlags
+                ?.map((permissionFlag) => permissionFlag.flag)
+                .filter((flag): flag is string => typeof flag === 'string') ??
+              [],
+          ) ?? [];
+        setCurrentUserRecordId(member?.id ?? null);
+        setApprovalCapabilities(resolveApprovalCapabilities(flags));
       } catch {
         setCurrentUserRecordId(null);
+        setApprovalCapabilities({ canRequest: false, canDecide: false });
       }
     })();
   }, []);
@@ -254,6 +284,7 @@ const VendorPurchaseOrder = () => {
     );
 
   const canRequest =
+    approvalCapabilities.canRequest &&
     document !== null &&
     document.procurementCaseRecordId !== null &&
     document.aggregateVersion !== null &&
@@ -311,8 +342,8 @@ const VendorPurchaseOrder = () => {
     });
     const request = {
       contractVersion: PASHX_MAB_CONTRACT_VERSION,
-      approvalRequestRecordId: createUuid(),
-      idempotencyKey: createUuid(),
+      approvalRequestRecordId: buildPurchaseOrderApprovalRequestRecordId(digest),
+      idempotencyKey: buildPurchaseOrderApprovalIdempotencyKey(document.id),
       name: 'Vendor purchase order approval',
       requestedActionCode: PASHX_PURCHASE_ORDER_APPROVAL_ACTION_CODE,
       payloadDigest: digest,
@@ -590,13 +621,13 @@ const VendorPurchaseOrder = () => {
                       <table className="pxd-vpo__table">
                         <thead>
                           <tr>
-                            <th scope="col" data-numeric>{copy.positionLabel}</th>
+                            <th scope="col" data-numeric className="pxd-vpo__table-num">{copy.positionLabel}</th>
                             <th scope="col">{copy.descriptionLabel}</th>
                             <th scope="col">{copy.specificationLabel}</th>
-                            <th scope="col" data-numeric>{copy.quantityLabel}</th>
+                            <th scope="col" data-numeric className="pxd-vpo__table-num">{copy.quantityLabel}</th>
                             <th scope="col">{copy.unitLabel}</th>
-                            <th scope="col" data-numeric>{copy.unitPriceLabel}</th>
-                            <th scope="col" data-numeric>{copy.lineTotalLabel}</th>
+                            <th scope="col" data-numeric className="pxd-vpo__table-num">{copy.unitPriceLabel}</th>
+                            <th scope="col" data-numeric className="pxd-vpo__table-num">{copy.lineTotalLabel}</th>
                             <th scope="col">
                               <span className="pxd-vpo__sr-only">{copy.sourceLabel}</span>
                             </th>
@@ -605,7 +636,7 @@ const VendorPurchaseOrder = () => {
                         <tbody>
                           {lines.map((line) => (
                             <tr key={line.id}>
-                              <td data-numeric>
+                              <td data-numeric className="pxd-vpo__table-num">
                                 {line.position === null
                                   ? copy.notRecorded
                                   : line.position}
@@ -624,7 +655,7 @@ const VendorPurchaseOrder = () => {
                                   <bdi className="pxd-vpo__isolate">{line.specification}</bdi>
                                 )}
                               </td>
-                              <td data-numeric>
+                              <td data-numeric className="pxd-vpo__table-num">
                                 <bdi>{formatVendorPurchaseOrderQuantity(line.quantity, locale)}</bdi>
                               </td>
                               <td>
@@ -634,10 +665,10 @@ const VendorPurchaseOrder = () => {
                                   <bdi className="pxd-vpo__isolate">{line.unit}</bdi>
                                 )}
                               </td>
-                              <td data-numeric>
+                              <td data-numeric className="pxd-vpo__table-num">
                                 <bdi>{formatVendorPurchaseOrderAmount(line.unitPriceMicros, line.currencyCode, locale)}</bdi>
                               </td>
-                              <td data-numeric>
+                              <td data-numeric className="pxd-vpo__table-num">
                                 <bdi>{formatVendorPurchaseOrderAmount(line.lineTotalMicros, line.currencyCode, locale)}</bdi>
                               </td>
                               <td>
@@ -712,14 +743,18 @@ const VendorPurchaseOrder = () => {
                   {approvalState.status === 'no-request' ? (
                     <>
                       <p className="pxd-vpo__muted">{copy.noRequest}</p>
-                      <button
-                        className="pxd-vpo__button pxd-vpo__button--primary"
-                        disabled={!canRequest}
-                        onClick={() => void requestApproval()}
-                        type="button"
-                      >
-                        {approvalSubmitting ? copy.requesting : copy.requestApproval}
-                      </button>
+                      {approvalCapabilities.canRequest ? (
+                        <button
+                          className="pxd-vpo__button pxd-vpo__button--primary"
+                          disabled={!canRequest}
+                          onClick={() => void requestApproval()}
+                          type="button"
+                        >
+                          {approvalSubmitting ? copy.requesting : copy.requestApproval}
+                        </button>
+                      ) : (
+                        <p className="pxd-vpo__muted">{copy.readOnlyApproval}</p>
+                      )}
                     </>
                   ) : (
                     <dl className="pxd-vpo__detail">
@@ -786,16 +821,20 @@ const VendorPurchaseOrder = () => {
                     isRequester ? (
                       <>
                         <p className="pxd-vpo__muted">{copy.selfDecisionBlocked}</p>
-                        <button
-                          className="pxd-vpo__button pxd-vpo__button--danger"
-                          disabled={approvalSubmitting}
-                          onClick={() => void decideApproval('CANCEL')}
-                          type="button"
-                        >
-                          {approvalSubmitting ? copy.deciding : copy.cancelApproval}
-                        </button>
+                        {approvalCapabilities.canRequest ? (
+                          <button
+                            className="pxd-vpo__button pxd-vpo__button--danger"
+                            disabled={approvalSubmitting}
+                            onClick={() => void decideApproval('CANCEL')}
+                            type="button"
+                          >
+                            {approvalSubmitting ? copy.deciding : copy.cancelApproval}
+                          </button>
+                        ) : (
+                          <p className="pxd-vpo__muted">{copy.readOnlyApproval}</p>
+                        )}
                       </>
-                    ) : (
+                    ) : approvalCapabilities.canDecide ? (
                       <>
                         <label htmlFor="pxd-vpo-approval-note">{copy.decisionNoteLabel}</label>
                         <textarea
@@ -824,6 +863,8 @@ const VendorPurchaseOrder = () => {
                           </button>
                         </div>
                       </>
+                    ) : (
+                      <p className="pxd-vpo__muted">{copy.readOnlyApproval}</p>
                     )
                   ) : null}
                   {approvalStatusMessage !== '' ? (

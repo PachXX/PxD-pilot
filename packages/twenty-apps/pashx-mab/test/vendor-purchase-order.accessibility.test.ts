@@ -84,7 +84,7 @@ test('English and Arabic copy are exhaustive, meaningful and structurally equal'
   for (const locale of ['en', 'ar'] as const) {
     const copy = vendorPurchaseOrderCopy[locale];
     assertCopyValueComplete(copy, locale);
-    assert.equal(copy.formulaSteps.length, 5);
+    assert.equal(copy.formulaSteps.length, 6);
     assert.equal(new Set(copy.formulaSteps).size, copy.formulaSteps.length);
     assert.equal(Object.keys(copy.stepLabels).length, 7);
     assert.deepEqual(

@@ -5,6 +5,7 @@ import test from 'node:test';
 import {
   PASHX_PURCHASE_ORDER_APPROVAL_ACTION_CODE,
   buildPurchaseOrderApprovalPayloadDigest,
+  isPurchaseOrderApprovalDecisionAuthorized,
   serializePurchaseOrderApprovalPayload,
   validatePurchaseOrderApprovalPayload,
 } from '../dist/index.js';
@@ -100,5 +101,61 @@ test('payload validation rejects malformed fields without throwing', () => {
         'currencyCode',
       ],
     },
+  );
+});
+
+test('D5 decision authorization forbids the requester approving or rejecting their own request', () => {
+  const requester = '33333333-3333-4333-8333-333333333333';
+  const approver = '44444444-4444-4444-8444-444444444444';
+
+  // Requester may never approve or reject their own request, even when unassigned.
+  assert.equal(
+    isPurchaseOrderApprovalDecisionAuthorized({
+      requesterRecordId: requester,
+      approverRecordId: null,
+      actorRecordId: requester,
+      decision: 'APPROVE',
+    }),
+    false,
+  );
+  assert.equal(
+    isPurchaseOrderApprovalDecisionAuthorized({
+      requesterRecordId: requester,
+      approverRecordId: requester,
+      actorRecordId: requester,
+      decision: 'REJECT',
+    }),
+    false,
+  );
+
+  // Requester may cancel their own request.
+  assert.equal(
+    isPurchaseOrderApprovalDecisionAuthorized({
+      requesterRecordId: requester,
+      approverRecordId: null,
+      actorRecordId: requester,
+      decision: 'CANCEL',
+    }),
+    true,
+  );
+
+  // The assigned approver is the only other actor who may decide.
+  assert.equal(
+    isPurchaseOrderApprovalDecisionAuthorized({
+      requesterRecordId: requester,
+      approverRecordId: approver,
+      actorRecordId: approver,
+      decision: 'APPROVE',
+    }),
+    true,
+  );
+  assert.equal(
+    isPurchaseOrderApprovalDecisionAuthorized({
+      requesterRecordId: requester,
+      approverRecordId: approver,
+      actorRecordId: requester,
+      decision: 'APPROVE',
+    }),
+    false,
   );
 });

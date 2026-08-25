@@ -68,6 +68,7 @@ export type VendorPurchaseOrderCopy = Readonly<{
   mixedCurrencyBody: (currencies: string) => string;
   mismatchedTotalBody: (expected: string, summed: string) => string;
   unsafeAmountBody: (positions: string) => string;
+  lineProductMismatchBody: (positions: string) => string;
   supplierTitle: string;
   supplierDescription: string;
   crLabel: string;
@@ -78,6 +79,7 @@ export type VendorPurchaseOrderCopy = Readonly<{
   riskBody: string;
   approvalTitle: string;
   approvalDescription: string;
+  readOnlyApproval: string;
   noRequest: string;
   requesterLabel: string;
   approverLabel: string;
@@ -197,6 +199,8 @@ export const vendorPurchaseOrderCopy: Readonly<
       `The line totals sum to ${summed} but the document total is ${expected}.`,
     unsafeAmountBody: (positions) =>
       `One or more lines carry an unsafe amount (positions ${positions}).`,
+    lineProductMismatchBody: (positions) =>
+      `One or more line totals do not equal quantity × unit price (positions ${positions}).`,
     supplierTitle: 'Supplier identity and compliance',
     supplierDescription:
       'Stored CR and VAT with a native drill-through; risk is never inferred from company presence.',
@@ -210,6 +214,7 @@ export const vendorPurchaseOrderCopy: Readonly<
     approvalTitle: 'Human approval',
     approvalDescription:
       'Approval decisions go through the audited command boundary; the requester may not approve their own request.',
+    readOnlyApproval: 'Your role is read-only for purchase-order approvals.',
     noRequest: 'No approval request recorded for this order.',
     requesterLabel: 'Requester',
     approverLabel: 'Approver',
@@ -255,6 +260,7 @@ export const vendorPurchaseOrderCopy: Readonly<
       'All lines and the document must share one currency.',
       'Every quantity must be greater than zero.',
       'Every line total must be a safe integer number of micros.',
+      'Every line total must equal quantity × unit price in integer micros.',
       'The summed line totals must equal the document total.',
     ],
     stages: {
@@ -358,6 +364,8 @@ export const vendorPurchaseOrderCopy: Readonly<
       `مجموع إجماليات البنود ${summed} بينما إجمالي المستند ${expected}.`,
     unsafeAmountBody: (positions) =>
       `يحمل بند أو أكثر مبلغاً غير آمن (المواضع ${positions}).`,
+    lineProductMismatchBody: (positions) =>
+      `لا يساوي إجمالي بند أو أكثر الكمية × سعر الوحدة (المواضع ${positions}).`,
     supplierTitle: 'هوية المورد والامتثال',
     supplierDescription:
       'السجل التجاري والرقم الضريبي المخزّنان مع فتح السجل الأصلي؛ ولا تُستنتج المخاطر من وجود الشركة.',
@@ -371,6 +379,7 @@ export const vendorPurchaseOrderCopy: Readonly<
     approvalTitle: 'الاعتماد البشري',
     approvalDescription:
       'تحدث قرارات الاعتماد عبر حدود الأوامر الموثقة؛ ولا يجوز لطالب الاعتماد اعتماد طلبه.',
+    readOnlyApproval: 'دورك للقراءة فقط بالنسبة لاعتمادات أوامر الشراء.',
     noRequest: 'لا يوجد طلب اعتماد مسجل لهذا الطلب.',
     requesterLabel: 'الطالب',
     approverLabel: 'المعتمد',
@@ -415,6 +424,7 @@ export const vendorPurchaseOrderCopy: Readonly<
       'يجب أن تشترك البنود والمستند في عملة واحدة.',
       'يجب أن تكون كل كمية أكبر من صفر.',
       'يجب أن يكون إجمالي كل بند عدداً صحيحاً وآمناً من الميكرو.',
+      'يجب أن يساوي إجمالي كل بند الكمية × سعر الوحدة بالميكرو الصحيح.',
       'يجب أن يساوي مجموع إجماليات البنود إجمالي المستند.',
     ],
     stages: {

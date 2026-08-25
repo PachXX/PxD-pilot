@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import {
   approvalStatusForDecision,
+  isPurchaseOrderApprovalDecisionAuthorized,
   PASHX_COMMAND_EXCEPTION_CODES,
   type PashxApprovalCommandResult,
   type PashxCommandName,
@@ -203,29 +204,20 @@ export class PashxApprovalCommandService {
             2,
           );
         }
-        if (request.decision === 'CANCEL') {
-          if (approval.requesterRecordId !== actorRecordId) {
-            throw new PashxMabException(
-              PASHX_COMMAND_EXCEPTION_CODES.forbiddenCapability,
-            );
-          }
-        } else {
-          // Assigned-approver enforcement: the requester may never decide their
-          // own request, and when an approver is assigned only that approver
-          // may decide. Both fail closed with no partial write.
-          if (approval.requesterRecordId === actorRecordId) {
-            throw new PashxMabException(
-              PASHX_COMMAND_EXCEPTION_CODES.forbiddenCapability,
-            );
-          }
-          if (
-            approval.approverRecordId !== null &&
-            approval.approverRecordId !== actorRecordId
-          ) {
-            throw new PashxMabException(
-              PASHX_COMMAND_EXCEPTION_CODES.forbiddenCapability,
-            );
-          }
+        // D5 assigned-approver enforcement comes from the frozen contract
+        // predicate so the enforcing service and the contract test agree.
+        // Unauthorized actors fail closed with no partial write.
+        if (
+          !isPurchaseOrderApprovalDecisionAuthorized({
+            requesterRecordId: approval.requesterRecordId,
+            approverRecordId: approval.approverRecordId,
+            actorRecordId,
+            decision: request.decision,
+          })
+        ) {
+          throw new PashxMabException(
+            PASHX_COMMAND_EXCEPTION_CODES.forbiddenCapability,
+          );
         }
 
         const status = approvalStatusForDecision(request.decision);

@@ -116,7 +116,11 @@ export type VendorPurchaseOrderLineValidation =
       expectedTotalMicros: number;
       summedTotalMicros: number;
     }>
-  | Readonly<{ status: 'unsafe-amount'; positions: readonly number[] }>;
+  | Readonly<{ status: 'unsafe-amount'; positions: readonly number[] }>
+  | Readonly<{
+      status: 'line-product-mismatch';
+      positions: readonly number[];
+    }>;
 
 export type SupportingEvidenceKind =
   | 'internalApproval'
