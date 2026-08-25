@@ -111,3 +111,32 @@ export const approvalStatusForDecision = (
       return 'CANCELLED';
   }
 };
+
+export type PashxApprovalDecisionAuthorization = Readonly<{
+  requesterRecordId: string;
+  approverRecordId: string | null;
+  actorRecordId: string;
+  decision: PashxDecideApprovalRequest['decision'];
+}>;
+
+// D5 assigned-approver enforcement, expressed as a pure contract predicate so
+// the enforcing service and its contract test agree without shared runtime
+// state. The requester may cancel their own request but may never approve or
+// reject it; an assigned approver, when present, is the only other actor who
+// may decide.
+export const isPurchaseOrderApprovalDecisionAuthorized = ({
+  requesterRecordId,
+  approverRecordId,
+  actorRecordId,
+  decision,
+}: PashxApprovalDecisionAuthorization): boolean => {
+  if (decision === 'CANCEL') {
+    return requesterRecordId === actorRecordId;
+  }
+
+  if (requesterRecordId === actorRecordId) {
+    return false;
+  }
+
+  return approverRecordId === null || approverRecordId === actorRecordId;
+};
