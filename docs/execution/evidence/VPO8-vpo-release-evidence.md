@@ -41,10 +41,30 @@
 
 ## Rollback
 
-- Rollback target: app `0.2.16` (previous installed version)
-- Rollback procedure: `twenty app:install -r pashx-pilot` with the 0.2.16 tarball, or `app:uninstall` + reinstall
-- Rollback test result: not executed (release verified healthy)
-- Post-rollback health + page behavior: n/a
+- Rollback target: app `0.2.16` (previous installed version); host image = prior
+  digest of `me-central1-docker.pkg.dev/pashx-mab-pilot/pashx-mab-images/twenty-pashx`
+  (the image tag replaced by this release window is
+  `twenty-pashx:company-identity-20260826`; prior digests are listed with
+  `gcloud artifacts docker images list ... --include-tags --sort-by=~CREATE_TIME`)
+- Rollback procedure:
+  - **App-level** — the platform keeps no versioned app registry: `app:install`
+    installs the latest deployed package only, and `app:publish` rejects versions
+    not higher than the currently deployed one, so a downgrade publish to 0.2.16 is
+    blocked by design. App rollback therefore means (a) publish a corrective
+    version (e.g. 0.2.18) and install it, or (b) `app:uninstall` +
+    reinstall, then re-verify the metadata relations listed above.
+  - **Host-level** — `deploy/pashx-mab/deploy.sh <PREVIOUS_IMAGE@sha256:...>`
+    (runbook A, ~10 min) then `curl https://mab.pashx.com/healthz`; re-run the VPO
+    smoke path before declaring recovery. See
+    `docs/operations/pashx-mab-gcp/runbook-rollback.md`.
+- Rollback test result: **not executed as a live drill** — the platform has no
+  versioned app registry and the downgrade publish is rejected by the version
+  guard, so a clean 0.2.16 re-install drill is not possible without a corrective
+  publish. Recorded honestly rather than implying a drill that did not run.
+- Post-rollback health + page behavior: n/a (no drill executed).
+- Rollback trigger review: healthz 200, 8/8 components registered, checksum
+  match, no alert fired during or after the release — no rollback condition met.
+
 
 ## Risks
 
