@@ -29,6 +29,20 @@ const VALID_RELATION_TYPES: string[] = [
 
 const RAW_AGGREGATE_FIELD_METADATA_ID_KEY = 'aggregateFieldMetadataId';
 
+const SERVER_RESERVED_CUSTOM_OBJECT_FIELD_NAMES = new Set([
+  'id',
+  'createdAt',
+  'createdBy',
+  'deletedAt',
+  'position',
+  'updatedAt',
+  'updatedBy',
+]);
+
+const SERVER_REJECTED_CUSTOM_FIELD_TYPES = new Set<FieldMetadataType>([
+  FieldMetadataType.NUMERIC,
+]);
+
 type GraphPageLayoutWidgetUniversalConfiguration = Extract<
   PageLayoutWidgetUniversalConfiguration,
   { configurationType: GraphWidgetConfigurationType }
@@ -132,6 +146,29 @@ const validateRelationFields = (
 
   return errors;
 };
+
+const validateServerInstallFieldConstraints = (
+  manifest: Pick<Manifest, 'objects'>,
+): string[] =>
+  manifest.objects.flatMap((object) =>
+    object.fields.flatMap((field) => {
+      const errors: string[] = [];
+
+      if (SERVER_REJECTED_CUSTOM_FIELD_TYPES.has(field.type)) {
+        errors.push(
+          `Custom object "${object.nameSingular}" field "${field.name}" uses server-rejected type ${field.type}. Use NUMBER instead.`,
+        );
+      }
+
+      if (SERVER_RESERVED_CUSTOM_OBJECT_FIELD_NAMES.has(field.name)) {
+        errors.push(
+          `Custom object "${object.nameSingular}" declares server-reserved field name "${field.name}".`,
+        );
+      }
+
+      return errors;
+    }),
+  );
 
 const collectPageLayoutWidgets = (
   manifest: Pick<Manifest, 'pageLayouts' | 'pageLayoutTabs'>,
@@ -237,6 +274,8 @@ export const manifestValidate = (manifest: Manifest) => {
   ];
 
   errors.push(...validateRelationFields(allFields));
+
+  errors.push(...validateServerInstallFieldConstraints(manifest));
 
   errors.push(...validateGraphWidgets(collectPageLayoutWidgets(manifest)));
 

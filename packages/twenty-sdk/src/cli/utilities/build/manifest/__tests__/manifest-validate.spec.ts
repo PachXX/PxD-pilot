@@ -50,6 +50,58 @@ const validManifest: Manifest = {
 };
 
 describe('manifestValidate', () => {
+  describe('server install field constraints', () => {
+    const manifestWithObjectField = (field: FieldManifest): Manifest => ({
+      ...validManifest,
+      objects: [
+        {
+          universalIdentifier: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+          nameSingular: 'lineItem',
+          namePlural: 'lineItems',
+          labelSingular: 'Line item',
+          labelPlural: 'Line items',
+          labelIdentifierFieldMetadataUniversalIdentifier:
+            field.universalIdentifier,
+          fields: [field],
+        },
+      ],
+    });
+
+    it('rejects NUMERIC before the server install step', () => {
+      const result = manifestValidate(
+        manifestWithObjectField({
+          objectUniversalIdentifier: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+          universalIdentifier: '550e8400-e29b-41d4-a716-446655440060',
+          type: FieldMetadataType.NUMERIC,
+          name: 'quantity',
+          label: 'Quantity',
+        }),
+      );
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain(
+        'Custom object "lineItem" field "quantity" uses server-rejected type NUMERIC. Use NUMBER instead.',
+      );
+    });
+
+    it('rejects position before the server install step', () => {
+      const result = manifestValidate(
+        manifestWithObjectField({
+          objectUniversalIdentifier: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+          universalIdentifier: '550e8400-e29b-41d4-a716-446655440061',
+          type: FieldMetadataType.NUMBER,
+          name: 'position',
+          label: 'Position',
+        }),
+      );
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain(
+        'Custom object "lineItem" declares server-reserved field name "position".',
+      );
+    });
+  });
+
   describe('valid object extensions', () => {
     it('should pass validation with valid object extension by nameSingular', () => {
       const result = manifestValidate({

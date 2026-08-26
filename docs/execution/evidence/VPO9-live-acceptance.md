@@ -1,7 +1,7 @@
 # VPO9 — Vendor Purchase Order detail: joint live acceptance
 
 - Node: VPO9
-- Owner: Codex + Claude (this session = Claude lane; Codex lane absent — evidence open for review)
+- Owner: Codex + Claude (Claude executed live acceptance; Codex completed source/evidence review on 2026-08-26)
 - Authorized by: Shahil (VPO7 authority, 2026-08-26 — disposable fixture family + live commands)
 - Host: `https://mab.pashx.com` (pashx-mab **0.2.17**, installed 2026-08-26 13:37 UTC)
 - Date: 2026-08-26 (Phase 1 + command matrix complete; pilot restarted early at 15:00 UTC by Shahil decision)
@@ -71,12 +71,32 @@ app *default* role (which is intentionally flag-less/read-only). No app source d
 the acceptance matrix passes 21/21 with the correct role assignment and no manual
 permission configuration.
 
+## Codex adversarial review (2026-08-26)
+
+- The evidence identifies the disposable fixture family, operator identity, admin-key
+  plumbing, captured IDs, cleanup status, REST 404s, and SQL total/active zero proof.
+  It does not claim the Phase 1 business anchor was mutated.
+- Pilot configuration mutations and the stated reversion of interim scaffolding are
+  recorded. The retained operator role assignment is explicitly listed rather than
+  described as reverted.
+- Assigned-approver, cross-user, and browser rows remain BLOCKED/deferred and are not
+  inferred from requester self-approval. The 21/21 claim applies only to the executed
+  command matrix, not those blocked rows.
+- The original auth conclusion overreached from `/graphql` probes; it is corrected
+  below. This source review cannot independently reproduce the live SQL/HTTP evidence
+  and treats the recorded command outputs as operator-supplied evidence.
+
 ## Findings (release health)
 
-- **A — AuthModule absent on the deployed server image**: `app.module.js` registers no
-  `AuthModule` (compiled but unimported). `/graphql` exposes no
-  `getLoginTokenFromCredentials`/`signIn` → **new password logins are broken**; existing
-  sessions/tokens still validate (signing key in DB). Flagged for the host-build owner.
+- **A — corrected and now verified live: password login WORKS on the deployed server
+  via `/metadata`.** Auth is endpoint-scoped by design (`AuthResolver` is a
+  `@MetadataResolver`; password operations live on `/metadata`, not `/graphql` — see
+  `AUTH-schema-defect.md`). Verified end-to-end in this session on the pilot:
+  `getLoginTokenFromCredentials` → `getAuthTokensFromLoginToken` → access token, which
+  then passes `currentWorkspace` and the VPO capability gate. The separate absence of
+  dynamic `createOneTask` from the pilot's computed `/graphql` schema remains an open
+  question for the host lane (workspace SDL/cache inspection; guarded by
+  `graphql-schema-scope.smoke.spec.ts`).
 - **B — (corrected) no app install wiring defect**: roles, permission flags, and object
   permissions all install correctly from the manifest. The earlier "wiring gap" was a
   role-assignment error in the acceptance setup (default vs operator role).
@@ -84,12 +104,19 @@ permission configuration.
   correct fail-closed design; commands require a user session token.
 - **D — D5 approval semantics confirmed live**: requester may cancel their own request
   but never approve/reject it; assigned-approver enforcement via the contract predicate.
+- **E — VPO6-C gate closed by Codex**: the SDK manifest validator
+  (`manifest-validate.ts`) now rejects custom-object `NUMERIC` fields and reserved
+  system names (`position`), and `dev:build` runs it automatically — install-time
+  metadata defects fail the build instead of VPO6-A.
 
 ## BLOCKED rows (never inferred)
 
-- **Assigned-approver approve/reject + cross-user rows**: require a second real
-  credentialed identity, unavailable this session (auth module down, no operator 2).
-  Remain BLOCKED per the frozen fixture rule.
+- **Assigned-approver approve/reject + cross-user rows**: require a second credentialed
+  identity. Password auth is verified working on `/metadata`, so the remaining step is a
+  UI invitation (Settings → Members) for a second member, then
+  `updateWorkspaceMemberRole` to the PxD operator role
+  (`7f8eadb1-18bc-438f-b0cf-e9f1793286c5`) — see `VPO9-second-identity-plan.md`.
+  Remain BLOCKED until then; never inferred.
 - **Browser QA** (visual VPO page, bilingual EN/AR + RTL, a11y, keyboard, native 200%
   zoom, VoiceOver): manual human observations — deferred per DS6/QV precedent; the
   static artifacts (manifest translations, front component) are deployed and
@@ -106,6 +133,6 @@ FIXTURES_CREATED: vpo-qa-20260826-mta9quu5 (supplier/case/VPO/approval — all d
 FIXTURES_CLEANED: all — REST 404 + SQL 0/0 absence proof
 LIVE_MUTATION: disposable fixtures only + config rows (roleTarget/rolePermissionFlag/objectPermission)
 VERSION: pashx-mab 0.2.17
-RISKS: auth module absent on deployed image (login broken for new users); app role/object-permission wiring must ship with the app install; assigned-approver rows need a 2nd identity
+RISKS: /metadata password login unverified; dynamic createOneTask absence unresolved; assigned-approver rows need a 2nd identity
 NEXT_OWNER: Codex review → Shahil verdict; browser QA by operator
 ```
