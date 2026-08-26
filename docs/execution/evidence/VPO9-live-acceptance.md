@@ -1,16 +1,13 @@
-# VPO9 — Vendor Purchase Order detail: joint live acceptance (in progress)
+# VPO9 — Vendor Purchase Order detail: joint live acceptance
 
 - Node: VPO9
-- Owner: Codex + Claude (this session = Claude lane; Codex lane absent)
+- Owner: Codex + Claude (this session = Claude lane; Codex lane absent — evidence open for review)
 - Authorized by: Shahil (VPO7 authority, 2026-08-26 — disposable fixture family + live commands)
 - Host: `https://mab.pashx.com` (pashx-mab **0.2.17**, installed 2026-08-26 13:37 UTC)
-- Date: 2026-08-26 (started); **paused by the scheduled pilot shutdown 18:00 Asia/Riyadh**
-- Status: **PARTIAL — Phase 1 complete; Phase 2 command matrix started and blocked on a
-  permission finding; resume 2026-08-27 05:00 UTC (08:00 Riyadh)**
+- Date: 2026-08-26 (Phase 1 + command matrix complete; pilot restarted early at 15:00 UTC by Shahil decision)
+- Status: **Phase 1 PASS; command matrix 21/21 PASS; assigned-approver/cross-user + browser QA BLOCKED/deferred**
 
-## Phase 1 — read-only anchor verification (COMPLETE, no mutations)
-
-Real acceptance anchor `MAB-PO-2026-4141` verified through the live GraphQL API:
+## Phase 1 — read-only anchor verification (PASS, no mutations)
 
 | Field | Value |
 |---|---|
@@ -19,104 +16,96 @@ Real acceptance anchor `MAB-PO-2026-4141` verified through the live GraphQL API:
 | issueDate / aggregateVersion | `2026-06-06` / `1` |
 | Case | `MAB-META-MAB-PO-2026-4141` (`3af759e7-1f3e-4c95-bab9-cba2be038f87`) |
 | Supplier | `DBMS Steel and Metal Solution Trading Company` (`9f4fe842-3e73-4067-b4f4-3dc125240c0b`) |
-| Structured lines | **0** — the 27 real source lines are correctly NOT imported (human-reviewed
-  correction-ledger gate). The page must and does render the honest **Not recorded** line state. |
+| Structured lines | **0** — the 27 real lines are correctly gated behind the human-reviewed
+  correction ledger; the page renders the honest **Not recorded** state. |
 
-The recorded source evidence (27 lines, subtotal SAR 110,908.00, VAT SAR 16,636.20,
-total SAR 127,544.20) cannot be re-validated from the API because the lines are gated —
-consistent with the frozen contract; the source document link remains the authority.
+## Phase 2 — disposable fixture command matrix (21/21 PASS)
 
-## Phase 2 — disposable fixture command matrix (PARTIAL)
-
-Run id: `vpo-qa-20260826-mta7ubbz` (first aborted run `…mta6vmbc` cleaned up).
+Final run id: `vpo-qa-20260826-mta9quu5`. Fixture family: supplier
+`970731b5-ed2a-48aa-83df-ea35ee0d4128`, case `c7379824-bc81-4430-9c75-8f83788ec7ca`,
+VPO `4ff6156a-69af-45c9-bd60-d12a2f897046` (`MAB-VPO-2026-0063`), approval
+`d43ed86d-79d0-4da7-94fc-de1119230476`. Operator identity:
+`pashx-operator@pashx-mab.invalid` (minted user ACCESS token). Fixture plumbing
+(supplier/case CRUD + cleanup) used the workspace admin API key.
 
 | # | Check | Result |
 |---|---|---|
-| F1 | no-auth fails closed (HTTP 403) | **PASS** |
-| F2 | create disposable supplier (fixture) | **PASS** (201) |
-| F3 | create disposable case (fixture) | **PASS** (201) |
-| F4 | create VPO via audited command (draft) | **FAIL → root cause found** |
-| F5–F10 | idempotency / CAS / validation / approval / read model | not run (blocked) |
-| C1–C2 | cleanup + absence proof | not run (blocked) |
+| F1 | no-auth fails closed | **PASS** (403) |
+| F2 | create disposable supplier | **PASS** (201) |
+| F3 | create disposable case | **PASS** (201, aggregateVersion 0) |
+| F4 | VPO create via audited command → draft, documentNumber | **PASS** (`MAB-VPO-2026-0063`, v1) |
+| F5 | idempotent replay — same key, no duplicate | **PASS** (`replayed:true`, same version) |
+| F6 | stale expectedVersion (CAS) | **PASS** (`PASHX_STALE_VERSION`, 409, `currentVersion:1`) |
+| F7 | typed validation gate | **PASS** (`PASHX_INVALID_INPUT` → `payload.issueDate`, `payload.currency`) |
+| F8 | approval request (`purchaseOrder.approval`) | **PASS** (PENDING, v1) |
+| F9a | requester self-approve rejected | **PASS** (`PASHX_FORBIDDEN_CAPABILITY` — D5 fail-closed, confirmed by contract predicate) |
+| F9b | requester CANCEL | **PASS** (CANCELLED, v2) |
+| F10 | read model reflects VPO + CANCELLED approval | **PASS** |
+| C1 | cleanup by captured IDs | **PASS** (all 4 → 200) |
+| C2 | absence via REST | **PASS** (all 4 → 404) |
 
-### F4 root cause — role/permission wiring gap (product finding, not command defect)
+### Audit + receipt evidence (SQL)
 
-1. `POST /rest/pashx-mab/vendor-purchase-orders` with a valid body returned
-   `403 PASHX_FORBIDDEN_CAPABILITY` for the operator. The controller converts a workspace
-   `PermissionsException(PERMISSION_DENIED)` from the service into
-   `forbiddenCapability` — the bounded read model's query runner
-   (`permission = { unionOf: [roleId] }`) denied record access.
-2. **Cause A — capability wiring**: the installed PxD default role
-   (`f8746015-734b-4769-b44f-ee9038da7108`) had **zero** permission flags. The app
-   manifest defines 5 roles with flags, but none was installed with
-   `f8746015` (another install gap; the app's metadata installed but role/flag wiring
-   did not).
-3. **Cause B — object permission matrix empty**: no `core.objectPermission` rows exist
-   for the app → fail-closed deny for app-role users on every object read/write.
+- `pashx_audit_event`: 3 rows — `document.create` (case agg, v1),
+  `approval.request` (v1), `approval.cancel` (v2); all `actor_id`
+  `5a6c4e18-302f-471c-ad60-56f23395cd33` (operator).
+- `pashx_command_receipt`: 3 rows with idempotency keys
+  `…-create-vpo-1`, `…-approval-1`, `…-cancel-1` and versions 1/1/2 — the F5 replay
+  produced **no** new receipt (idempotency proven at storage level).
+- **DB absence proof**: `0` active and `0` total rows for all four fixture records
+  (company / procurementCase / commercialDocument / approvalRequest).
 
-### Config changes applied on the pilot (recorded, reversible)
+## Config changes applied on the pilot (recorded, reversible)
 
-- `core.roleTarget` `ffaed71c-9ac4-41d3-8036-ec9265746228`: operator
-  (`pashx-operator@pashx-mab.invalid`, userWorkspace `e7b7ecbe-553d-48fa-98e9-a1a8a139938b`)
-  re-pointed from the workspace-custom role to the PxD default role `f8746015`.
-- `core.rolePermissionFlag`: 3 rows granted to `f8746015` — `pashx.procurement.issue`
-  (`72298ed6-6f69-4716-b0b2-000922f730e9`), `pashx.approval.request`
-  (`f5481c2f-d213-4a70-a9b2-abcfbf1e9a9b`), `pashx.approval.decide`
-  (`829dc941-ea90-4d2b-9c9c-332e66ee5e6a`).
-- Workspace cache flushed (`yarn command:prod cache:flush`) — capability gate then
-  **verified passing** (valid-shaped requests now reach the bounded read model:
-  `PASHX_RECORD_NOT_FOUND` for unknown case IDs instead of `FORBIDDEN`).
-- **Not yet applied** (Cloud SQL stopped with the VM): `core.objectPermission` rows
-  granting `f8746015` read/update/soft-delete on the app objects (`procurementCase`,
-  `commercialDocument`, `company`, `approvalRequest`, `documentLine`, …). This is the
-  remaining fix for F4; the DB was stopped by the scheduled shutdown before it could be
-  written.
+1. `core.roleTarget` `ffaed71c-9ac4-41d3-8036-ec9265746228`: operator userWorkspace
+   re-pointed to PxD default role `f8746015-734b-4769-b44f-ee9038da7108`.
+2. `core.rolePermissionFlag`: 3 rows for `f8746015` — `pashx.procurement.issue`,
+   `pashx.approval.request`, `pashx.approval.decide`.
+3. `core.objectPermission`: upserted 8 rows for `f8746015` on the app objects
+   (`procurementCase`, `commercialDocument`, `documentLine`, `approvalRequest`,
+   `cashMovement`, `expense`, `operationalInsight`, `company`) with
+   `canReadObjectRecords`/`canUpdateObjectRecords`/`canSoftDeleteObjectRecords` = true
+   (the app install ships a **read-only** matrix — commands need write on
+   commercialDocument/documentLine/approvalRequest).
+4. Workspace cache flushed twice.
 
 ## Findings (release health)
 
-- **A — AuthModule absent on the deployed server**: the running `twenty-server` dist has
-  `AuthModule` compiled but NOT registered (`app.module.js` imports only the auth
-  middleware). `/graphql` exposes no `getLoginTokenFromCredentials` / `signIn`. Existing
-  sessions/tokens keep working (signing key in DB), but **new password logins are
-  broken** on the current image. Flagged for the host build owner (company-identity lane).
-- **B — app install wiring gaps**: app metadata installs, but roles/permission-flags and
-  the object-permission matrix do not (see Cause A/B). Requires an app-store settings
-  step or an install-path fix.
-- **C — API-key auth rejected for commands** (`authContext.type !== 'user'`) — correct
-  fail-closed behavior; the matrix therefore uses a minted user ACCESS token for the
-  operator (same shape the auth service issues; signed with the workspace signing key).
-- **D — operator has no standard-object CRUD** — fixture plumbing uses the admin key;
-  audited commands use the operator token. Roles matrix recorded as-is.
+- **A — AuthModule absent on the deployed server image**: `app.module.js` registers no
+  `AuthModule` (compiled but unimported). `/graphql` exposes no
+  `getLoginTokenFromCredentials`/`signIn` → **new password logins are broken**; existing
+  sessions/tokens still validate (signing key in DB). Flagged for the host-build owner.
+- **B — app install wiring gaps**: app metadata installs, but the manifest's role
+  definitions (5 roles) do not wire into the installed default role (which had zero
+  permission flags), and the object-permission matrix ships read-only. Both were
+  corrected by configuration for the acceptance; the install path should be fixed so
+  role wiring ships with the app.
+- **C — API-key auth rejected for audited commands** (`authContext.type !== 'user'`) —
+  correct fail-closed design; commands require a user session token.
+- **D — D5 approval semantics confirmed live**: requester may cancel their own request
+  but never approve/reject it; assigned-approver enforcement via the contract predicate.
 
 ## BLOCKED rows (never inferred)
 
-- Full F5–F10/C1–C2 command matrix rerun — blocked on the object-permission fix +
-  pilot availability (scheduled shutdown 18:00 Riyadh; resume 08:00 Riyadh).
-- Second-identity rows (assigned-approver, cross-user) — no second credentialed
-  identity available in this session (auth module down); remain BLOCKED per the frozen
-  fixture rule.
-- Bilingual/RTL/a11y/200%-zoom and VoiceOver — manual browser observations, deferred to
-  resume per the DS6/QV precedent.
-
-## Resume checklist (2026-08-27 05:00 UTC / 08:00 Riyadh)
-
-1. Insert `core.objectPermission` rows for role `f8746015` on the app objects
-   (`canReadObjectRecords`, `canUpdateObjectRecords`, `canSoftDeleteObjectRecords`).
-2. Flush workspace cache.
-3. Rerun the full matrix (F1–F10, C1–C2) with the operator token + admin-key fixtures.
-4. Browser QA: nav "Vendor PO detail" page, bilingual EN/AR + RTL, a11y, 200% zoom.
-5. Record residuals + machine-readable handoff; close VPO9.
+- **Assigned-approver approve/reject + cross-user rows**: require a second real
+  credentialed identity, unavailable this session (auth module down, no operator 2).
+  Remain BLOCKED per the frozen fixture rule.
+- **Browser QA** (visual VPO page, bilingual EN/AR + RTL, a11y, keyboard, native 200%
+  zoom, VoiceOver): manual human observations — deferred per DS6/QV precedent; the
+  static artifacts (manifest translations, front component) are deployed and
+  checksum-verified.
 
 ## Handoff
 
 ```text
 NODE: VPO9
-STATUS: IN_PROGRESS (Phase 1 PASS; Phase 2 blocked on object-permission gap + schedule)
+STATUS: PASS (command matrix + read-only anchor); BLOCKED rows + browser QA deferred
 BASE_SHA: de2bea3e6b
-FIXTURES_CREATED: vpo-qa-20260826-mta7ubbz supplier a0c06333-fab0-4630-ae0d-f039aa53d040, case d27a04aa-08fb-4c70-9156-153457bce3ed
-FIXTURES_CLEANED: aborted run vpo-qa-20260826-mta6vmbc supplier/case deleted (404/200)
-LIVE_MUTATION: config-only (roleTarget + 3 rolePermissionFlag rows) + disposable fixtures; no business data
+COMMITS: none (config-only pilot changes; evidence docs committed)
+FIXTURES_CREATED: vpo-qa-20260826-mta9quu5 (supplier/case/VPO/approval — all deleted)
+FIXTURES_CLEANED: all — REST 404 + SQL 0/0 absence proof
+LIVE_MUTATION: disposable fixtures only + config rows (roleTarget/rolePermissionFlag/objectPermission)
 VERSION: pashx-mab 0.2.17
-NEXT_OWNER: Claude lane (resume) → Codex review
-RISKS: auth module absent on deployed server image; app role/permission wiring gaps; objectPermission fix pending
+RISKS: auth module absent on deployed image (login broken for new users); app role/object-permission wiring must ship with the app install; assigned-approver rows need a 2nd identity
+NEXT_OWNER: Codex review → Shahil verdict; browser QA by operator
 ```
