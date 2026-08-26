@@ -326,6 +326,9 @@ const WorkflowPipeline = () => {
                               </div>
                               <p className="pxd-pipeline__card-project">
                                 {card.customerName ?? copy.noCustomer}
+                                {card.customerId === null
+                                  ? ''
+                                  : ` · ${copy.customerIdLabel} ${card.customerId}`}
                                 {' · '}
                                 {caseRecord.projectName ?? copy.noProject}
                               </p>

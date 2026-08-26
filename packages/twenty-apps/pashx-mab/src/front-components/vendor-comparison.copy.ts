@@ -58,6 +58,7 @@ export type VendorComparisonCopy = Readonly<{
   expiredStatus: string;
   openRecord: string;
   openSupplier: string;
+  vendorIdLabel: string;
   crLabel: string;
   vatLabel: string;
   missingLabel: string;
@@ -172,6 +173,7 @@ export const vendorComparisonCopy: Readonly<
     expiredStatus: 'Expired',
     openRecord: 'Open record',
     openSupplier: 'Open supplier',
+    vendorIdLabel: 'Vendor ID',
     crLabel: 'CR',
     vatLabel: 'VAT',
     missingLabel: 'Missing',
@@ -317,6 +319,7 @@ export const vendorComparisonCopy: Readonly<
     expiredStatus: 'منتهي الصلاحية',
     openRecord: 'فتح السجل',
     openSupplier: 'فتح المورد',
+    vendorIdLabel: 'معرّف المورد',
     crLabel: 'السجل التجاري',
     vatLabel: 'الرقم الضريبي',
     missingLabel: 'غير متوفر',

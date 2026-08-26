@@ -34,6 +34,7 @@ export type WorkflowPipelineDocumentRecord = Readonly<{
 export type WorkflowPipelineCompanyRecord = Readonly<{
   id: string;
   name: string;
+  customerId: string | null;
 }>;
 
 export type WorkflowPipelineResult = Readonly<{
@@ -57,6 +58,7 @@ export type WorkflowPipelineCard = Readonly<{
   caseRecord: WorkflowPipelineCaseRecord;
   stage: PashxProcurementCaseStage;
   customerName: string | null;
+  customerId: string | null;
   dueAt: string | null;
   isOverdue: boolean;
   documentCount: number;

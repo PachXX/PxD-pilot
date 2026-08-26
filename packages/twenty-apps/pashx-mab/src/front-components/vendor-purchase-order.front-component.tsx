@@ -712,6 +712,12 @@ const VendorPurchaseOrder = () => {
                         </a>
                       )}
                     </dd>
+                    <dt>{copy.vendorIdLabel}</dt>
+                    <dd>
+                      <bdi className="pxd-vpo__mono">
+                        {supplier?.vendorId ?? copy.missingLabel}
+                      </bdi>
+                    </dd>
                     <dt>{copy.crLabel}</dt>
                     <dd>
                       <bdi className="pxd-vpo__mono">

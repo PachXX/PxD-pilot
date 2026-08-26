@@ -71,6 +71,7 @@ export type VendorPurchaseOrderCopy = Readonly<{
   lineProductMismatchBody: (positions: string) => string;
   supplierTitle: string;
   supplierDescription: string;
+  vendorIdLabel: string;
   crLabel: string;
   vatLabel: string;
   missingLabel: string;
@@ -204,6 +205,7 @@ export const vendorPurchaseOrderCopy: Readonly<
     supplierTitle: 'Supplier identity and compliance',
     supplierDescription:
       'Stored CR and VAT with a native drill-through; risk is never inferred from company presence.',
+    vendorIdLabel: 'Vendor ID',
     crLabel: 'CR',
     vatLabel: 'VAT',
     missingLabel: 'Not recorded',
@@ -369,6 +371,7 @@ export const vendorPurchaseOrderCopy: Readonly<
     supplierTitle: 'هوية المورد والامتثال',
     supplierDescription:
       'السجل التجاري والرقم الضريبي المخزّنان مع فتح السجل الأصلي؛ ولا تُستنتج المخاطر من وجود الشركة.',
+    vendorIdLabel: 'معرّف المورد',
     crLabel: 'السجل التجاري',
     vatLabel: 'الرقم الضريبي',
     missingLabel: 'غير مسجل',

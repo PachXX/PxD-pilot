@@ -58,14 +58,14 @@ type DashboardData = Readonly<{
 type FilterOption = Readonly<{ value: string; label: string }>;
 
 type DimensionOptions = Readonly<{
-  cases: readonly FilterOption[];
+  vendors: readonly FilterOption[];
   customers: readonly FilterOption[];
   projects: readonly FilterOption[];
   owners: readonly FilterOption[];
 }>;
 
 const EMPTY_OPTIONS: DimensionOptions = {
-  cases: [],
+  vendors: [],
   customers: [],
   projects: [],
   owners: [],
@@ -74,7 +74,7 @@ const EMPTY_OPTIONS: DimensionOptions = {
 const DASHBOARD_SKELETON_FILTERS = [
   'period-start',
   'period-end',
-  'case',
+  'vendor',
   'customer',
   'project',
   'owner',
@@ -108,6 +108,20 @@ const getOptionsFromBreakdown = (
   rows: readonly ProfitabilityBreakdownRow[],
 ): readonly FilterOption[] =>
   rows.map(({ key, label }) => ({ value: key, label }));
+
+const getEntityFilterOptions = (
+  options: NonNullable<OperationalProfitabilityResult['filterOptions']>[
+    'vendors' | 'customers'
+  ],
+): readonly FilterOption[] =>
+  options.map((option) => ({
+    value: option.recordId,
+    label: [
+      option.name,
+      option.businessId === null ? option.recordId : `CR ${option.businessId}`,
+      ...option.purchaseOrderReferences,
+    ].join(' · '),
+  }));
 
 const formatSignedBasisPointValue = (
   value: bigint,
@@ -833,6 +847,61 @@ const FilterSelect = ({
   </div>
 );
 
+const SearchableFilter = ({
+  id,
+  label,
+  placeholder,
+  value,
+  options,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  placeholder: string;
+  value: string;
+  options: readonly FilterOption[];
+  onChange: (value: string) => void;
+}) => {
+  const selectedLabel = getSelectedOptionLabel(options, value);
+  const [query, setQuery] = useState(value === '' ? '' : selectedLabel);
+
+  useEffect(() => {
+    setQuery(value === '' ? '' : selectedLabel);
+  }, [selectedLabel, value]);
+
+  return (
+    <div className="pxd-dashboard__field">
+      <label htmlFor={id}>{label}</label>
+      <input
+        autoComplete="off"
+        className="pxd-dashboard__control"
+        id={id}
+        list={`${id}-options`}
+        onChange={(event) => {
+          const nextQuery = event.target.value;
+          const normalized = nextQuery.trim().toLocaleLowerCase();
+          const match = options.find(
+            (option) =>
+              option.label.toLocaleLowerCase() === normalized ||
+              option.value.toLocaleLowerCase() === normalized,
+          );
+
+          setQuery(nextQuery);
+          onChange(match?.value ?? '');
+        }}
+        placeholder={placeholder}
+        type="search"
+        value={query}
+      />
+      <datalist id={`${id}-options`}>
+        {options.map((option) => (
+          <option key={option.value} value={option.label} />
+        ))}
+      </datalist>
+    </div>
+  );
+};
+
 const DashboardSkeleton = ({ copy }: { copy: DashboardCopy }) => (
   <section
     aria-live="polite"
@@ -884,7 +953,7 @@ const OperationalProfitabilityDashboard = () => {
   const locale = localeOverride ?? toDashboardLocale(hostLocale);
   const [startDate, setStartDate] = useState(defaultPeriod.startDate);
   const [endDate, setEndDate] = useState(defaultPeriod.endDate);
-  const [caseRecordId, setCaseRecordId] = useState('');
+  const [vendorRecordId, setVendorRecordId] = useState('');
   const [customerRecordId, setCustomerRecordId] = useState('');
   const [projectName, setProjectName] = useState('');
   const [ownerRecordId, setOwnerRecordId] = useState('');
@@ -917,13 +986,13 @@ const OperationalProfitabilityDashboard = () => {
     () => ({
       startDate,
       endDate,
-      ...(caseRecordId === '' ? {} : { caseRecordId }),
+      ...(vendorRecordId === '' ? {} : { vendorRecordId }),
       ...(customerRecordId === '' ? {} : { customerRecordId }),
       ...(projectName === '' ? {} : { projectName }),
       ...(ownerRecordId === '' ? {} : { ownerRecordId }),
     }),
     [
-      caseRecordId,
+      vendorRecordId,
       customerRecordId,
       endDate,
       ownerRecordId,
@@ -960,13 +1029,13 @@ const OperationalProfitabilityDashboard = () => {
             'SAR'),
       );
       setOptions((currentOptions) => ({
-        cases: mergeOptions(
-          currentOptions.cases,
-          getOptionsFromBreakdown(current.breakdowns.CASE),
+        vendors: mergeOptions(
+          currentOptions.vendors,
+          getEntityFilterOptions(current.filterOptions?.vendors ?? []),
         ),
         customers: mergeOptions(
           currentOptions.customers,
-          getOptionsFromBreakdown(current.breakdowns.CUSTOMER),
+          getEntityFilterOptions(current.filterOptions?.customers ?? []),
         ),
         projects: mergeOptions(
           currentOptions.projects,
@@ -995,7 +1064,7 @@ const OperationalProfitabilityDashboard = () => {
     const nextPeriod = getDefaultDashboardPeriod(new Date());
     setStartDate(nextPeriod.startDate);
     setEndDate(nextPeriod.endDate);
-    setCaseRecordId('');
+    setVendorRecordId('');
     setCustomerRecordId('');
     setProjectName('');
     setOwnerRecordId('');
@@ -1026,12 +1095,12 @@ const OperationalProfitabilityDashboard = () => {
       forceLeftToRight: true,
     },
     { label: copy.currency, value: currencyCode, forceLeftToRight: true },
-    ...(caseRecordId === ''
+    ...(vendorRecordId === ''
       ? []
       : [
           {
-            label: copy.case,
-            value: getSelectedOptionLabel(options.cases, caseRecordId),
+            label: copy.vendor,
+            value: getSelectedOptionLabel(options.vendors, vendorRecordId),
             forceLeftToRight: false,
           },
         ]),
@@ -1127,20 +1196,20 @@ const OperationalProfitabilityDashboard = () => {
                 value={endDate}
               />
             </div>
-            <FilterSelect
-              allLabel={copy.all}
-              id="pxd-case"
-              label={copy.case}
-              onChange={setCaseRecordId}
-              options={options.cases}
-              value={caseRecordId}
+            <SearchableFilter
+              id="pxd-vendor"
+              label={copy.vendor}
+              onChange={setVendorRecordId}
+              options={options.vendors}
+              placeholder={copy.vendorSearchPlaceholder}
+              value={vendorRecordId}
             />
-            <FilterSelect
-              allLabel={copy.all}
+            <SearchableFilter
               id="pxd-customer"
               label={copy.customer}
               onChange={setCustomerRecordId}
               options={options.customers}
+              placeholder={copy.customerSearchPlaceholder}
               value={customerRecordId}
             />
             <FilterSelect

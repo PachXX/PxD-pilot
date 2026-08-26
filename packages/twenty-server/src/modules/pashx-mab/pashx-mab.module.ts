@@ -15,6 +15,7 @@ import { PashxApprovalCommandService } from 'src/modules/pashx-mab/services/pash
 import { PashxCapabilityService } from 'src/modules/pashx-mab/services/pashx-capability.service';
 import { PashxCaseTransitionService } from 'src/modules/pashx-mab/services/pashx-case-transition.service';
 import { PashxCommandSupportService } from 'src/modules/pashx-mab/services/pashx-command-support.service';
+import { PashxCompanyIdentityService } from 'src/modules/pashx-mab/services/pashx-company-identity.service';
 import { PashxDeliveryRecordService } from 'src/modules/pashx-mab/services/pashx-delivery-record.service';
 import { PashxDocumentLifecycleService } from 'src/modules/pashx-mab/services/pashx-document-lifecycle.service';
 import { PashxSupplierRfqService } from 'src/modules/pashx-mab/services/pashx-supplier-rfq.service';
@@ -58,6 +59,7 @@ import { PashxWorkspaceSchemaService } from 'src/modules/pashx-mab/services/pash
     PashxCapabilityService,
     PashxCaseTransitionService,
     PashxCommandSupportService,
+    PashxCompanyIdentityService,
     PashxDeliveryRecordService,
     PashxDocumentLifecycleService,
     PashxSupplierRfqService,

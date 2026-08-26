@@ -31,6 +31,7 @@ export type ProfitabilityCaseDimension = Readonly<{
   customerRecordId: string | null;
   projectName: string | null;
   ownerRecordId: string | null;
+  vendorRecordIds?: readonly string[];
 }>;
 
 type ProfitabilityRecordBase = Readonly<{
@@ -88,6 +89,14 @@ export type ProfitabilityFilters = Readonly<{
   customerRecordIds?: readonly string[];
   projectNames?: readonly string[];
   ownerRecordIds?: readonly string[];
+  vendorRecordIds?: readonly string[];
+}>;
+
+export type ProfitabilityEntityFilterOption = Readonly<{
+  recordId: string;
+  name: string;
+  businessId: string | null;
+  purchaseOrderReferences: readonly string[];
 }>;
 
 export const PROFITABILITY_EXCLUSION_REASONS = [
@@ -170,6 +179,10 @@ export type OperationalProfitabilityResult = Readonly<{
     exclusions: Readonly<Record<ProfitabilityExclusionReason, number>>;
   }>;
   cashFlow?: VerifiedCashFlowResult;
+  filterOptions?: Readonly<{
+    vendors: readonly ProfitabilityEntityFilterOption[];
+    customers: readonly ProfitabilityEntityFilterOption[];
+  }>;
 }>;
 
 export const CASH_FLOW_EXCLUSION_REASONS = [

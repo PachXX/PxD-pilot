@@ -18,6 +18,10 @@ export const getPashxWorkspaceSchema = (workspaceId: string): string =>
 
 @Injectable()
 export class PashxWorkspaceSchemaService {
+  getSchema(workspaceId: string): string {
+    return getPashxWorkspaceSchema(workspaceId);
+  }
+
   async reconcileSupportTables(
     queryRunner: WorkspaceQueryRunner,
     workspaceId: string,

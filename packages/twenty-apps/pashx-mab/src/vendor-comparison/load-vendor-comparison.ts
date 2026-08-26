@@ -28,6 +28,8 @@ type QueryConnection<TNode> = Readonly<{
 type CaseNode = Readonly<{
   id: string;
   name: string;
+  customerId?: string | null;
+  vendorId?: string | null;
   stage?: string | null;
   customerRecordId?: string | null;
   nextActionCode?: string | null;
@@ -56,6 +58,8 @@ type DocumentNode = Readonly<{
 type CompanyNode = Readonly<{
   id: string;
   name: string;
+  customerId?: string | null;
+  vendorId?: string | null;
   commercialRegistrationNumber?: string | null;
   vatRegistrationNumber?: string | null;
 }>;
@@ -124,6 +128,8 @@ const toDocumentRecord = (
 const toCompanyRecord = (node: CompanyNode): VendorComparisonCompanyRecord => ({
   id: node.id,
   name: node.name,
+  customerId: node.customerId ?? null,
+  vendorId: node.vendorId ?? null,
   commercialRegistrationNumber: node.commercialRegistrationNumber ?? null,
   vatRegistrationNumber: node.vatRegistrationNumber ?? null,
 });
@@ -221,6 +227,8 @@ export const loadVendorComparison = async ({
           node: {
             id: true,
             name: true,
+            customerId: true,
+            vendorId: true,
             commercialRegistrationNumber: true,
             vatRegistrationNumber: true,
           },

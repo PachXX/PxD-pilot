@@ -43,8 +43,19 @@ const filterExclusion = (
       [filters.caseRecordIds, record.caseDimension.caseRecordId],
       [filters.customerRecordIds, record.caseDimension.customerRecordId],
       [filters.projectNames, record.caseDimension.projectName],
-      [filters.ownerRecordIds, record.caseDimension.ownerRecordId],
-    ];
+    [filters.ownerRecordIds, record.caseDimension.ownerRecordId],
+  ];
+
+  const recordVendorIds = record.caseDimension.vendorRecordIds ?? [];
+
+  if (
+    filters.vendorRecordIds !== undefined &&
+    !filters.vendorRecordIds.some((vendorRecordId) =>
+      recordVendorIds.includes(vendorRecordId),
+    )
+  ) {
+    return 'FILTERED_OUT';
+  }
 
   return dimensions.some(
     ([selected, value]) =>

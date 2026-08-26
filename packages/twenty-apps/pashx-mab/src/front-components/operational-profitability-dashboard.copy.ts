@@ -26,7 +26,10 @@ export type DashboardCopy = Readonly<{
   periodStart: string;
   periodEnd: string;
   case: string;
+  vendor: string;
+  vendorSearchPlaceholder: string;
   customer: string;
+  customerSearchPlaceholder: string;
   project: string;
   owner: string;
   currency: string;
@@ -122,7 +125,10 @@ const englishCopy: DashboardCopy = {
   periodStart: 'Period start',
   periodEnd: 'Period end',
   case: 'Case',
-  customer: 'Customer',
+  vendor: 'Vendor PO released by MAB',
+  vendorSearchPlaceholder: 'Search vendor name, CR, or Vendor PO',
+  customer: 'Customer PO',
+  customerSearchPlaceholder: 'Search customer name, CR, or Customer PO',
   project: 'Project',
   owner: 'Owner',
   currency: 'Currency',
@@ -259,7 +265,10 @@ const arabicCopy: DashboardCopy = {
   periodStart: 'بداية الفترة',
   periodEnd: 'نهاية الفترة',
   case: 'حالة الشراء',
-  customer: 'العميل',
+  vendor: 'أمر شراء المورد الصادر من MAB',
+  vendorSearchPlaceholder: 'ابحث باسم المورد أو السجل التجاري أو أمر الشراء',
+  customer: 'أمر شراء العميل',
+  customerSearchPlaceholder: 'ابحث باسم العميل أو السجل التجاري أو أمر الشراء',
   project: 'المشروع',
   owner: 'المسؤول',
   currency: 'العملة',

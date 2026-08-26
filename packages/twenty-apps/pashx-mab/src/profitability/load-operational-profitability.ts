@@ -28,6 +28,14 @@ type CaseNode = Readonly<{
   ownerRecordId?: string | null;
 }>;
 
+type CompanyNode = Readonly<{
+  id: string;
+  name: string;
+  customerId?: string | null;
+  vendorId?: string | null;
+  commercialRegistrationNumber?: string | null;
+}>;
+
 type CommercialDocumentNode = Readonly<{
   id: string;
   name: string;
@@ -37,6 +45,7 @@ type CommercialDocumentNode = Readonly<{
   procurementCaseRecordId: string;
   issueDate: string | null;
   totalAmount?: CurrencyValue | null;
+  supplierRecordId?: string | null;
 }>;
 
 type ExpenseNode = Readonly<{
@@ -71,14 +80,19 @@ type ProfitabilityQueryData = Readonly<{
   commercialDocuments?: QueryConnection<CommercialDocumentNode>;
   expenses?: QueryConnection<ExpenseNode>;
   cashMovements?: QueryConnection<CashMovementNode>;
+  companies?: QueryConnection<CompanyNode>;
 }>;
 
-const toCaseDimension = (node: CaseNode): ProfitabilityCaseDimension => ({
+const toCaseDimension = (
+  node: CaseNode,
+  vendorRecordIds: readonly string[],
+): ProfitabilityCaseDimension => ({
   caseRecordId: node.id,
   caseName: node.name,
   customerRecordId: node.customerRecordId ?? null,
   projectName: node.projectName ?? null,
   ownerRecordId: node.ownerRecordId ?? null,
+  vendorRecordIds,
 });
 
 export const loadOperationalProfitability = async ({
@@ -115,6 +129,7 @@ export const loadOperationalProfitability = async ({
           procurementCaseRecordId: true,
           issueDate: true,
           totalAmount: { amountMicros: true, currencyCode: true },
+          supplierRecordId: true,
         },
       },
     },
@@ -150,28 +165,61 @@ export const loadOperationalProfitability = async ({
         },
       },
     },
+    companies: {
+      __args: { first: 1000 },
+      pageInfo: { hasNextPage: true },
+      edges: {
+        node: {
+          id: true,
+          name: true,
+          customerId: true,
+          vendorId: true,
+          commercialRegistrationNumber: true,
+        },
+      },
+    },
   })) as ProfitabilityQueryData;
 
   if (
     data.procurementCases?.pageInfo?.hasNextPage === true ||
     data.commercialDocuments?.pageInfo?.hasNextPage === true ||
     data.expenses?.pageInfo?.hasNextPage === true ||
-    data.cashMovements?.pageInfo?.hasNextPage === true
+    data.cashMovements?.pageInfo?.hasNextPage === true ||
+    data.companies?.pageInfo?.hasNextPage === true
   ) {
     throw new Error(
       'Operational profitability exceeded the bounded 1,000-record query limit.',
     );
   }
 
+  const documentNodes = (data.commercialDocuments?.edges ?? []).map(
+    ({ node }) => node,
+  );
+  const vendorIdsByCase = new Map<string, Set<string>>();
+
+  for (const document of documentNodes) {
+    if (
+      document.documentType !== 'VENDOR_PURCHASE_ORDER' ||
+      document.lifecycleStatus !== 'FINALIZED' ||
+      document.supplierRecordId === null ||
+      document.supplierRecordId === undefined
+    ) {
+      continue;
+    }
+
+    const vendorIds =
+      vendorIdsByCase.get(document.procurementCaseRecordId) ?? new Set<string>();
+    vendorIds.add(document.supplierRecordId);
+    vendorIdsByCase.set(document.procurementCaseRecordId, vendorIds);
+  }
+
   const caseDimensions = new Map(
     (data.procurementCases?.edges ?? []).map(({ node }) => [
       node.id,
-      toCaseDimension(node),
+      toCaseDimension(node, [...(vendorIdsByCase.get(node.id) ?? [])].sort()),
     ]),
   );
-  const documentRecords: ProfitabilitySourceRecord[] = (
-    data.commercialDocuments?.edges ?? []
-  ).map(({ node }) => ({
+  const documentRecords: ProfitabilitySourceRecord[] = documentNodes.map((node) => ({
     sourceType: 'DOCUMENT',
     recordId: node.id,
     recordName: node.name,
@@ -218,11 +266,68 @@ export const loadOperationalProfitability = async ({
     asOf: now().toISOString(),
   });
 
+  const companiesById = new Map(
+    (data.companies?.edges ?? []).map(({ node }) => [node.id, node]),
+  );
+  const purchaseOrdersByEntity = (
+    documentType: 'CUSTOMER_PURCHASE_ORDER' | 'VENDOR_PURCHASE_ORDER',
+    getEntityId: (document: CommercialDocumentNode) => string | null,
+  ) => {
+    const references = new Map<string, Set<string>>();
+    for (const document of documentNodes) {
+      if (
+        document.documentType !== documentType ||
+        document.lifecycleStatus !== 'FINALIZED'
+      ) {
+        continue;
+      }
+      const entityId = getEntityId(document);
+      if (entityId === null) continue;
+      const values = references.get(entityId) ?? new Set<string>();
+      values.add(document.name);
+      references.set(entityId, values);
+    }
+    return references;
+  };
+  const customerIdByCase = new Map(
+    (data.procurementCases?.edges ?? []).map(({ node }) => [
+      node.id,
+      node.customerRecordId ?? null,
+    ]),
+  );
+  const vendorPurchaseOrders = purchaseOrdersByEntity(
+    'VENDOR_PURCHASE_ORDER',
+    (document) => document.supplierRecordId ?? null,
+  );
+  const customerPurchaseOrders = purchaseOrdersByEntity(
+    'CUSTOMER_PURCHASE_ORDER',
+    (document) => customerIdByCase.get(document.procurementCaseRecordId) ?? null,
+  );
+  const toFilterOptions = (
+    references: Map<string, Set<string>>,
+    identityField: 'customerId' | 'vendorId',
+  ) =>
+    [...references.entries()]
+      .map(([recordId, purchaseOrderReferences]) => {
+        const company = companiesById.get(recordId);
+        return {
+          recordId,
+          name: company?.name ?? recordId,
+          businessId: company?.[identityField] ?? null,
+          purchaseOrderReferences: [...purchaseOrderReferences].sort(),
+        };
+      })
+      .sort((left, right) => left.name.localeCompare(right.name));
+
   return {
     ...profitability,
     cashFlow: aggregateVerifiedCashFlow({
       records: cashMovementRecords,
       filters,
     }),
+    filterOptions: {
+      vendors: toFilterOptions(vendorPurchaseOrders, 'vendorId'),
+      customers: toFilterOptions(customerPurchaseOrders, 'customerId'),
+    },
   };
 };

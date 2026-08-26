@@ -16,7 +16,7 @@ const CENTS_PER_UNIT = BigInt(100);
 export type DashboardFilterSelection = Readonly<{
   startDate: string;
   endDate: string;
-  caseRecordId?: string;
+  vendorRecordId?: string;
   customerRecordId?: string;
   projectName?: string;
   ownerRecordId?: string;
@@ -120,9 +120,9 @@ export const toProfitabilityFilters = (
   return {
     periodStart: selection.startDate,
     periodEndExclusive: toIsoDay(addUtcDays(end, 1)),
-    ...(selection.caseRecordId === undefined
+    ...(selection.vendorRecordId === undefined
       ? {}
-      : { caseRecordIds: [selection.caseRecordId] }),
+      : { vendorRecordIds: [selection.vendorRecordId] }),
     ...(selection.customerRecordId === undefined
       ? {}
       : { customerRecordIds: [selection.customerRecordId] }),

@@ -449,6 +449,10 @@ const VendorComparison = () => {
                               {company !== null ? (
                                 <span className="pxd-vc__muted">
                                   {' '}
+                                  · {copy.vendorIdLabel}:{' '}
+                                  <bdi className="pxd-vc__mono">
+                                    {company.vendorId ?? copy.missingLabel}
+                                  </bdi>{' '}
                                   · {copy.crLabel}:{' '}
                                   <bdi className="pxd-vc__mono">
                                     {company.commercialRegistrationNumber ??

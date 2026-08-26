@@ -20,6 +20,7 @@ import { PashxMabModule } from 'src/modules/pashx-mab/pashx-mab.module';
 import { PashxApprovalCommandService } from 'src/modules/pashx-mab/services/pashx-approval-command.service';
 import { PashxCapabilityService } from 'src/modules/pashx-mab/services/pashx-capability.service';
 import { PashxCaseTransitionService } from 'src/modules/pashx-mab/services/pashx-case-transition.service';
+import { PashxCompanyIdentityService } from 'src/modules/pashx-mab/services/pashx-company-identity.service';
 import { PashxCommandSupportService } from 'src/modules/pashx-mab/services/pashx-command-support.service';
 import { PashxDeliveryRecordService } from 'src/modules/pashx-mab/services/pashx-delivery-record.service';
 import { PashxDocumentLifecycleService } from 'src/modules/pashx-mab/services/pashx-document-lifecycle.service';
@@ -36,6 +37,7 @@ const PASHX_PROVIDERS = [
   PashxApprovalCommandService,
   PashxCapabilityService,
   PashxCaseTransitionService,
+  PashxCompanyIdentityService,
   PashxCommandSupportService,
   PashxDeliveryRecordService,
   PashxDocumentLifecycleService,

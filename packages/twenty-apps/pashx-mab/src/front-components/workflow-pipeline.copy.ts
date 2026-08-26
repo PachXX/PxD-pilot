@@ -48,6 +48,7 @@ export type WorkflowPipelineCopy = Readonly<{
   overdue: string;
   blocked: string;
   noCustomer: string;
+  customerIdLabel: string;
   noProject: string;
   noNextAction: string;
   noDueDate: string;
@@ -112,6 +113,7 @@ export const workflowPipelineCopy: Readonly<
     overdue: 'Overdue',
     blocked: 'Blocked',
     noCustomer: 'Customer not linked',
+    customerIdLabel: 'Customer ID',
     noProject: 'Project not recorded',
     noNextAction: 'No next task recorded',
     noDueDate: 'No due date',
@@ -125,7 +127,7 @@ export const workflowPipelineCopy: Readonly<
       intake: '1 · RFQ Received',
       sourcing: '2 · Quotation Requested from Vendor',
       quoted: '3 · Quotation Sent to Client',
-      'customer-order': '4 · PO Approved from Client',
+      'customer-order': '4 · PO Released from Client',
       'vendor-order': '5 · PO Approved to Vendor',
       delivery: '6 · Delivery Note',
       invoicing: '7 · Invoice',
@@ -136,7 +138,7 @@ export const workflowPipelineCopy: Readonly<
       intake: 'Client RFQ received and case opened',
       sourcing: 'Vendor quotations requested and compared',
       quoted: 'MAB quotation sent to the client',
-      'customer-order': 'Client approved and PO received',
+      'customer-order': 'Client released the PO to MAB',
       'vendor-order': 'Vendor PO approved and issued',
       delivery: 'Goods delivered with delivery-note evidence',
       invoicing: 'Customer invoice issued',
@@ -215,6 +217,7 @@ export const workflowPipelineCopy: Readonly<
     overdue: 'متأخرة',
     blocked: 'متوقفة',
     noCustomer: 'العميل غير مرتبط',
+    customerIdLabel: 'معرّف العميل',
     noProject: 'المشروع غير مسجل',
     noNextAction: 'لا توجد مهمة تالية مسجلة',
     noDueDate: 'لا يوجد تاريخ استحقاق',
@@ -228,7 +231,7 @@ export const workflowPipelineCopy: Readonly<
       intake: '١ · استلام طلب عرض السعر',
       sourcing: '٢ · طلب عرض السعر من المورد',
       quoted: '٣ · إرسال العرض للعميل',
-      'customer-order': '٤ · اعتماد أمر الشراء من العميل',
+      'customer-order': '٤ · إصدار أمر الشراء من العميل',
       'vendor-order': '٥ · اعتماد أمر الشراء للمورد',
       delivery: '٦ · إشعار التسليم',
       invoicing: '٧ · الفاتورة',
@@ -239,7 +242,7 @@ export const workflowPipelineCopy: Readonly<
       intake: 'استلام طلب عرض السعر من العميل وفتح الحالة',
       sourcing: 'طلب عروض الموردين ومقارنتها',
       quoted: 'إرسال عرض MAB إلى العميل',
-      'customer-order': 'موافقة العميل واستلام أمر الشراء',
+      'customer-order': 'أصدر العميل أمر الشراء إلى MAB',
       'vendor-order': 'اعتماد أمر شراء المورد وإصداره',
       delivery: 'تسليم البضائع مع دليل إشعار التسليم',
       invoicing: 'إصدار فاتورة العميل',

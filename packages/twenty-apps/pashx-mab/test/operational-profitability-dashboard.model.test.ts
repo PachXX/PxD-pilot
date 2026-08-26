@@ -36,6 +36,7 @@ const caseDimension = {
   customerRecordId: 'customer-1',
   projectName: 'Data centre',
   ownerRecordId: 'owner-1',
+  vendorRecordIds: ['vendor-1'],
 } as const;
 
 const document = (
@@ -88,7 +89,7 @@ test('builds current and equal-duration prior filters without changing dimension
   const current = toProfitabilityFilters({
     startDate: '2026-08-10',
     endDate: '2026-08-11',
-    caseRecordId: 'case-1',
+    vendorRecordId: 'vendor-1',
     customerRecordId: 'customer-1',
     projectName: 'Data centre',
     ownerRecordId: 'owner-1',
@@ -97,7 +98,7 @@ test('builds current and equal-duration prior filters without changing dimension
   assert.deepEqual(current, {
     periodStart: '2026-08-10',
     periodEndExclusive: '2026-08-12',
-    caseRecordIds: ['case-1'],
+    vendorRecordIds: ['vendor-1'],
     customerRecordIds: ['customer-1'],
     projectNames: ['Data centre'],
     ownerRecordIds: ['owner-1'],

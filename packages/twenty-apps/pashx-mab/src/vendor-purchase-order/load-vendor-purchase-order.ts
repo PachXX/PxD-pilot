@@ -62,6 +62,7 @@ type CaseNode = Readonly<{
 type CompanyNode = Readonly<{
   id: string;
   name: string;
+  vendorId?: string | null;
   commercialRegistrationNumber?: string | null;
   vatRegistrationNumber?: string | null;
 }>;
@@ -196,6 +197,7 @@ const toCaseRecord = (node: CaseNode): VendorPurchaseOrderCaseRecord => ({
 const toCompanyRecord = (node: CompanyNode): VendorPurchaseOrderCompanyRecord => ({
   id: node.id,
   name: node.name,
+  vendorId: node.vendorId ?? null,
   commercialRegistrationNumber: node.commercialRegistrationNumber ?? null,
   vatRegistrationNumber: node.vatRegistrationNumber ?? null,
 });
@@ -387,6 +389,7 @@ export const loadVendorPurchaseOrder = async ({
           node: {
             id: true,
             name: true,
+            vendorId: true,
             projectName: true,
             ownerRecordId: true,
             stage: true,

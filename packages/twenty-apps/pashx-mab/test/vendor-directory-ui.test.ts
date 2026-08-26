@@ -6,6 +6,7 @@ import type { RfqEligibleCase } from '../src/vendor-directory/vendor-directory.t
 import {
   buildRfqEligibleCases,
   buildVendorDirectoryRows,
+  filterVendorDirectoryRows,
   getCaseRecordHref,
   getCompanyRecordHref,
   loadVendorDirectory,
@@ -53,6 +54,7 @@ const vendor = (
 ): VendorDirectoryVendorRecord => ({
   id: SUPPLIER_ID,
   name: 'Al Shuweir',
+  vendorId: '101',
   commercialRegistrationNumber: 'CR-101',
   vatRegistrationNumber: 'VAT-202',
   ...overrides,
@@ -161,6 +163,31 @@ test('row with no activity shows honest empty counts', () => {
   assert.deepEqual(rows[0]?.activeCaseNames, []);
 });
 
+test('directory search matches supplier name, CR and VAT without changing rows', () => {
+  const rows = buildVendorDirectoryRows({
+    vendors: [
+      vendor(),
+      vendor({
+        id: CUSTOMER_ID,
+        name: 'Gulf Cables',
+        vendorId: '107',
+        commercialRegistrationNumber: '2059007788',
+        vatRegistrationNumber: '310987654300003',
+      }),
+    ],
+    cases: [],
+    documents: [],
+    isPartial: false,
+    asOf: '2026-08-25T00:00:00.000Z',
+  });
+
+  assert.deepEqual(filterVendorDirectoryRows(rows, ' shuweir '), [rows[0]]);
+  assert.deepEqual(filterVendorDirectoryRows(rows, '2059007788'), [rows[1]]);
+  assert.deepEqual(filterVendorDirectoryRows(rows, '310987654300003'), [rows[1]]);
+  assert.deepEqual(filterVendorDirectoryRows(rows, '107'), [rows[1]]);
+  assert.equal(filterVendorDirectoryRows(rows, '').length, 2);
+});
+
 test('loader maps stored values and filters companies by supplier role', async () => {
   const client = {
     query: async () => ({
@@ -171,6 +198,7 @@ test('loader maps stored values and filters companies by supplier role', async (
             node: {
               id: SUPPLIER_ID,
               name: 'Al Shuweir',
+              vendorId: '101',
               commercialRegistrationNumber: 'CR-101',
               vatRegistrationNumber: 'VAT-202',
               mabBusinessRoles: ['SUPPLIER'],
@@ -276,6 +304,8 @@ test('component requests RFQs through the REST command boundary only', () => {
   assert.ok(componentSource.includes('getPashxCommandErrorMessage'));
   assert.ok(componentSource.includes('target="_top"'));
   assert.ok(componentSource.includes('role="alert"'));
+  assert.ok(componentSource.includes('type="search"'));
+  assert.ok(componentSource.includes('filterVendorDirectoryRows'));
   assert.ok(!componentSource.includes('fetch('));
   assert.ok(vendorDirectoryStyles.includes('pxd-vendor__table'));
 });

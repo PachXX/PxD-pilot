@@ -24,6 +24,7 @@ const CASE_A: ProfitabilityCaseDimension = {
   customerRecordId: 'customer-a',
   projectName: 'Project Alpha',
   ownerRecordId: 'owner-a',
+  vendorRecordIds: ['vendor-a'],
 };
 
 const CASE_B: ProfitabilityCaseDimension = {
@@ -262,6 +263,7 @@ test('applies every case dimension filter', () => {
   const otherCustomer = { ...CASE_A, customerRecordId: 'customer-b' };
   const otherProject = { ...CASE_A, projectName: 'Project Beta' };
   const otherOwner = { ...CASE_A, ownerRecordId: 'owner-b' };
+  const otherVendor = { ...CASE_A, vendorRecordIds: ['vendor-b'] };
   const missingDimensions = {
     ...CASE_A,
     customerRecordId: null,
@@ -275,6 +277,7 @@ test('applies every case dimension filter', () => {
       documentRecord({ recordId: 'other-customer', caseDimension: otherCustomer }),
       documentRecord({ recordId: 'other-project', caseDimension: otherProject }),
       documentRecord({ recordId: 'other-owner', caseDimension: otherOwner }),
+      documentRecord({ recordId: 'other-vendor', caseDimension: otherVendor }),
       documentRecord({
         recordId: 'missing-dimensions',
         caseDimension: missingDimensions,
@@ -286,12 +289,13 @@ test('applies every case dimension filter', () => {
       customerRecordIds: ['customer-a'],
       projectNames: ['Project Alpha'],
       ownerRecordIds: ['owner-a'],
+      vendorRecordIds: ['vendor-a'],
     },
     asOf: '2026-08-14T12:00:00.000Z',
   });
 
   assert.deepEqual(result.currencies[0]?.contributionRecordIds, ['document']);
-  assert.equal(result.quality.exclusions.FILTERED_OUT, 5);
+  assert.equal(result.quality.exclusions.FILTERED_OUT, 6);
 });
 
 test('rounds gross margin half away from zero and handles zero revenue', () => {

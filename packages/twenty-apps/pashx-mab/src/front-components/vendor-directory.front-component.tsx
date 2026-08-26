@@ -16,6 +16,7 @@ import { getPublicAssetUrl } from 'twenty-sdk/utils';
 import {
   buildRfqEligibleCases,
   buildVendorDirectoryRows,
+  filterVendorDirectoryRows,
   getCompanyRecordHref,
   loadVendorDirectory,
 } from '../vendor-directory/load-vendor-directory';
@@ -71,6 +72,7 @@ const VendorDirectory = () => {
     'idle',
   );
   const [errorMessage, setErrorMessage] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const rows: readonly VendorDirectoryRow[] = useMemo(
     () => (result === null ? [] : buildVendorDirectoryRows(result)),
@@ -82,6 +84,10 @@ const VendorDirectory = () => {
         ? []
         : buildRfqEligibleCases(result.cases, result.documents),
     [result],
+  );
+  const filteredRows = useMemo(
+    () => filterVendorDirectoryRows(rows, searchTerm),
+    [rows, searchTerm],
   );
   const selectedVendors = useMemo(
     () =>
@@ -300,11 +306,27 @@ const VendorDirectory = () => {
             >
               <h2 id="pxd-vendor-directory-title">{copy.directoryTitle}</h2>
               <p>{copy.directoryDescription}</p>
+              <div className="pxd-vendor__field pxd-vendor__search">
+                <label htmlFor="pxd-vendor-search">{copy.searchLabel}</label>
+                <input
+                  autoComplete="off"
+                  className="pxd-vendor__select"
+                  id="pxd-vendor-search"
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder={copy.searchPlaceholder}
+                  type="search"
+                  value={searchTerm}
+                />
+                <span aria-live="polite" className="pxd-vendor__hint">
+                  {copy.searchResults(filteredRows.length, rows.length)}
+                </span>
+              </div>
               <div className="pxd-vendor__table-scroll">
                 <table className="pxd-vendor__table">
                   <thead>
                     <tr>
                       <th scope="col">{copy.vendorLabel}</th>
+                      <th scope="col">{copy.vendorIdLabel}</th>
                       <th scope="col">{copy.crLabel}</th>
                       <th scope="col">{copy.vatLabel}</th>
                       <th scope="col">{copy.openRfqLabel}</th>
@@ -313,7 +335,7 @@ const VendorDirectory = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.map((row) => (
+                    {filteredRows.map((row) => (
                       <tr key={row.vendor.id}>
                         <td>
                           <a
@@ -325,6 +347,11 @@ const VendorDirectory = () => {
                               {row.vendor.name}
                             </bdi>
                           </a>
+                        </td>
+                        <td>
+                          <bdi className="pxd-vendor__isolate">
+                            {row.vendor.vendorId ?? copy.noVendorId}
+                          </bdi>
                         </td>
                         <td>
                           <bdi className="pxd-vendor__isolate">
@@ -356,6 +383,11 @@ const VendorDirectory = () => {
                         </td>
                       </tr>
                     ))}
+                    {filteredRows.length === 0 ? (
+                      <tr>
+                        <td colSpan={7}>{copy.noSearchResults}</td>
+                      </tr>
+                    ) : null}
                   </tbody>
                 </table>
               </div>

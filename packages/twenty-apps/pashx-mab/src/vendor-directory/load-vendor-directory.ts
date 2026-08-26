@@ -28,6 +28,7 @@ type QueryConnection<TNode> = Readonly<{
 type CompanyNode = Readonly<{
   id: string;
   name: string;
+  vendorId?: string | null;
   commercialRegistrationNumber?: string | null;
   vatRegistrationNumber?: string | null;
   mabBusinessRoles?: unknown;
@@ -71,6 +72,7 @@ const hasSupplierRole = (value: unknown): boolean =>
 const toVendorRecord = (node: CompanyNode): VendorDirectoryVendorRecord => ({
   id: node.id,
   name: node.name,
+  vendorId: node.vendorId ?? null,
   commercialRegistrationNumber: node.commercialRegistrationNumber ?? null,
   vatRegistrationNumber: node.vatRegistrationNumber ?? null,
 });
@@ -119,6 +121,7 @@ export const loadVendorDirectory = async ({
         node: {
           id: true,
           name: true,
+          vendorId: true,
           commercialRegistrationNumber: true,
           vatRegistrationNumber: true,
           mabBusinessRoles: true,
@@ -240,6 +243,26 @@ export const buildVendorDirectoryRows = (
         .sort((left, right) => left.localeCompare(right)),
     };
   });
+
+export const filterVendorDirectoryRows = (
+  rows: readonly VendorDirectoryRow[],
+  searchTerm: string,
+): readonly VendorDirectoryRow[] => {
+  const normalizedSearchTerm = searchTerm.trim().toLocaleLowerCase();
+
+  if (normalizedSearchTerm === '') return rows;
+
+  return rows.filter((row) =>
+    [
+      row.vendor.name,
+      row.vendor.vendorId,
+      row.vendor.commercialRegistrationNumber,
+      row.vendor.vatRegistrationNumber,
+    ].some((value) =>
+      value?.toLocaleLowerCase().includes(normalizedSearchTerm),
+    ),
+  );
+};
 
 export const getCompanyRecordHref = (companyRecordId: string): string =>
   `/object/company/${companyRecordId}`;

@@ -57,7 +57,11 @@ type DocumentNode = Readonly<{
   }> | null;
 }>;
 
-type CompanyNode = Readonly<{ id: string; name: string }>;
+type CompanyNode = Readonly<{
+  id: string;
+  name: string;
+  customerId?: string | null;
+}>;
 
 type WorkflowPipelineQueryData = Readonly<{
   procurementCases?: QueryConnection<CaseNode>;
@@ -126,6 +130,7 @@ const toDocumentRecord = (
 const toCompanyRecord = (node: CompanyNode): WorkflowPipelineCompanyRecord => ({
   id: node.id,
   name: node.name,
+  customerId: node.customerId ?? null,
 });
 
 export const loadWorkflowPipeline = async ({
@@ -205,7 +210,7 @@ export const loadWorkflowPipeline = async ({
       companies: {
         __args: { first: limit, filter: { id: { in: customerIds } } },
         pageInfo: { hasNextPage: true },
-        edges: { node: { id: true, name: true } },
+        edges: { node: { id: true, name: true, customerId: true } },
       },
     })) as WorkflowPipelineQueryData;
     companies = (companyData.companies?.edges ?? []).map(({ node }) =>

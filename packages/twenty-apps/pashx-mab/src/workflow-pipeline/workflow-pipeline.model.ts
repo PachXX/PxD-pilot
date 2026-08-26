@@ -120,6 +120,9 @@ export const buildWorkflowPipelineCards = (
   const customerNameById = new Map(
     result.companies.map((company) => [company.id, company.name]),
   );
+  const customerIdById = new Map(
+    result.companies.map((company) => [company.id, company.customerId]),
+  );
   const documentsByCaseId = new Map<
     string,
     WorkflowPipelineDocumentRecord[]
@@ -148,6 +151,10 @@ export const buildWorkflowPipelineCards = (
         caseRecord.customerRecordId === null
           ? null
           : customerNameById.get(caseRecord.customerRecordId) ?? null,
+      customerId:
+        caseRecord.customerRecordId === null
+          ? null
+          : customerIdById.get(caseRecord.customerRecordId) ?? null,
       dueAt,
       isOverdue:
         ACTIVE_STAGES.has(stage) &&

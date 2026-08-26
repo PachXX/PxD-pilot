@@ -22,10 +22,16 @@ export type VendorDirectoryCopy = Readonly<{
   vendorCoverage: (visible: number) => string;
   directoryTitle: string;
   directoryDescription: string;
+  searchLabel: string;
+  searchPlaceholder: string;
+  searchResults: (visible: number, total: number) => string;
+  noSearchResults: string;
   vendorLabel: string;
+  vendorIdLabel: string;
   crLabel: string;
   vatLabel: string;
   noCr: string;
+  noVendorId: string;
   noVat: string;
   openRfqLabel: string;
   repliedLabel: string;
@@ -77,10 +83,16 @@ export const vendorDirectoryCopy: Readonly<
     directoryTitle: 'Supplier directory',
     directoryDescription:
       'Companies with the MAB supplier role, their open RFQ requests and replied quotations.',
+    searchLabel: 'Search suppliers',
+    searchPlaceholder: 'Search by supplier name, Vendor ID, CR, or VAT',
+    searchResults: (visible, total) => `${visible} of ${total} suppliers shown`,
+    noSearchResults: 'No suppliers match this search.',
     vendorLabel: 'Supplier',
+    vendorIdLabel: 'Vendor ID',
     crLabel: 'CR',
     vatLabel: 'VAT',
     noCr: 'No CR',
+    noVendorId: 'No Vendor ID',
     noVat: 'No VAT',
     openRfqLabel: 'Open RFQs',
     repliedLabel: 'Quotes replied',
@@ -140,10 +152,16 @@ export const vendorDirectoryCopy: Readonly<
     vendorCoverage: (visible) => `${visible} مورداً ظاهراً`,
     directoryTitle: 'دليل الموردين',
     directoryDescription: 'الشركات الحاملة لدور المورد في مباندس مع طلبات العروض المفتوحة والعروض الواردة.',
+    searchLabel: 'البحث في الموردين',
+    searchPlaceholder: 'ابحث باسم المورد أو معرّف المورد أو السجل التجاري أو الرقم الضريبي',
+    searchResults: (visible, total) => `عرض ${visible} من أصل ${total} موردين`,
+    noSearchResults: 'لا يوجد موردون مطابقون لهذا البحث.',
     vendorLabel: 'المورد',
+    vendorIdLabel: 'معرّف المورد',
     crLabel: 'السجل التجاري',
     vatLabel: 'الرقم الضريبي',
     noCr: 'لا يوجد سجل تجاري',
+    noVendorId: 'لا يوجد معرّف مورد',
     noVat: 'لا يوجد رقم ضريبي',
     openRfqLabel: 'طلبات مفتوحة',
     repliedLabel: 'عروض واردة',

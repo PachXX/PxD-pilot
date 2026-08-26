@@ -104,6 +104,17 @@ const isWithinFilters = (
     [filters.ownerRecordIds, record.caseDimension.ownerRecordId],
   ];
 
+  const recordVendorIds = record.caseDimension.vendorRecordIds ?? [];
+
+  if (
+    filters.vendorRecordIds !== undefined &&
+    !filters.vendorRecordIds.some((vendorRecordId) =>
+      recordVendorIds.includes(vendorRecordId),
+    )
+  ) {
+    return 'FILTERED_OUT';
+  }
+
   return selectedDimensions.some(
     ([selectedValues, recordValue]) =>
       selectedValues !== undefined &&

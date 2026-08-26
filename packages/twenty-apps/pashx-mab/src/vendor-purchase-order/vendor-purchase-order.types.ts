@@ -32,6 +32,7 @@ export type VendorPurchaseOrderCaseRecord = Readonly<{
 export type VendorPurchaseOrderCompanyRecord = Readonly<{
   id: string;
   name: string;
+  vendorId: string | null;
   commercialRegistrationNumber: string | null;
   vatRegistrationNumber: string | null;
 }>;

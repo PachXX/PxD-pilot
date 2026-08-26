@@ -31,6 +31,8 @@ export type VendorComparisonDocumentRecord = Readonly<{
 export type VendorComparisonCompanyRecord = Readonly<{
   id: string;
   name: string;
+  customerId: string | null;
+  vendorId: string | null;
   commercialRegistrationNumber: string | null;
   vatRegistrationNumber: string | null;
 }>;
