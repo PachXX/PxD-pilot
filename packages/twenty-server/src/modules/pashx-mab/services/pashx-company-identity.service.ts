@@ -169,14 +169,16 @@ export class PashxCompanyIdentityService {
     // vendor 0000101 look identical); prefix by kind so the code alone tells
     // you which type it is.
     const prefix = kind === 'customer' ? 'C' : 'V';
+    // Floor of 1,000,000 keeps generated codes at a realistic business-ID
+    // length (e.g. V1000001) instead of looking like a tiny row counter.
     const rows = (await queryRunner.query(
       `INSERT INTO ${schema}.pashx_number_counter
          (document_type, period, current_value)
        SELECT $1, 'global',
               GREATEST(
                 COALESCE(MAX(CASE WHEN "${fieldName}" ~ '^[A-Z]?[0-9]+$'
-                                  THEN regexp_replace("${fieldName}", '^[A-Z]', '')::bigint END), 100),
-                100
+                                  THEN regexp_replace("${fieldName}", '^[A-Z]', '')::bigint END), 1000000),
+                1000000
               ) + 1
          FROM ${schema}.company
        ON CONFLICT (document_type, period)
