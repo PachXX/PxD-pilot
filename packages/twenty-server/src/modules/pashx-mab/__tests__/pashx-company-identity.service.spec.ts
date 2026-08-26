@@ -13,24 +13,26 @@ const buildHarness = (
   },
   fields = { customer: true, vendor: true },
 ) => {
-  const query = jest.fn(async (sql: string) => {
-    if (sql.includes('FOR UPDATE')) {
-      return [
-        {
-          id: companyId,
-          ...company,
-          hasCustomerIdField: fields.customer,
-          hasVendorIdField: fields.vendor,
-        },
-      ];
-    }
-    // Existence check for the randomly generated candidate: always report no
-    // collision so allocation succeeds on the first attempt.
-    if (sql.trimStart().startsWith('SELECT 1 FROM')) {
+  const query = jest.fn(
+    async (sql: string, _parameters?: unknown[]): Promise<unknown> => {
+      if (sql.includes('FOR UPDATE')) {
+        return [
+          {
+            id: companyId,
+            ...company,
+            hasCustomerIdField: fields.customer,
+            hasVendorIdField: fields.vendor,
+          },
+        ];
+      }
+      // Existence check for the randomly generated candidate: always report no
+      // collision so allocation succeeds on the first attempt.
+      if (sql.trimStart().startsWith('SELECT 1 FROM')) {
+        return [];
+      }
       return [];
-    }
-    return [];
-  });
+    },
+  );
   const queryRunner = {
     query,
     connect: jest.fn(),
@@ -84,10 +86,14 @@ describe('PashxCompanyIdentityService', () => {
     );
 
     expect(updateCall).toBeDefined();
+    if (updateCall === undefined) throw new Error('Expected company update');
 
-    const [updateSql, updateParameters] = updateCall as [string, string[]];
+    const [updateSql, updateParameters] = updateCall;
 
     expect(updateSql).toContain('"customerId" = $1, "vendorId" = $2');
+    if (updateParameters === undefined) {
+      throw new Error('Expected company update parameters');
+    }
     expect(updateParameters[0]).toMatch(/^C\d{7}$/);
     expect(updateParameters[1]).toMatch(/^V\d{7}$/);
     expect(updateParameters[2]).toBe(companyId);
@@ -102,7 +108,7 @@ describe('PashxCompanyIdentityService', () => {
     });
     let collisionChecks = 0;
 
-    harness.query.mockImplementation(async (sql: string) => {
+    harness.query.mockImplementation(async (sql: string): Promise<unknown> => {
       if (sql.includes('FOR UPDATE')) {
         return [
           {
@@ -129,7 +135,8 @@ describe('PashxCompanyIdentityService', () => {
       sql.trimStart().startsWith('UPDATE'),
     );
     expect(updateCall).toBeDefined();
-    expect((updateCall?.[1] as string[])[0]).toMatch(/^C\d{7}$/);
+    if (updateCall === undefined) throw new Error('Expected company update');
+    expect((updateCall[1] as string[])[0]).toMatch(/^C\d{7}$/);
   });
 
   it('never overwrites IDs on an unrelated company update', async () => {

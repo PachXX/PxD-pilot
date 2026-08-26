@@ -47,14 +47,18 @@ export class PashxCompanyIdentityService {
 
   @OnDatabaseBatchEvent('company', DatabaseEventAction.CREATED)
   async handleCreated(
-    payload: WorkspaceEventBatch<ObjectRecordCreateEvent<CompanyIdentityRecord>>,
+    payload: WorkspaceEventBatch<
+      ObjectRecordCreateEvent<CompanyIdentityRecord>
+    >,
   ): Promise<void> {
     await this.assignMissingIds(payload.workspaceId, payload.events);
   }
 
   @OnDatabaseBatchEvent('company', DatabaseEventAction.UPDATED)
   async handleUpdated(
-    payload: WorkspaceEventBatch<ObjectRecordUpdateEvent<CompanyIdentityRecord>>,
+    payload: WorkspaceEventBatch<
+      ObjectRecordUpdateEvent<CompanyIdentityRecord>
+    >,
   ): Promise<void> {
     await this.assignMissingIds(payload.workspaceId, payload.events);
   }
@@ -77,19 +81,18 @@ export class PashxCompanyIdentityService {
 
     const authContext = buildSystemAuthContext(workspaceId);
 
-    await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        const dataSource =
-          await this.globalWorkspaceOrmManager.getGlobalWorkspaceDataSource();
+    await this.globalWorkspaceOrmManager.executeInWorkspaceContext(async () => {
+      const dataSource =
+        await this.globalWorkspaceOrmManager.getGlobalWorkspaceDataSource();
 
-        for (const companyId of companyIds) {
-          const queryRunner = dataSource.createQueryRunner();
-          await queryRunner.connect();
-          await queryRunner.startTransaction();
-          try {
-            const schema = this.workspaceSchema.getSchema(workspaceId);
-            const rows = (await queryRunner.query(
-              `SELECT id,
+      for (const companyId of companyIds) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        try {
+          const schema = this.workspaceSchema.getSchema(workspaceId);
+          const rows = (await queryRunner.query(
+            `SELECT id,
                       to_jsonb(company)->'mabBusinessRoles' AS "mabBusinessRoles",
                       to_jsonb(company)->>'customerId' AS "customerId",
                       to_jsonb(company)->>'vendorId' AS "vendorId",
@@ -98,65 +101,63 @@ export class PashxCompanyIdentityService {
                  FROM ${schema}.company AS company
                 WHERE id = $1
                 FOR UPDATE`,
-              [companyId],
-            )) as CompanyIdentityRow[];
-            const company = rows[0];
+            [companyId],
+          )) as CompanyIdentityRow[];
+          const company = rows[0];
 
-            if (company !== undefined) {
-              const updates: string[] = [];
-              const parameters: string[] = [];
-              const needsCustomerId =
-                hasRole(company.mabBusinessRoles, 'CUSTOMER') &&
-                company.hasCustomerIdField &&
-                isEmpty(company.customerId);
-              const needsVendorId =
-                hasRole(company.mabBusinessRoles, 'SUPPLIER') &&
-                company.hasVendorIdField &&
-                isEmpty(company.vendorId);
+          if (company !== undefined) {
+            const updates: string[] = [];
+            const parameters: string[] = [];
+            const needsCustomerId =
+              hasRole(company.mabBusinessRoles, 'CUSTOMER') &&
+              company.hasCustomerIdField &&
+              isEmpty(company.customerId);
+            const needsVendorId =
+              hasRole(company.mabBusinessRoles, 'SUPPLIER') &&
+              company.hasVendorIdField &&
+              isEmpty(company.vendorId);
 
-              if (needsCustomerId || needsVendorId) {
-                await this.workspaceSchema.reconcileSupportTables(
-                  queryRunner,
-                  workspaceId,
-                );
-              }
-              if (needsCustomerId) {
-                parameters.push(
-                  await this.allocateIdentity(queryRunner, schema, 'customer'),
-                );
-                updates.push(`"customerId" = $${parameters.length}`);
-              }
-              if (needsVendorId) {
-                parameters.push(
-                  await this.allocateIdentity(queryRunner, schema, 'vendor'),
-                );
-                updates.push(`"vendorId" = $${parameters.length}`);
-              }
+            if (needsCustomerId || needsVendorId) {
+              await this.workspaceSchema.reconcileSupportTables(
+                queryRunner,
+                workspaceId,
+              );
+            }
+            if (needsCustomerId) {
+              parameters.push(
+                await this.allocateIdentity(queryRunner, schema, 'customer'),
+              );
+              updates.push(`"customerId" = $${parameters.length}`);
+            }
+            if (needsVendorId) {
+              parameters.push(
+                await this.allocateIdentity(queryRunner, schema, 'vendor'),
+              );
+              updates.push(`"vendorId" = $${parameters.length}`);
+            }
 
-              if (updates.length > 0) {
-                parameters.push(companyId);
-                await queryRunner.query(
-                  `UPDATE ${schema}.company
+            if (updates.length > 0) {
+              parameters.push(companyId);
+              await queryRunner.query(
+                `UPDATE ${schema}.company
                       SET ${updates.join(', ')}, "updatedAt" = now()
                     WHERE id = $${parameters.length}`,
-                  parameters,
-                );
-              }
+                parameters,
+              );
             }
-
-            await queryRunner.commitTransaction();
-          } catch (error) {
-            if (queryRunner.isTransactionActive) {
-              await queryRunner.rollbackTransaction();
-            }
-            throw error;
-          } finally {
-            await queryRunner.release();
           }
+
+          await queryRunner.commitTransaction();
+        } catch (error) {
+          if (queryRunner.isTransactionActive) {
+            await queryRunner.rollbackTransaction();
+          }
+          throw error;
+        } finally {
+          await queryRunner.release();
         }
-      },
-      authContext,
-    );
+      }
+    }, authContext);
   }
 
   private async allocateIdentity(
