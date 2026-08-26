@@ -55,19 +55,21 @@ VPO `4ff6156a-69af-45c9-bd60-d12a2f897046` (`MAB-VPO-2026-0063`), approval
 - **DB absence proof**: `0` active and `0` total rows for all four fixture records
   (company / procurementCase / commercialDocument / approvalRequest).
 
-## Config changes applied on the pilot (recorded, reversible)
+## Config changes applied on the pilot (recorded; scaffolding reverted)
 
-1. `core.roleTarget` `ffaed71c-9ac4-41d3-8036-ec9265746228`: operator userWorkspace
-   re-pointed to PxD default role `f8746015-734b-4769-b44f-ee9038da7108`.
-2. `core.rolePermissionFlag`: 3 rows for `f8746015` — `pashx.procurement.issue`,
-   `pashx.approval.request`, `pashx.approval.decide`.
-3. `core.objectPermission`: upserted 8 rows for `f8746015` on the app objects
-   (`procurementCase`, `commercialDocument`, `documentLine`, `approvalRequest`,
-   `cashMovement`, `expense`, `operationalInsight`, `company`) with
-   `canReadObjectRecords`/`canUpdateObjectRecords`/`canSoftDeleteObjectRecords` = true
-   (the app install ships a **read-only** matrix — commands need write on
-   commercialDocument/documentLine/approvalRequest).
-4. Workspace cache flushed twice.
+1. `core.roleTarget` `ffaed71c-9ac4-41d3-8036-ec9265746228`: the operator
+   (`pashx-operator@pashx-mab.invalid`) is assigned the **app's manifest operator role**
+   `8154c004-5fd3-4b1d-8660-7b13166815c4` (manifest UID `7f8eadb1-18bc-438f-b0cf-e9f1793286c5`,
+   12 permission flags, read+write object permissions on all app objects).
+2. Interim scaffolding applied during diagnosis (3 `rolePermissionFlag` rows + writable
+   `objectPermission` upsert on the *default* role `f8746015`) was **fully reverted** —
+   the default role is back to its app-installed read-only, flag-less state (verified 0/0).
+3. Workspace cache flushed after each change.
+
+**Lesson recorded**: the VPO command path requires the app's *operator* role, not the
+app *default* role (which is intentionally flag-less/read-only). No app source defect —
+the acceptance matrix passes 21/21 with the correct role assignment and no manual
+permission configuration.
 
 ## Findings (release health)
 
@@ -75,11 +77,9 @@ VPO `4ff6156a-69af-45c9-bd60-d12a2f897046` (`MAB-VPO-2026-0063`), approval
   `AuthModule` (compiled but unimported). `/graphql` exposes no
   `getLoginTokenFromCredentials`/`signIn` → **new password logins are broken**; existing
   sessions/tokens still validate (signing key in DB). Flagged for the host-build owner.
-- **B — app install wiring gaps**: app metadata installs, but the manifest's role
-  definitions (5 roles) do not wire into the installed default role (which had zero
-  permission flags), and the object-permission matrix ships read-only. Both were
-  corrected by configuration for the acceptance; the install path should be fixed so
-  role wiring ships with the app.
+- **B — (corrected) no app install wiring defect**: roles, permission flags, and object
+  permissions all install correctly from the manifest. The earlier "wiring gap" was a
+  role-assignment error in the acceptance setup (default vs operator role).
 - **C — API-key auth rejected for audited commands** (`authContext.type !== 'user'`) —
   correct fail-closed design; commands require a user session token.
 - **D — D5 approval semantics confirmed live**: requester may cancel their own request
