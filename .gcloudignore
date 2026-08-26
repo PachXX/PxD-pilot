@@ -1,0 +1,11 @@
+.git/
+.gcloudignore
+node_modules/
+**/.terraform/
+**/.next/
+**/dist/
+**/coverage/
+**/.nx/cache/
+packages/twenty-website/
+packages/twenty-docs/
+packages/twenty-e2e-testing/
