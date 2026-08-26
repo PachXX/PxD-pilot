@@ -252,6 +252,7 @@ test('loader maps stored values and filters companies by supplier role', async (
     [SUPPLIER_ID],
   );
   assert.equal(result.vendors[0]?.commercialRegistrationNumber, 'CR-101');
+  assert.equal(result.vendors[0]?.vendorId, '101');
   assert.equal(result.cases[0]?.stage, 'intake');
   assert.equal(result.documents[0]?.documentType, 'SUPPLIER_RFQ');
 });

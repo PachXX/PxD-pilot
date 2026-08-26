@@ -55,7 +55,9 @@ const result = (
 ): WorkflowPipelineResult => ({
   cases: [caseRecord()],
   documents: [documentRecord()],
-  companies: [{ id: 'customer-1', name: 'MAB Demo Customer' }],
+  companies: [
+    { id: 'customer-1', name: 'MAB Demo Customer', customerId: '103' },
+  ],
   isPartial: false,
   asOf: NOW.toISOString(),
   ...overrides,
@@ -121,6 +123,7 @@ test('maps customer, document and compliance evidence onto each card', () => {
   );
 
   assert.equal(cards[0]?.customerName, 'MAB Demo Customer');
+  assert.equal(cards[0]?.customerId, '103');
   assert.equal(cards[0]?.documentCount, 2);
   assert.equal(cards[0]?.finalizedDocumentCount, 1);
   assert.equal(cards[0]?.complianceExceptionCount, 1);
