@@ -3,6 +3,7 @@ export * from './approval-commands.js';
 export * from './commands.js';
 export * from './command-centre.js';
 export * from './domain.js';
+export * from './email-intake.js';
 export * from './errors.js';
 export * from './metadata.js';
 export * from './money.js';
