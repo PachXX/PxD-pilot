@@ -165,13 +165,17 @@ export class PashxCompanyIdentityService {
     kind: CompanyIdentityKind,
   ): Promise<string> {
     const fieldName = kind === 'customer' ? 'customerId' : 'vendorId';
+    // A bare 7-digit number is ambiguous out of context (customer 0000101 and
+    // vendor 0000101 look identical); prefix by kind so the code alone tells
+    // you which type it is.
+    const prefix = kind === 'customer' ? 'C' : 'V';
     const rows = (await queryRunner.query(
       `INSERT INTO ${schema}.pashx_number_counter
          (document_type, period, current_value)
        SELECT $1, 'global',
               GREATEST(
-                COALESCE(MAX(CASE WHEN "${fieldName}" ~ '^[0-9]+$'
-                                  THEN "${fieldName}"::bigint END), 100),
+                COALESCE(MAX(CASE WHEN "${fieldName}" ~ '^[A-Z]?[0-9]+$'
+                                  THEN regexp_replace("${fieldName}", '^[A-Z]', '')::bigint END), 100),
                 100
               ) + 1
          FROM ${schema}.company
@@ -180,8 +184,8 @@ export class PashxCompanyIdentityService {
          pashx_number_counter.current_value + 1,
          EXCLUDED.current_value
        )
-       RETURNING lpad(current_value::text, 7, '0') AS current_value`,
-      [`company${kind === 'customer' ? 'Customer' : 'Vendor'}Id`],
+       RETURNING $2 || lpad(current_value::text, 7, '0') AS current_value`,
+      [`company${kind === 'customer' ? 'Customer' : 'Vendor'}Id`, prefix],
     )) as CounterRow[];
     const value = rows[0]?.current_value;
 

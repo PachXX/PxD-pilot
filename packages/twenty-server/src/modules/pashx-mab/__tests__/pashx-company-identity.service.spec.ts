@@ -5,17 +5,29 @@ import { type PashxWorkspaceSchemaService } from 'src/modules/pashx-mab/services
 const workspaceId = '11111111-1111-4111-8111-111111111111';
 const companyId = '22222222-2222-4222-8222-222222222222';
 
-const buildHarness = (company: {
-  mabBusinessRoles: string[];
-  customerId: string | null;
-  vendorId: string | null;
-}) => {
+const buildHarness = (
+  company: {
+    mabBusinessRoles: string[];
+    customerId: string | null;
+    vendorId: string | null;
+  },
+  fields = { customer: true, vendor: true },
+) => {
   const query = jest.fn(async (sql: string, parameters?: unknown[]) => {
-    if (sql.includes('FOR UPDATE')) return [{ id: companyId, ...company }];
+    if (sql.includes('FOR UPDATE')) {
+      return [
+        {
+          id: companyId,
+          ...company,
+          hasCustomerIdField: fields.customer,
+          hasVendorIdField: fields.vendor,
+        },
+      ];
+    }
     if (sql.includes('INSERT INTO')) {
       return parameters?.[0] === 'companyCustomerId'
-        ? [{ current_value: '104' }]
-        : [{ current_value: '108' }];
+        ? [{ current_value: 'C0000104' }]
+        : [{ current_value: 'V0000108' }];
     }
     return [];
   });
@@ -67,10 +79,12 @@ describe('PashxCompanyIdentityService', () => {
     expect(counterSql).toHaveLength(2);
     expect(counterSql.every((sql) => sql.includes('ON CONFLICT'))).toBe(true);
     expect(counterSql.every((sql) => sql.includes('GREATEST'))).toBe(true);
-    expect(counterSql.every((sql) => sql.includes("~ '^[0-9]+$'"))).toBe(true);
+    expect(
+      counterSql.every((sql) => sql.includes("~ '^[A-Z]?[0-9]+$'")),
+    ).toBe(true);
     expect(harness.query).toHaveBeenCalledWith(
       expect.stringContaining('"customerId" = $1, "vendorId" = $2'),
-      ['104', '108', companyId],
+      ['C0000104', 'V0000108', companyId],
     );
     expect(harness.queryRunner.commitTransaction).toHaveBeenCalledTimes(1);
   });
@@ -99,6 +113,23 @@ describe('PashxCompanyIdentityService', () => {
       customerId: null,
       vendorId: null,
     });
+
+    await harness.service.handleCreated(createdPayload as never);
+
+    expect(
+      harness.query.mock.calls.some(([sql]) => sql.includes('INSERT INTO')),
+    ).toBe(false);
+  });
+
+  it('no-ops safely when a non-MAB workspace lacks the identity fields', async () => {
+    const harness = buildHarness(
+      {
+        mabBusinessRoles: ['CUSTOMER', 'SUPPLIER'],
+        customerId: null,
+        vendorId: null,
+      },
+      { customer: false, vendor: false },
+    );
 
     await harness.service.handleCreated(createdPayload as never);
 
