@@ -25,6 +25,8 @@ type CompanyIdentityRow = Readonly<{
   mabBusinessRoles: unknown;
   customerId: string | null;
   vendorId: string | null;
+  hasCustomerIdField: boolean;
+  hasVendorIdField: boolean;
 }>;
 type CounterRow = Readonly<{ current_value: string }>;
 
@@ -83,14 +85,15 @@ export class PashxCompanyIdentityService {
           await queryRunner.connect();
           await queryRunner.startTransaction();
           try {
-            await this.workspaceSchema.reconcileSupportTables(
-              queryRunner,
-              workspaceId,
-            );
             const schema = this.workspaceSchema.getSchema(workspaceId);
             const rows = (await queryRunner.query(
-              `SELECT id, "mabBusinessRoles", "customerId", "vendorId"
-                 FROM ${schema}.company
+              `SELECT id,
+                      to_jsonb(company)->'mabBusinessRoles' AS "mabBusinessRoles",
+                      to_jsonb(company)->>'customerId' AS "customerId",
+                      to_jsonb(company)->>'vendorId' AS "vendorId",
+                      to_jsonb(company) ? 'customerId' AS "hasCustomerIdField",
+                      to_jsonb(company) ? 'vendorId' AS "hasVendorIdField"
+                 FROM ${schema}.company AS company
                 WHERE id = $1
                 FOR UPDATE`,
               [companyId],
@@ -100,20 +103,28 @@ export class PashxCompanyIdentityService {
             if (company !== undefined) {
               const updates: string[] = [];
               const parameters: string[] = [];
-
-              if (
+              const needsCustomerId =
                 hasRole(company.mabBusinessRoles, 'CUSTOMER') &&
-                isEmpty(company.customerId)
-              ) {
+                company.hasCustomerIdField &&
+                isEmpty(company.customerId);
+              const needsVendorId =
+                hasRole(company.mabBusinessRoles, 'SUPPLIER') &&
+                company.hasVendorIdField &&
+                isEmpty(company.vendorId);
+
+              if (needsCustomerId || needsVendorId) {
+                await this.workspaceSchema.reconcileSupportTables(
+                  queryRunner,
+                  workspaceId,
+                );
+              }
+              if (needsCustomerId) {
                 parameters.push(
                   await this.allocateIdentity(queryRunner, schema, 'customer'),
                 );
                 updates.push(`"customerId" = $${parameters.length}`);
               }
-              if (
-                hasRole(company.mabBusinessRoles, 'SUPPLIER') &&
-                isEmpty(company.vendorId)
-              ) {
+              if (needsVendorId) {
                 parameters.push(
                   await this.allocateIdentity(queryRunner, schema, 'vendor'),
                 );
@@ -169,7 +180,7 @@ export class PashxCompanyIdentityService {
          pashx_number_counter.current_value + 1,
          EXCLUDED.current_value
        )
-       RETURNING current_value::text`,
+       RETURNING lpad(current_value::text, 7, '0') AS current_value`,
       [`company${kind === 'customer' ? 'Customer' : 'Vendor'}Id`],
     )) as CounterRow[];
     const value = rows[0]?.current_value;
