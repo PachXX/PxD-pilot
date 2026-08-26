@@ -140,8 +140,13 @@ export type ProfitabilityContribution = Readonly<{
 export type ProfitabilityCurrencySummary = Readonly<{
   currencyCode: string;
   finalizedRevenueMicros: bigint;
+  invoiceVatMicros: bigint;
+  grossInvoiceBillingMicros: bigint;
   directCostMicros: bigint;
   grossProfitMicros: bigint;
+  sponsorAllocationMicros: bigint;
+  zakatProvisionMicros: bigint;
+  netProfitAfterAllocationsMicros: bigint;
   grossMarginBasisPoints: bigint | null;
   contributionRecordIds: readonly string[];
 }>;

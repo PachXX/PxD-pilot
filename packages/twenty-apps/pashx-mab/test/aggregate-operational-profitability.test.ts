@@ -3,7 +3,11 @@ import test from 'node:test';
 
 import {
   aggregateOperationalProfitability,
+  calculateBasisPointAmount,
   calculateGrossMarginBasisPoints,
+  CUSTOMER_INVOICE_VAT_BASIS_POINTS,
+  SPONSOR_ALLOCATION_BASIS_POINTS,
+  ZAKAT_PROVISION_BASIS_POINTS,
 } from '../src/profitability/aggregate-operational-profitability';
 import {
   type ProfitabilityCaseDimension,
@@ -118,7 +122,7 @@ test('aggregates revenue, vendor cost, expenses, credits and currencies', () => 
   });
 
   assert.equal(result.asOf, '2026-08-14T12:00:00.000Z');
-  assert.equal(result.inclusionRules.length, 6);
+  assert.equal(result.inclusionRules.length, 8);
   assert.equal(result.quality.includedRecordCount, 7);
   assert.equal(result.quality.excludedRecordCount, 0);
   assert.deepEqual(
@@ -128,16 +132,26 @@ test('aggregates revenue, vendor cost, expenses, credits and currencies', () => 
   assert.deepEqual(result.currencies[0], {
     currencyCode: 'AED',
     finalizedRevenueMicros: 1_500_000n,
+    invoiceVatMicros: 225_000n,
+    grossInvoiceBillingMicros: 1_725_000n,
     directCostMicros: 0n,
     grossProfitMicros: 1_500_000n,
+    sponsorAllocationMicros: 60_000n,
+    zakatProvisionMicros: 11_250n,
+    netProfitAfterAllocationsMicros: 1_428_750n,
     grossMarginBasisPoints: 10_000n,
     contributionRecordIds: ['aed-invoice', 'aed-invoice-tie'],
   });
   assert.deepEqual(result.currencies[1], {
     currencyCode: 'SAR',
     finalizedRevenueMicros: 1_800_000n,
+    invoiceVatMicros: 270_000n,
+    grossInvoiceBillingMicros: 2_070_000n,
     directCostMicros: 1_000_000n,
     grossProfitMicros: 800_000n,
+    sponsorAllocationMicros: 72_000n,
+    zakatProvisionMicros: 13_500n,
+    netProfitAfterAllocationsMicros: 714_500n,
     grossMarginBasisPoints: 4_444n,
     contributionRecordIds: [
       'invoice',
@@ -355,6 +369,47 @@ test('rounds gross margin half away from zero and handles zero revenue', () => {
     }),
     null,
   );
+});
+
+test('calculates invoice VAT, sponsor allocation and Zakat from finalized revenue', () => {
+  const finalizedRevenueMicros = 100_000_000n;
+
+  assert.equal(
+    calculateBasisPointAmount({
+      amountMicros: finalizedRevenueMicros,
+      rateBasisPoints: CUSTOMER_INVOICE_VAT_BASIS_POINTS,
+    }),
+    15_000_000n,
+  );
+  assert.equal(
+    calculateBasisPointAmount({
+      amountMicros: finalizedRevenueMicros,
+      rateBasisPoints: SPONSOR_ALLOCATION_BASIS_POINTS,
+    }),
+    4_000_000n,
+  );
+  assert.equal(
+    calculateBasisPointAmount({
+      amountMicros: finalizedRevenueMicros,
+      rateBasisPoints: ZAKAT_PROVISION_BASIS_POINTS,
+    }),
+    750_000n,
+  );
+});
+
+test('rounds VAT per invoice before summing the reporting period', () => {
+  const result = aggregateOperationalProfitability({
+    records: [
+      documentRecord({ recordId: 'invoice-a', amountMicros: 4 }),
+      documentRecord({ recordId: 'invoice-b', amountMicros: 4 }),
+    ],
+    filters: FILTERS,
+    asOf: '2026-08-14T12:00:00.000Z',
+  });
+
+  assert.equal(result.currencies[0]?.finalizedRevenueMicros, 8n);
+  assert.equal(result.currencies[0]?.invoiceVatMicros, 2n);
+  assert.equal(result.currencies[0]?.grossInvoiceBillingMicros, 10n);
 });
 
 test('returns an explicit empty result when no source records match', () => {

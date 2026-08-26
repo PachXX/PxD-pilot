@@ -20,11 +20,14 @@ export const OPERATIONAL_PROFITABILITY_INCLUSION_RULES = [
   'Customer and vendor credit notes reduce their respective totals using a positive stored amount and a deterministic negative sign.',
   'Draft, cancelled, credited-original, ZATCA-pending, ZATCA-rejected, pending-expense, and rejected-expense records are excluded and counted.',
   'Currencies are never combined; each ISO 4217 currency is reported separately without conversion.',
+  'Customer invoice revenue is tax-exclusive; 15% VAT is calculated at invoice time and reported outside revenue and profit.',
+  'Sponsor allocation is 4% and Zakat provision is 0.75% of finalized revenue; both use deterministic integer-micros rounding.',
   'Gross margin is rounded half away from zero to one basis point and is not applicable when finalized revenue is zero.',
 ] as const;
 
 type MutableCurrencySummary = {
   finalizedRevenueMicros: bigint;
+  invoiceVatMicros: bigint;
   directCostMicros: bigint;
   contributionRecordIds: string[];
 };
@@ -33,6 +36,9 @@ const BIGINT_ZERO = BigInt(0);
 const BIGINT_ONE = BigInt(1);
 const BIGINT_TWO = BigInt(2);
 const BASIS_POINTS_PER_ONE = BigInt(10_000);
+export const CUSTOMER_INVOICE_VAT_BASIS_POINTS = BigInt(1_500);
+export const SPONSOR_ALLOCATION_BASIS_POINTS = BigInt(400);
+export const ZAKAT_PROVISION_BASIS_POINTS = BigInt(75);
 
 const createExclusionCounts = (): Record<ProfitabilityExclusionReason, number> =>
   Object.fromEntries(
@@ -74,6 +80,18 @@ export const calculateGrossMarginBasisPoints = ({
         grossProfitMicros * BASIS_POINTS_PER_ONE,
         finalizedRevenueMicros,
       );
+
+export const calculateBasisPointAmount = ({
+  amountMicros,
+  rateBasisPoints,
+}: {
+  amountMicros: bigint;
+  rateBasisPoints: bigint;
+}): bigint =>
+  roundRatioHalfAwayFromZero(
+    amountMicros * rateBasisPoints,
+    BASIS_POINTS_PER_ONE,
+  );
 
 const isWithinFilters = (
   record: ProfitabilitySourceRecord,
@@ -185,12 +203,28 @@ const toCurrencySummary = (
 ): ProfitabilityCurrencySummary => {
   const grossProfitMicros =
     mutableSummary.finalizedRevenueMicros - mutableSummary.directCostMicros;
+  const invoiceVatMicros = mutableSummary.invoiceVatMicros;
+  const sponsorAllocationMicros = calculateBasisPointAmount({
+    amountMicros: mutableSummary.finalizedRevenueMicros,
+    rateBasisPoints: SPONSOR_ALLOCATION_BASIS_POINTS,
+  });
+  const zakatProvisionMicros = calculateBasisPointAmount({
+    amountMicros: mutableSummary.finalizedRevenueMicros,
+    rateBasisPoints: ZAKAT_PROVISION_BASIS_POINTS,
+  });
 
   return {
     currencyCode,
     finalizedRevenueMicros: mutableSummary.finalizedRevenueMicros,
+    invoiceVatMicros,
+    grossInvoiceBillingMicros:
+      mutableSummary.finalizedRevenueMicros + invoiceVatMicros,
     directCostMicros: mutableSummary.directCostMicros,
     grossProfitMicros,
+    sponsorAllocationMicros,
+    zakatProvisionMicros,
+    netProfitAfterAllocationsMicros:
+      grossProfitMicros - sponsorAllocationMicros - zakatProvisionMicros,
     grossMarginBasisPoints: calculateGrossMarginBasisPoints({
       finalizedRevenueMicros: mutableSummary.finalizedRevenueMicros,
       grossProfitMicros,
@@ -207,12 +241,17 @@ const summarizeContributions = (
   for (const contribution of contributions) {
     const summary = summaries.get(contribution.currencyCode) ?? {
       finalizedRevenueMicros: BIGINT_ZERO,
+      invoiceVatMicros: BIGINT_ZERO,
       directCostMicros: BIGINT_ZERO,
       contributionRecordIds: [],
     };
 
     if (contribution.kind === 'REVENUE') {
       summary.finalizedRevenueMicros += contribution.signedAmountMicros;
+      summary.invoiceVatMicros += calculateBasisPointAmount({
+        amountMicros: contribution.signedAmountMicros,
+        rateBasisPoints: CUSTOMER_INVOICE_VAT_BASIS_POINTS,
+      });
     } else {
       summary.directCostMicros += contribution.signedAmountMicros;
     }

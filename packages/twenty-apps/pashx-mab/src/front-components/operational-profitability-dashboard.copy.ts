@@ -91,7 +91,12 @@ export type DashboardCopy = Readonly<{
   marginBridgeTitle: string;
   marginBridgeSubtitle: string;
   finalizedRevenue: string;
+  invoiceVat: string;
+  grossInvoiceBilling: string;
   lessDirectCost: string;
+  lessSponsorAllocation: string;
+  lessZakatProvision: string;
+  netAfterAllocations: string;
   rankedCasesTitle: string;
   rankedCasesSubtitle: string;
   noCaseContributors: string;
@@ -203,9 +208,15 @@ const englishCopy: DashboardCopy = {
   currencyConversion: 'Currency conversion',
   noCurrencyConversion: 'None — currencies remain separated',
   marginBridgeTitle: 'Deterministic margin bridge',
-  marginBridgeSubtitle: 'Revenue − direct cost = gross profit',
+  marginBridgeSubtitle:
+    'VAT is billed separately; sponsor and Zakat are calculated from finalized revenue',
   finalizedRevenue: 'Finalized revenue',
+  invoiceVat: 'Invoice VAT (15%, outside revenue)',
+  grossInvoiceBilling: 'Gross invoice billing including VAT',
   lessDirectCost: 'Less direct cost',
+  lessSponsorAllocation: 'Less sponsor allocation (4% of revenue)',
+  lessZakatProvision: 'Less Zakat provision (0.75% of revenue)',
+  netAfterAllocations: 'Net profit after sponsor and Zakat',
   rankedCasesTitle: 'Ranked case contributors',
   rankedCasesSubtitle: 'Largest absolute gross-profit effect',
   noCaseContributors: 'No case contributors in this currency.',
@@ -228,6 +239,8 @@ const englishCopy: DashboardCopy = {
     'Customer and vendor credit notes reduce their respective totals using a positive stored amount and a deterministic negative sign.',
     'Draft, cancelled, credited-original, ZATCA-pending, ZATCA-rejected, pending-expense, and rejected-expense records are excluded and counted.',
     'Currencies are never combined; each ISO 4217 currency is reported separately without conversion.',
+    'Customer invoice revenue is tax-exclusive. VAT is calculated at 15% during invoicing and is not included in revenue, direct cost, gross profit, or margin.',
+    'Sponsor allocation is 4% and Zakat provision is 0.75% of finalized revenue, calculated with deterministic integer-micros rounding.',
     'Gross margin is rounded half away from zero to one basis point and is not applicable when finalized revenue is zero.',
   ],
   includedCurrencyRecords: (count, currencyCode) =>
@@ -342,9 +355,15 @@ const arabicCopy: DashboardCopy = {
   currencyConversion: 'تحويل العملة',
   noCurrencyConversion: 'لا يوجد — تبقى العملات منفصلة',
   marginBridgeTitle: 'جسر الهامش الحتمي',
-  marginBridgeSubtitle: 'الإيرادات − التكلفة المباشرة = إجمالي الربح',
+  marginBridgeSubtitle:
+    'تُفوتر الضريبة بشكل منفصل، وتُحسب حصة الراعي والزكاة من الإيرادات النهائية',
   finalizedRevenue: 'الإيرادات النهائية',
+  invoiceVat: 'ضريبة الفاتورة (15%، خارج الإيرادات)',
+  grossInvoiceBilling: 'إجمالي الفاتورة شامل الضريبة',
   lessDirectCost: 'ناقص التكلفة المباشرة',
+  lessSponsorAllocation: 'ناقص حصة الراعي (4% من الإيرادات)',
+  lessZakatProvision: 'ناقص مخصص الزكاة (0.75% من الإيرادات)',
+  netAfterAllocations: 'صافي الربح بعد حصة الراعي والزكاة',
   rankedCasesTitle: 'ترتيب الحالات المساهمة',
   rankedCasesSubtitle: 'أكبر أثر مطلق على إجمالي الربح',
   noCaseContributors: 'لا توجد حالات مساهمة بهذه العملة.',
@@ -367,6 +386,8 @@ const arabicCopy: DashboardCopy = {
     'تخفض إشعارات دائني العملاء والموردين إجمالياتها باستخدام مبلغ موجب مخزن وإشارة سالبة حتمية.',
     'تُستبعد وتُحصى السجلات المسودة والملغاة والأصول المقيّدة والإقرارات المعلقة أو المرفوضة لدى ZATCA والمصروفات المعلقة أو المرفوضة.',
     'لا تُدمج العملات مطلقًا؛ تُعرض كل عملة وفق ISO 4217 بصورة منفصلة ومن دون تحويل.',
+    'إيرادات فاتورة العميل غير شاملة للضريبة. تُحسب ضريبة القيمة المضافة بنسبة 15% عند إصدار الفاتورة ولا تدخل في الإيرادات أو التكلفة أو الربح أو الهامش.',
+    'تبلغ حصة الراعي 4% ومخصص الزكاة 0.75% من الإيرادات النهائية، مع تقريب حتمي بوحدة الميكرو.',
     'يُقرب الهامش الإجمالي بعيدًا عن الصفر إلى نقطة أساس واحدة، ويكون غير منطبق عندما تكون الإيرادات النهائية صفرًا.',
   ],
   includedCurrencyRecords: (count, currencyCode) =>

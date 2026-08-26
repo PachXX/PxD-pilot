@@ -610,6 +610,16 @@ const MarginBridge = ({
       kind: 'revenue',
     },
     {
+      label: copy.invoiceVat,
+      value: summary?.invoiceVatMicros ?? BigInt(0),
+      kind: 'vat',
+    },
+    {
+      label: copy.grossInvoiceBilling,
+      value: summary?.grossInvoiceBillingMicros ?? BigInt(0),
+      kind: 'revenue',
+    },
+    {
       label: copy.lessDirectCost,
       value: summary?.directCostMicros ?? BigInt(0),
       kind: 'cost',
@@ -617,6 +627,21 @@ const MarginBridge = ({
     {
       label: copy.grossProfit,
       value: summary?.grossProfitMicros ?? BigInt(0),
+      kind: 'profit',
+    },
+    {
+      label: copy.lessSponsorAllocation,
+      value: summary?.sponsorAllocationMicros ?? BigInt(0),
+      kind: 'cost',
+    },
+    {
+      label: copy.lessZakatProvision,
+      value: summary?.zakatProvisionMicros ?? BigInt(0),
+      kind: 'cost',
+    },
+    {
+      label: copy.netAfterAllocations,
+      value: summary?.netProfitAfterAllocationsMicros ?? BigInt(0),
       kind: 'profit',
     },
   ] as const;

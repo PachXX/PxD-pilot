@@ -133,7 +133,7 @@ test('English and Arabic dashboard copy are exhaustive, meaningful, and structur
       Object.keys(copy.contributionKinds).sort(),
       [...CONTRIBUTION_KINDS].sort(),
     );
-    assert.equal(copy.inclusionRules.length, 6);
+    assert.equal(copy.inclusionRules.length, 8);
     assert.equal(new Set(copy.inclusionRules).size, copy.inclusionRules.length);
   }
 
