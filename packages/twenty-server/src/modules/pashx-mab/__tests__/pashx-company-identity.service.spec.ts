@@ -13,7 +13,7 @@ const buildHarness = (
   },
   fields = { customer: true, vendor: true },
 ) => {
-  const query = jest.fn(async (sql: string, parameters?: unknown[]) => {
+  const query = jest.fn(async (sql: string) => {
     if (sql.includes('FOR UPDATE')) {
       return [
         {
@@ -24,10 +24,10 @@ const buildHarness = (
         },
       ];
     }
-    if (sql.includes('INSERT INTO')) {
-      return parameters?.[0] === 'companyCustomerId'
-        ? [{ current_value: '104' }]
-        : [{ current_value: '108' }];
+    // Existence check for the randomly generated candidate: always report no
+    // collision so allocation succeeds on the first attempt.
+    if (sql.trimStart().startsWith('SELECT 1 FROM')) {
+      return [];
     }
     return [];
   });
@@ -64,7 +64,7 @@ const createdPayload = {
 };
 
 describe('PashxCompanyIdentityService', () => {
-  it('atomically assigns both missing IDs from the live maxima', async () => {
+  it('assigns both missing IDs with type prefixes under atomic locks', async () => {
     const harness = buildHarness({
       mabBusinessRoles: ['CUSTOMER', 'SUPPLIER'],
       customerId: null,
@@ -73,18 +73,63 @@ describe('PashxCompanyIdentityService', () => {
 
     await harness.service.handleCreated(createdPayload as never);
 
-    const counterSql = harness.query.mock.calls
+    const lockSql = harness.query.mock.calls
       .map(([sql]) => sql)
       .filter((sql) => sql.includes('INSERT INTO'));
-    expect(counterSql).toHaveLength(2);
-    expect(counterSql.every((sql) => sql.includes('ON CONFLICT'))).toBe(true);
-    expect(counterSql.every((sql) => sql.includes('GREATEST'))).toBe(true);
-    expect(counterSql.every((sql) => sql.includes("~ '^[0-9]+$'"))).toBe(true);
-    expect(harness.query).toHaveBeenCalledWith(
-      expect.stringContaining('"customerId" = $1, "vendorId" = $2'),
-      ['104', '108', companyId],
+    expect(lockSql).toHaveLength(2);
+    expect(lockSql.every((sql) => sql.includes('ON CONFLICT'))).toBe(true);
+
+    const updateCall = harness.query.mock.calls.find(([sql]) =>
+      sql.trimStart().startsWith('UPDATE'),
     );
+
+    expect(updateCall).toBeDefined();
+
+    const [updateSql, updateParameters] = updateCall as [string, string[]];
+
+    expect(updateSql).toContain('"customerId" = $1, "vendorId" = $2');
+    expect(updateParameters[0]).toMatch(/^C\d{7}$/);
+    expect(updateParameters[1]).toMatch(/^V\d{7}$/);
+    expect(updateParameters[2]).toBe(companyId);
     expect(harness.queryRunner.commitTransaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries when a generated candidate collides with an existing ID', async () => {
+    const harness = buildHarness({
+      mabBusinessRoles: ['CUSTOMER'],
+      customerId: null,
+      vendorId: null,
+    });
+    let collisionChecks = 0;
+
+    harness.query.mockImplementation(async (sql: string) => {
+      if (sql.includes('FOR UPDATE')) {
+        return [
+          {
+            id: companyId,
+            mabBusinessRoles: ['CUSTOMER'],
+            customerId: null,
+            vendorId: null,
+            hasCustomerIdField: true,
+            hasVendorIdField: true,
+          },
+        ];
+      }
+      if (sql.trimStart().startsWith('SELECT 1 FROM')) {
+        collisionChecks += 1;
+        return collisionChecks === 1 ? [{ exists: 1 }] : [];
+      }
+      return [];
+    });
+
+    await harness.service.handleCreated(createdPayload as never);
+
+    expect(collisionChecks).toBe(2);
+    const updateCall = harness.query.mock.calls.find(([sql]) =>
+      sql.trimStart().startsWith('UPDATE'),
+    );
+    expect(updateCall).toBeDefined();
+    expect((updateCall?.[1] as string[])[0]).toMatch(/^C\d{7}$/);
   });
 
   it('never overwrites IDs on an unrelated company update', async () => {

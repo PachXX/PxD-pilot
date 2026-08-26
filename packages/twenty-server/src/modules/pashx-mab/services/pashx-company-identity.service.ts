@@ -28,7 +28,9 @@ type CompanyIdentityRow = Readonly<{
   hasCustomerIdField: boolean;
   hasVendorIdField: boolean;
 }>;
-type CounterRow = Readonly<{ current_value: string }>;
+const MAX_ALLOCATION_ATTEMPTS = 20;
+const RANDOM_ID_FLOOR = 1_000_000;
+const RANDOM_ID_CEILING = 9_999_999;
 
 const hasRole = (roles: unknown, role: 'CUSTOMER' | 'SUPPLIER'): boolean =>
   Array.isArray(roles) && roles.includes(role);
@@ -165,30 +167,41 @@ export class PashxCompanyIdentityService {
     kind: CompanyIdentityKind,
   ): Promise<string> {
     const fieldName = kind === 'customer' ? 'customerId' : 'vendorId';
-    const rows = (await queryRunner.query(
+    // A bare number is ambiguous out of context (customer 1000101 and vendor
+    // 1000101 look identical); prefix by kind so the code alone tells you
+    // which type it is.
+    const prefix = kind === 'customer' ? 'C' : 'V';
+
+    // Acquire a per-kind row lock on the shared counter table so two
+    // companies of the same kind can never pick a random candidate at the
+    // same time. The counter's own value is unused here — it only serves as
+    // a mutex held for the rest of this transaction.
+    await queryRunner.query(
       `INSERT INTO ${schema}.pashx_number_counter
          (document_type, period, current_value)
-       SELECT $1, 'global',
-              GREATEST(
-                COALESCE(MAX(CASE WHEN "${fieldName}" ~ '^[0-9]+$'
-                                  THEN "${fieldName}"::bigint END), 100),
-                100
-              ) + 1
-         FROM ${schema}.company
+       VALUES ($1, 'global', 1)
        ON CONFLICT (document_type, period)
-       DO UPDATE SET current_value = GREATEST(
-         pashx_number_counter.current_value + 1,
-         EXCLUDED.current_value
-       )
-       RETURNING current_value::text`,
+       DO UPDATE SET current_value = pashx_number_counter.current_value + 1`,
       [`company${kind === 'customer' ? 'Customer' : 'Vendor'}Id`],
-    )) as CounterRow[];
-    const value = rows[0]?.current_value;
+    );
 
-    if (value === undefined) {
-      throw new Error(`Failed to allocate the next ${kind} ID.`);
+    for (let attempt = 0; attempt < MAX_ALLOCATION_ATTEMPTS; attempt += 1) {
+      const candidateNumber =
+        RANDOM_ID_FLOOR +
+        Math.floor(Math.random() * (RANDOM_ID_CEILING - RANDOM_ID_FLOOR + 1));
+      const candidate = `${prefix}${candidateNumber}`;
+      const existing = (await queryRunner.query(
+        `SELECT 1 FROM ${schema}.company WHERE "${fieldName}" = $1 LIMIT 1`,
+        [candidate],
+      )) as unknown[];
+
+      if (existing.length === 0) {
+        return candidate;
+      }
     }
 
-    return value;
+    throw new Error(
+      `Failed to allocate a unique ${kind} ID after ${MAX_ALLOCATION_ATTEMPTS} attempts.`,
+    );
   }
 }
