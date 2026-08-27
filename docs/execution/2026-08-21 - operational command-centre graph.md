@@ -1,7 +1,7 @@
 # Operational Command Centre graph — insights, approvals, compliance, tasks, agents, email
 
 - Date: 2026-08-21
-- Status: **OC0–OC4 deployed and accepted; OC6-A app 0.2.10 live and fixture-dependent DS6 matrix complete; OC5 source landed and tests pass (mailbox connected, classifier + loader cherry-picked to `codex/mab-workflow-pipeline` 2026-08-27, live acceptance pending); OC5-OCR, OC6-B/C and OC7 blocked**
+- Status: **OC0–OC4 deployed and accepted; OC6-A app 0.2.10 live and fixture-dependent DS6 matrix complete; OC5 source landed and tests pass (mailbox connected, classifier + loader cherry-picked to `codex/mab-workflow-pipeline` 2026-08-27, live acceptance pending); OC6-B email panel source landed 2026-08-27; OC5-OCR, OC6-B OCR panel, OC6-C and OC7 blocked**
 - Architecture: `docs/architecture/ADR-0003-command-centre-operational-control-plane.md`
 
 ## User outcome
@@ -32,7 +32,7 @@ The approved mockup language remains the visual contract:
 | **OC4** | Codex | OC1 + OC2 | Read-only evidence analyst and specialist task agents with least-privilege roles. | **accepted 2026-08-24; app 0.2.9 live, agents/role verified in Cloud SQL; model behavior deferred to OC7** |
 | **OC5** | Codex + Claude | OC1 + native mailbox connected | Read-only synchronized-email candidates; review-before-task/approval creation. | **mailbox connected; source landed 2026-08-27: classifier + read-only candidate loader cherry-picked from `codex/pashx-pilot-cx3-cx4` onto `codex/mab-workflow-pipeline`; contract coverage 100/100/100 and loader 6/6 pass; live acceptance pending** |
 | **OC5-OCR** | Codex + Claude | OC1 + accepted OCR benchmark/provider | Text-layer-first document extraction, OCR fallback, page/region provenance, confidence and human review before create. | **contract/corpus inventory complete; local smoke benchmark 24/25 critical fields, provider acceptance blocked pending OC5-OCR-B2** |
-| **OC6** | Codex | OC2 + OC3 + OC4 + OC5 + OC5-OCR | Native bilingual Command Centre panels matching approved mockups. | **OC6-A source accepted 2026-08-24; OC6-B/C remain blocked** |
+| **OC6** | Codex | OC2 + OC3 + OC4 + OC5 + OC5-OCR | Native bilingual Command Centre panels matching approved mockups. | **OC6-A source accepted 2026-08-24; OC6-B email panel source landed 2026-08-27 on `codex/mab-workflow-pipeline` (review-only candidates, app suite 120/120, lint clean); OC6-B OCR panel and OC6-C remain blocked on OC5-OCR** |
 | **OC7** | Codex + Claude + Shahil | OC6 | Contract, permission, idempotency, prompt-injection, privacy, RTL, accessibility, and live QA. | blocked |
 
 ### OC5-OCR-B2 acceptance split
