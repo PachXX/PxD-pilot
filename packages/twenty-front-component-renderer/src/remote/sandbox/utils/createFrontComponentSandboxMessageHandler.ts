@@ -10,12 +10,14 @@ const UNKNOWN_WORKER_ERROR_MESSAGE = 'Unknown front component worker error';
 type FrontComponentSandboxMessageHandlerConfig = {
   sandboxIframe: HTMLIFrameElement;
   workerMessagePort: MessagePort;
+  workerHostFetchMessagePort: MessagePort;
   onSandboxError: (error: Error) => void;
 };
 
 export const createFrontComponentSandboxMessageHandler = ({
   sandboxIframe,
   workerMessagePort,
+  workerHostFetchMessagePort,
   onSandboxError,
 }: FrontComponentSandboxMessageHandlerConfig): ((
   event: MessageEvent,
@@ -44,7 +46,7 @@ export const createFrontComponentSandboxMessageHandler = ({
           type: FRONT_COMPONENT_SANDBOX_MESSAGE_TYPE.INIT,
         } satisfies FrontComponentSandboxMessage,
         '*',
-        [workerMessagePort],
+        [workerMessagePort, workerHostFetchMessagePort],
       );
 
       return;

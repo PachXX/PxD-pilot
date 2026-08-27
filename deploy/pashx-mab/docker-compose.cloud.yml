@@ -1,0 +1,112 @@
+# PashX MAB cloud runtime composition.
+#
+# This is the reviewable, checked-in source of the stack that the VM startup script renders.
+# It differs from packages/twenty-docker/docker-compose.yml in four ways, all deliberate:
+#
+#   1. No `db` service — PostgreSQL is managed Cloud SQL, reached over private IP.
+#   2. No `server-local-data` volume — the architecture forbids durable VM filesystem state.
+#      STORAGE_TYPE=s3 sends every byte to GCS instead.
+#   3. Caddy terminates TLS; the server container is never published on a host port.
+#   4. Every secret arrives through an env file that the startup script writes to tmpfs after
+#      reading Secret Manager. No secret value appears in this file or in the repository.
+#
+# Image is digest-pinned via PASHX_IMAGE. A tag-only reference fails the CL0 acceptance check.
+
+name: pashx-mab
+
+services:
+  redis:
+    image: redis:7-alpine
+    # noeviction matches packages/twenty-docker/docker-compose.yml: BullMQ must never have jobs
+    # silently evicted. --save "" disables RDB snapshots because no durable state lives here.
+    command: ["redis-server", "--maxmemory-policy", "noeviction", "--save", ""]
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    image: ${PASHX_IMAGE:?PASHX_IMAGE must be a digest-pinned reference}
+    env_file: [/run/pashx-mab/app.env]
+    environment:
+      # The server is the single migration owner. Two migration owners is a corruption path.
+      DISABLE_DB_MIGRATIONS: "false"
+      DISABLE_CRON_JOBS_REGISTRATION: "false"
+    # 9464 is Twenty's Prometheus exporter (MeterDriver.Prometheus). Exposed to the collector on
+    # the internal compose network only — it is never published to the host and never reachable
+    # from the internet. It carries the pashx financial-command histogram that the p95 rollback
+    # detector is built on.
+    expose: ["3000", "9464"]
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:3000/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      # Migrations run on first boot against an empty database and are slow.
+      start_period: 120s
+    restart: always
+    logging:
+      driver: gcplogs
+
+  worker:
+    image: ${PASHX_IMAGE:?PASHX_IMAGE must be a digest-pinned reference}
+    command: ["yarn", "worker:prod"]
+    env_file: [/run/pashx-mab/app.env]
+    environment:
+      DISABLE_DB_MIGRATIONS: "true"
+      DISABLE_CRON_JOBS_REGISTRATION: "true"
+    depends_on:
+      # Ordering required by the CX0 contract: worker starts only after server migrations
+      # complete and /healthz passes.
+      server:
+        condition: service_healthy
+    restart: always
+    logging:
+      driver: gcplogs
+
+  # Scrapes the server's Prometheus endpoint and writes to Google Managed Prometheus. This is
+  # what makes the p95 rollback trigger detectable; see docs/operations/pashx-mab-gcp/
+  # CL0-M1-p95-alert.md. Version-pinned: a collector upgrade can change metric naming, which
+  # would silently break the alert filter.
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.115.1
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - /run/pashx-mab/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    depends_on:
+      server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/otelcol-contrib", "--version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: always
+    logging:
+      driver: gcplogs
+
+  caddy:
+    image: caddy:2-alpine
+    ports: ["80:80", "443:443"]
+    volumes:
+      - /run/pashx-mab/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Bind mount to a SEPARATE persistent disk, not a docker named volume. A named volume lives
+      # on the boot disk, and deploys here replace the instance — so every deploy destroyed the
+      # ACME account and certificate, and 12 replacements exhausted Let's Encrypt's limit of 5
+      # certificates per exact set of identifiers per 168h. Public HTTPS went down as a result.
+      # The startup script mounts the disk at this path before compose starts.
+      - /mnt/disks/caddy-certs:/data
+    depends_on:
+      server:
+        condition: service_healthy
+    restart: always
+
+# No named volumes. `caddy-data` was removed: its comment claimed "losing this volume costs one
+# ACME re-issue, nothing else", which was wrong — re-issues are capped at 5 per 168h per identifier
+# set, and the deploy mechanism replaced the instance every time. Certificates now live on the
+# persistent disk bind-mounted above.

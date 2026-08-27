@@ -28,7 +28,7 @@ const StyledDivider = styled.div`
   width: 1px;
 `;
 
-const StyledTwentyLogo = styled.img`
+const StyledPxdLogo = styled.img`
   border-radius: ${themeCssVariables.border.radius.xs};
   height: ${SYNC_BADGE_LOGO_SIZE}px;
   width: ${SYNC_BADGE_LOGO_SIZE}px;
@@ -46,7 +46,7 @@ export const OnboardingImportPreviewSyncBadge = () => {
         size={theme.icon.size.md}
         color={themeCssVariables.font.color.tertiary}
       />
-      <StyledTwentyLogo src="/images/integrations/twenty-logo.svg" alt="" />
+      <StyledPxdLogo src="/branding/pxd-logo-192.png" alt="" />
     </StyledBadge>
   );
 };

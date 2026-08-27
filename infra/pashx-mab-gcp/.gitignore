@@ -1,0 +1,15 @@
+# Never commit state, variable values, credentials, or plan files.
+terraform.tfvars
+*.auto.tfvars
+backend.tf
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform/
+crash.log
+
+# .terraform.lock.hcl is deliberately NOT ignored. It pins provider versions by checksum, and
+# "reproducible from checked-in configuration" is a CL0 acceptance criterion — without the lock
+# file a later `init` could resolve a different provider build.
+
+*.json.key

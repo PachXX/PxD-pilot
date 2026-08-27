@@ -83,4 +83,5 @@ export enum MetricsKeys {
   ConnectedAccountWebhookSubscriptionRenewalFailed = 'connected-account-webhook-subscription/renewal-failed',
   ConnectedAccountWebhookSubscriptionDeleted = 'connected-account-webhook-subscription/deleted',
   ConnectedAccountWebhookSubscriptionDeletionFailed = 'connected-account-webhook-subscription/deletion-failed',
+  PashxFinancialCommandInternalDurationMs = 'pashx/financial-command/internal-duration-ms',
 }

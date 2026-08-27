@@ -77,14 +77,23 @@ const getTwentyORMExceptionUserFriendlyMessage = (
 };
 
 export class TwentyORMException extends CustomException<TwentyORMExceptionCode> {
+  readonly conflictingFieldName?: string;
+
   constructor(
     message: string,
     code: TwentyORMExceptionCode,
-    { userFriendlyMessage }: { userFriendlyMessage?: MessageDescriptor } = {},
+    {
+      userFriendlyMessage,
+      conflictingFieldName,
+    }: {
+      userFriendlyMessage?: MessageDescriptor;
+      conflictingFieldName?: string;
+    } = {},
   ) {
     super(message, code, {
       userFriendlyMessage:
         userFriendlyMessage ?? getTwentyORMExceptionUserFriendlyMessage(code),
     });
+    this.conflictingFieldName = conflictingFieldName;
   }
 }

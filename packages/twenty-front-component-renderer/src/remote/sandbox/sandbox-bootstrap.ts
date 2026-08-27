@@ -25,9 +25,9 @@ window.addEventListener('message', (event) => {
     return;
   }
 
-  const [hostPort] = event.ports;
+  const [hostPort, hostFetchPort] = event.ports;
 
-  if (!isDefined(hostPort)) {
+  if (!isDefined(hostPort) || !isDefined(hostFetchPort)) {
     return;
   }
 
@@ -53,7 +53,7 @@ window.addEventListener('message', (event) => {
     {
       type: FRONT_COMPONENT_SANDBOX_MESSAGE_TYPE.INIT,
     } satisfies FrontComponentSandboxMessage,
-    [hostPort],
+    [hostPort, hostFetchPort],
   );
 });
 

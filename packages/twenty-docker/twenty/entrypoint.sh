@@ -10,8 +10,8 @@ setup_and_migrate_db() {
     echo "Running database setup and migrations..."
 
     # Run setup and migration scripts
-    has_schema=$(psql -tAc "SELECT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = 'core')" ${PG_DATABASE_URL})
-    if [ "$has_schema" = "f" ]; then
+    has_core_workspace_table=$(psql -tAc "SELECT to_regclass('core.workspace') IS NOT NULL" "$PG_DATABASE_URL")
+    if [ "$has_core_workspace_table" = "f" ]; then
         echo "Database appears to be empty, running migrations."
         yarn database:init:prod
     fi

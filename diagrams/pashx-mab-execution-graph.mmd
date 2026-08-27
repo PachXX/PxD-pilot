@@ -1,0 +1,14 @@
+flowchart TD
+    DONE["Completed: H0, CL0, CX0, CL1, CX1, CL3, CX3, CX4"] --> CANDIDATE["Candidate: CX5-1 + app 0.1.3"]
+    CANDIDATE --> CL5["CL5 Claude: immutable build, deploy, install 0.1.3"]
+    CL5 --> CL2R["CL2-R Claude: Cloud SQL 69/69 + teardown"]
+    CL2R --> CX2R["CX2-R Codex: fresh-case bilingual browser + DB QA"]
+    CX2R --> RESULT{"Acceptance result"}
+    RESULT -->|pass| SG["SG: T3 ship gate"]
+    RESULT -->|application defect| CXR["CXR Codex: focused repair"]
+    RESULT -->|cloud or harness defect| CLR["CLR Claude: focused repair"]
+    CXR --> CL5
+    CLR --> CL2R
+    CL4["CL4 Claude: collector repair"] --> CL0M1["CL0-M1 Claude: p95 alert drill"]
+    CL0M1 --> SG
+    G0["G0: Gate 0 inputs or residual-risk decision"] --> SG

@@ -1,0 +1,76 @@
+# Copy to terraform.tfvars and fill in from the recorded H0 inputs.
+#
+# NEVER put a secret value in this file. Nothing here is a credential. Secrets are populated
+# directly into Secret Manager by scripts/30-put-secrets.sh.
+#
+# terraform.tfvars is gitignored. terraform.tfvars.example is the committed template.
+
+# --- H0 inputs — all six must be recorded in the shared Obsidian context first ---
+
+# See IDR-0001. Do NOT set this to pashxd-e56c5 without an explicit written decision.
+project_id = "pashx-mab-pilot" # RECORDED 2026-08-06. Created; billing linked; budget attached.
+
+# RECORDED 2026-08-06 (revised): me-central1 (Doha, Qatar).
+#
+# me-central2 (Dammam) was the first choice for in-kingdom Saudi residency and is UNREACHABLE
+# from this billing account: it requires Invoiced Billing for non-KSA customers or a CNTXT
+# reseller contract for KSA customers. See BLOCKER-me-central2-region-access.md.
+#
+# me-central1 is the closest usable region: ~600 km from Dammam, single-digit ms to Saudi users,
+# Middle East data residency — but NOT in-kingdom. In-kingdom residency is now a commercial
+# question (KSA entity + CNTXT), to be resolved before real MAB data.
+#
+# Verified by a real create-and-delete probe, not just by read APIs.
+# IMMUTABLE for Cloud SQL and the bucket after apply.
+region = "me-central1"
+zone   = "me-central1-a"
+
+# Public hostname. RECORDED 2026-08-06: empty, i.e. the nip.io fallback derived from the static
+# IP (e.g. https://34-1-2-3.nip.io). Acceptable for a disposable pilot with test users only.
+# NOT acceptable for MAB user-facing acceptance — set a real hostname before then. See
+# docs/operations/pashx-mab-gcp/H0-recorded-controls.md.
+server_hostname = ""
+
+# H0 input 5. 'disposable' is the only value compatible with destructive CL2 tests and with the
+# nightly PITR gaps that scheduled shutdown introduces. guards.tf refuses 'real' + schedule.
+data_classification = "disposable"
+
+# Monthly ceiling. RECORDED 2026-08-06: 9000 INR (~$100) scoped to pashx-mab-pilot only.
+# cost-estimate.md is in USD because GCP list prices are USD; this account bills in INR.
+budget_amount        = 9000   # INR. Billing account 0154D8-6A85C0-668177 bills in INR, not USD.
+budget_currency_code = "INR"
+billing_account_id   = "0154D8-6A85C0-668177"
+
+alert_email = "moideenshahil2@gmail.com"
+
+# --- The gate ---------------------------------------------------------------
+# false  => plan validates the configuration and creates NOTHING billable.
+# true   => apply creates the pilot environment. Flip only after the six H0 inputs above are
+#           recorded in the shared context and the plan + cost summary have been reviewed.
+h0_controls_recorded = false
+
+# --- Sizing -----------------------------------------------------------------
+# RECORDED 2026-08-06: lean tier + scheduled shutdown. That combination (~₹7,000/mo) is the only
+# one that fits the ₹9,000 ceiling in me-central2. Raising the ceiling to ₹27,000 would allow
+# e2-standard-4 + db-custom-2-7680 running continuously.
+#
+# db-custom-1-3840 is a dedicated-core tier on purpose. A shared-core tier (db-g1-small) is
+# cheaper but would throttle unpredictably and distort the p95 that CL0-M1 measures.
+vm_machine_type = "e2-standard-2"
+sql_tier        = "db-custom-1-3840"
+
+# --- Scheduled shutdown -------------------------------------------------------
+# The cost control. Sunday-Thursday (the Saudi working week), 08:00-18:00 Asia/Riyadh.
+# 10h x 22 days = ~30% of a 730-hour month.
+schedule_enabled    = true
+schedule_timezone   = "Asia/Riyadh"
+schedule_start_cron = "0 8 * * 0-4"
+schedule_stop_cron  = "0 18 * * 0-4"
+
+# Must fall inside the running window above; guards.tf enforces it.
+# 05:30 UTC = 08:30 Asia/Riyadh.
+sql_backup_start_time_utc = "05:30"
+
+# --- Application ------------------------------------------------------------
+# Filled in by CL3 after the image is built. Must be digest-pinned; a tag is rejected.
+container_image = ""

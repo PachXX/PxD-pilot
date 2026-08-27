@@ -10,6 +10,7 @@ import { type HostFetchResult } from '@/types/HostFetchResult';
 
 export const createHostFetchEnforcingPolicy = (
   hostFetchPolicy: HostFetchPolicy,
+  options?: { timeoutMs?: number },
 ): HostFetchFunction => {
   const allowedOriginSet = new Set(hostFetchPolicy.allowedOrigins);
   const fileStorageRedirectableUrlSet = new Set(
@@ -30,18 +31,41 @@ export const createHostFetchEnforcingPolicy = (
       ? input.method.toUpperCase()
       : 'GET';
 
-    const response = await fetch(input.url, {
-      method: requestMethod,
-      headers: input.headers,
-      body: input.body,
-      credentials: 'omit',
-      redirect: resolveHostFetchRedirectMode(
-        requestMethod,
-        input.url,
-        fileStorageRedirectableUrlSet,
-      ),
-    });
+    const abortController = new AbortController();
+    const timeoutMs = options?.timeoutMs ?? 30_000;
+    let timeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
 
-    return serializeResponseToHostFetchResult(response);
+    try {
+      const request = fetch(input.url, {
+        method: requestMethod,
+        headers: input.headers,
+        body: input.body,
+        credentials: 'omit',
+        redirect: resolveHostFetchRedirectMode(
+          requestMethod,
+          input.url,
+          fileStorageRedirectableUrlSet,
+        ),
+        signal: abortController.signal,
+      });
+      const timeout = new Promise<never>((_, reject) => {
+        timeoutId = globalThis.setTimeout(() => {
+          abortController.abort();
+          reject(
+            new CustomError(
+              `Front component host fetch timed out after ${timeoutMs} ms`,
+              'FRONT_COMPONENT_HOST_FETCH_TIMEOUT',
+            ),
+          );
+        }, timeoutMs);
+      });
+      const response = await Promise.race([request, timeout]);
+
+      return serializeResponseToHostFetchResult(response);
+    } finally {
+      if (isDefined(timeoutId)) {
+        globalThis.clearTimeout(timeoutId);
+      }
+    }
   };
 };

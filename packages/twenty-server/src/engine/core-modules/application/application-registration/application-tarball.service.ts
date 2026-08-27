@@ -90,7 +90,6 @@ export class ApplicationTarballService {
         : await this.createTarballRegistration({
             universalIdentifier,
             manifest,
-            packageJsonVersion: packageJson?.version ?? null,
             ownerWorkspaceId: params.ownerWorkspaceId,
           });
 
@@ -251,12 +250,10 @@ export class ApplicationTarballService {
   private async createTarballRegistration({
     universalIdentifier,
     manifest,
-    packageJsonVersion,
     ownerWorkspaceId,
   }: {
     universalIdentifier: string;
     manifest: { application?: ApplicationManifest };
-    packageJsonVersion: string | null;
     ownerWorkspaceId: string;
   }): Promise<ApplicationRegistrationEntity> {
     return this.appRegistrationRepository.save(
@@ -266,7 +263,10 @@ export class ApplicationTarballService {
         sourceType: ApplicationRegistrationSourceType.TARBALL,
         manifest,
         ...fromManifestApplicationToDisplayFields(manifest.application),
-        latestAvailableVersion: packageJsonVersion,
+        // The version becomes available only after the tarball is durably stored.
+        // Keeping a new registration pending makes an interrupted first publish
+        // retryable instead of failing the next attempt as a duplicate version.
+        latestAvailableVersion: null,
         isListed: false,
         isVetted: false,
         oAuthClientId: v4(),
