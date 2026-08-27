@@ -14,7 +14,15 @@
  *
  * Optional overrides:
  *   WF5_APPROVER_MEMBER_ID=<uuid>   workspace member used as the approval approver (defaults to
- *                                   the bearer's own workspace member via GraphQL currentUser)
+ *                                   the decider's own workspace member via GraphQL currentUser)
+ *   WF5_DECIDER_BEARER=<token>      a second bearer token, from a workspace member different
+ *                                   from WF5_BEARER, used only for the approval-decision call.
+ *                                   Required for the approve/reject path to ever succeed: the
+ *                                   contract's isPurchaseOrderApprovalDecisionAuthorized predicate
+ *                                   always rejects a requester deciding their own request, and this
+ *                                   harness creates every request as WF5_BEARER. Falls back to
+ *                                   WF5_BEARER (preserving prior behavior, which can only reach the
+ *                                   approval step, never pass it).
  *   WF5_PREFIX=WF5-QA-<short>       label prefix for every disposable record
  *
  * Exit codes: 0 pass, 2 fail, 3 environment/plan error.
@@ -23,6 +31,7 @@ import { randomUUID } from 'node:crypto';
 
 const BASE_URL = (process.env.WF5_BASE_URL ?? '').replace(/\/$/, '');
 const BEARER = process.env.WF5_BEARER ?? '';
+const DECIDER_BEARER = process.env.WF5_DECIDER_BEARER || BEARER;
 const EXECUTE = process.env.WF5_EXECUTE === '1';
 const PREFIX = process.env.WF5_PREFIX ?? `WF5-QA-${randomUUID().slice(0, 8)}`;
 
@@ -38,11 +47,11 @@ const fail = (message, code = 2) => {
   process.exit(code);
 };
 
-const request = async (method, path, body) => {
+const request = async (method, path, body, bearer = BEARER) => {
   const response = await fetch(`${BASE_URL}${path}`, {
     method,
     headers: {
-      Authorization: `Bearer ${BEARER}`,
+      Authorization: `Bearer ${bearer}`,
       ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
@@ -60,10 +69,10 @@ const request = async (method, path, body) => {
 
 // Identity (currentUser) lives on the metadata GraphQL schema at /metadata; record reads and
 // commands use the core /graphql and /rest boundaries.
-const graphql = async (path, query) => {
+const graphql = async (path, query, bearer = BEARER) => {
   const response = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${BEARER}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ query }),
   });
   const json = await response.json();
@@ -159,6 +168,7 @@ const approveTransition = async (fromStage, toStage, expectedVersion) => {
       'POST',
       `/rest/pashx-mab/approval-requests/${approvalRequestRecordId}/decisions`,
       decisionBody,
+      DECIDER_BEARER,
     );
     if (decided.status !== 201) {
       fail(`approval decision returned ${decided.status}: ${JSON.stringify(decided.body)}`);
@@ -208,6 +218,7 @@ const main = async () => {
       const identity = await graphql(
         '/metadata',
         'query { currentUser { workspaceMember { id } } }',
+        DECIDER_BEARER,
       );
       approverMemberId = identity?.currentUser?.workspaceMember?.id ?? '';
     } catch {
