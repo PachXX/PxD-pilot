@@ -61,6 +61,20 @@ export const getOperationalWorkItemHref = (
 export const getInsightRecordHref = (insight: PashxEvidenceInsight): string =>
   `/object/operationalInsight/${insight.id}`;
 
+// OC5 candidates are review-only: the only native target is the synchronized
+// message record itself, never a task or approval the email might suggest.
+export const getEmailMessageHref = (messageId: string): string =>
+  `/object/message/${messageId}`;
+
+// The classifier's proposed task type is a string in the contract; the panel
+// maps the frozen vocabulary and stays honest with a fallback for anything else.
+export const resolveEmailTaskTypeLabel = (
+  proposedTaskType: string | null,
+  labels: Readonly<Record<string, string>>,
+  fallback: string,
+): string =>
+  proposedTaskType === null ? fallback : (labels[proposedTaskType] ?? fallback);
+
 // Source IDs are stored without object types, so links resolve only against the
 // loaded bounded records. Unresolvable IDs stay honest plain identifiers.
 export const resolveInsightSourceLinks = (

@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import {
   PASHX_COMMAND_CENTRE_REASON_CODES,
+  PASHX_EMAIL_INTAKE_TASK_TYPES,
   PASHX_INSIGHT_CONFIDENCE_LEVELS,
   PASHX_INSIGHT_TYPES,
   PASHX_OPERATIONAL_WORK_SIGNALS,
@@ -18,10 +19,12 @@ import {
 import {
   formatCommandCentreDateTime,
   getCommandCentreRecordHref,
+  getEmailMessageHref,
   getInsightRecordHref,
   getOperationalWorkItemHref,
   groupCommandCentreItems,
   groupOperationalWorkItems,
+  resolveEmailTaskTypeLabel,
   resolveInsightSourceLinks,
 } from '../src/command-centre/command-centre.model';
 import {
@@ -241,6 +244,10 @@ test('English and Arabic copy exhaust every signal, reason, stage, insight type,
       Object.keys(copy.confidenceLabels).sort(),
       [...PASHX_INSIGHT_CONFIDENCE_LEVELS].sort(),
     );
+    assert.deepEqual(
+      Object.keys(copy.emailTaskLabels).sort(),
+      [...PASHX_EMAIL_INTAKE_TASK_TYPES].sort(),
+    );
     for (const value of [
       ...Object.values(copy.signals),
       ...Object.values(copy.signalDescriptions),
@@ -248,11 +255,18 @@ test('English and Arabic copy exhaust every signal, reason, stage, insight type,
       ...Object.values(copy.stages),
       ...Object.values(copy.insightTypeLabels),
       ...Object.values(copy.confidenceLabels),
+      ...Object.values(copy.emailTaskLabels),
       copy.insightsTitle,
       copy.insightsEmpty,
       copy.unavailableTitle,
       copy.unavailableState,
-      copy.emailUnavailableReason,
+      copy.emailIntakeLabel,
+      copy.emailIntakeDescription,
+      copy.emailCandidatesEmpty,
+      copy.emailCandidatesEmptyBody,
+      copy.emailPendingReview,
+      copy.emailTaskUnknown,
+      copy.emailOpenMessage,
       copy.ocrUnavailableReason,
       copy.insightTypeUnknown,
       copy.confidenceUnknown,
@@ -271,14 +285,52 @@ test('English and Arabic copy exhaust every signal, reason, stage, insight type,
   assert.equal(toCommandCentreLocale('en-GB'), 'en');
 });
 
-test('unavailable states are honest: never simulated email or OCR capabilities', () => {
+test('email is a real review-only panel; OCR remains an honest unavailable state', () => {
+  // Email intake is now native (OC5 gate passed), so the panel must be real.
+  assert.match(componentSource, /PashxEmailIntakeCandidate/);
+  assert.match(componentSource, /loadEmailIntake\(/);
+  assert.match(componentSource, /emailPendingReview/);
+  assert.match(componentSource, /getEmailMessageHref\(/);
+  // Review-only: the panel must never offer approve/reject/accept/dismiss/create.
+  assert.doesNotMatch(componentSource, /onClick=\{\(\) => void (approve|reject|accept|dismiss)/i);
+  assert.doesNotMatch(componentSource, /\.(create|update|delete|destroy|mutate)\s*\(/);
+  assert.doesNotMatch(componentSource, /simulate/i);
+  // OCR is still gated on OC5-OCR and stays honestly unavailable.
   assert.match(commandCentreCopy.en.unavailableState, /Unavailable/);
   assert.match(commandCentreCopy.ar.unavailableState, /\p{Script=Arabic}/u);
-  assert.match(commandCentreCopy.en.emailUnavailableReason, /OC5/);
   assert.match(commandCentreCopy.en.ocrUnavailableReason, /OC5-OCR/);
-  assert.doesNotMatch(componentSource, /PashxEmailIntakeCandidate/);
-  assert.doesNotMatch(componentSource, /proposal/i);
-  assert.doesNotMatch(componentSource, /simulate/i);
+  assert.match(commandCentreCopy.ar.ocrUnavailableReason, /OC5-OCR/);
+  // Email no longer claims to be unavailable; the capability panel lists only OCR.
+  assert.doesNotMatch(commandCentreCopy.en.emailIntakeLabel, /Unavailable/i);
+  assert.match(componentSource, /copy\.emailIntakeLabel/);
+});
+
+test('email candidates resolve to native message records and task labels stay honest', () => {
+  assert.equal(getEmailMessageHref('message-1'), '/object/message/message-1');
+  assert.equal(
+    resolveEmailTaskTypeLabel(
+      'CAPTURE_INVOICE',
+      commandCentreCopy.en.emailTaskLabels,
+      commandCentreCopy.en.emailTaskUnknown,
+    ),
+    'Capture invoice',
+  );
+  assert.equal(
+    resolveEmailTaskTypeLabel(
+      'NOT_A_TASK_TYPE',
+      commandCentreCopy.en.emailTaskLabels,
+      commandCentreCopy.en.emailTaskUnknown,
+    ),
+    'Unclassified',
+  );
+  assert.equal(
+    resolveEmailTaskTypeLabel(
+      null,
+      commandCentreCopy.ar.emailTaskLabels,
+      commandCentreCopy.ar.emailTaskUnknown,
+    ),
+    commandCentreCopy.ar.emailTaskUnknown,
+  );
 });
 
 test('native page is source-only, evidence-linked, and exposes complete runtime states', () => {
@@ -302,7 +354,10 @@ test('native page is source-only, evidence-linked, and exposes complete runtime 
     /getInsightRecordHref\(/,
     /result\.insights/,
     /copy\.unavailableState/,
-    /copy\.emailUnavailableReason/,
+    /copy\.emailIntakeLabel/,
+    /copy\.emailIntakeDescription/,
+    /emailResult\.candidates/,
+    /emailResult\.isPartial/,
     /copy\.ocrUnavailableReason/,
     /getPublicAssetUrl\(\s*'brand\/mab-indus-solutions-logo\.jpg'/,
     /copy\.welcomeTitle/,
@@ -342,6 +397,10 @@ test('styles preserve keyboard, touch, RTL, dark-theme, reduced-motion, and zoom
     /border-collapse: collapse/,
     /repeat\(4, minmax\(0, 1fr\)\)/,
     /\.pxd-command__signal-dot--approval_required/,
+    /\.pxd-command__email-list/,
+    /\.pxd-command__email-item/,
+    /\.pxd-command__email-subject/,
+    /\.pxd-command__tag--pending_review/,
     /unicode-bidi: isolate/,
   ]) {
     assert.match(commandCentreStyles, pattern);

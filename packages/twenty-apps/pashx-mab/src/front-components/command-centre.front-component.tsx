@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   PASHX_MAB_FRONT_COMPONENT_UNIVERSAL_IDENTIFIERS,
+  type PashxEmailIntakeCandidate,
   type PashxEvidenceInsight,
   type PashxOperationalCommandCentreResult,
   type PashxOperationalWorkItem,
@@ -13,11 +14,14 @@ import { buildOperationalWorkQueue } from '../command-centre/build-operational-w
 import { loadCommandCentre } from '../command-centre/load-command-centre';
 import {
   formatCommandCentreDateTime,
+  getEmailMessageHref,
   getInsightRecordHref,
   getOperationalWorkItemHref,
   groupOperationalWorkItems,
+  resolveEmailTaskTypeLabel,
   resolveInsightSourceLinks,
 } from '../command-centre/command-centre.model';
+import { loadEmailIntake, type EmailIntakeResult } from '../email-intake/load-email-intake';
 import {
   commandCentreCopy,
   toCommandCentreLocale,
@@ -216,6 +220,62 @@ const LedgerRow = ({
   );
 };
 
+const EmailCandidateCard = ({
+  candidate,
+  locale,
+  copy,
+}: Readonly<{
+  candidate: PashxEmailIntakeCandidate;
+  locale: CommandCentreLocale;
+  copy: CommandCentreCopy;
+}>) => (
+  <li className="pxd-command__email-item">
+    <span className="pxd-command__tag pxd-command__tag--pending_review">
+      {copy.emailPendingReview}
+    </span>
+    <p className="pxd-command__email-subject">
+      <bdi className="pxd-command__isolate">{candidate.subject}</bdi>
+    </p>
+    <dl className="pxd-command__email-meta">
+      <div>
+        <dt>{copy.emailTaskLabel}</dt>
+        <dd>
+          {resolveEmailTaskTypeLabel(
+            candidate.proposedTaskType,
+            copy.emailTaskLabels,
+            copy.emailTaskUnknown,
+          )}
+        </dd>
+      </div>
+      <div>
+        <dt>{copy.emailSenderLabel}</dt>
+        <dd>
+          <bdi className="pxd-command__isolate">{candidate.sender}</bdi>
+        </dd>
+      </div>
+      <div>
+        <dt>{copy.emailReceivedLabel}</dt>
+        <dd>
+          <bdi>{formatCommandCentreDateTime(candidate.receivedAt, locale)}</bdi>
+        </dd>
+      </div>
+      <div>
+        <dt>{copy.emailReviewStatusLabel}</dt>
+        <dd>{copy.emailPendingReview}</dd>
+      </div>
+    </dl>
+    <p className="pxd-command__email-actions">
+      <a
+        className="pxd-command__link"
+        href={getEmailMessageHref(candidate.messageId)}
+        target="_top"
+      >
+        {copy.emailOpenMessage}
+      </a>
+    </p>
+  </li>
+);
+
 const CommandCentre = () => {
   const hostLocale = useLocale();
   const colorScheme = useColorScheme();
@@ -230,6 +290,9 @@ const CommandCentre = () => {
     useState<PashxOperationalCommandCentreResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [emailResult, setEmailResult] = useState<EmailIntakeResult | null>(null);
+  const [emailLoading, setEmailLoading] = useState(true);
+  const [emailError, setEmailError] = useState(false);
   const requestId = useRef(0);
 
   // The frozen precedence lives in buildOperationalWorkQueue; JSX never re-sorts.
@@ -265,7 +328,11 @@ const CommandCentre = () => {
     requestId.current = activeRequest;
     setLoading(true);
     setError(false);
+    setEmailLoading(true);
+    setEmailError(false);
 
+    // The queue and the email panel fail independently: a mailbox problem
+    // never hides the deterministic queue, and vice versa.
     try {
       const nextResult = await loadCommandCentre({});
       if (requestId.current === activeRequest) setResult(nextResult);
@@ -273,6 +340,15 @@ const CommandCentre = () => {
       if (requestId.current === activeRequest) setError(true);
     } finally {
       if (requestId.current === activeRequest) setLoading(false);
+    }
+
+    try {
+      const nextEmail = await loadEmailIntake({});
+      if (requestId.current === activeRequest) setEmailResult(nextEmail);
+    } catch {
+      if (requestId.current === activeRequest) setEmailError(true);
+    } finally {
+      if (requestId.current === activeRequest) setEmailLoading(false);
     }
   }, []);
 
@@ -477,23 +553,71 @@ const CommandCentre = () => {
                 </section>
 
                 <section
+                  aria-labelledby="pxd-command-email"
+                  className="pxd-command__panel"
+                >
+                  <h2 id="pxd-command-email">{copy.emailIntakeLabel}</h2>
+                  <p className="pxd-command__panel-body">
+                    {copy.emailIntakeDescription}
+                  </p>
+                  {emailLoading && emailResult === null ? (
+                    <div className="pxd-command__panel-state" role="status">
+                      <p className="pxd-command__panel-state-title">
+                        {copy.emailLoading}
+                      </p>
+                    </div>
+                  ) : null}
+                  {emailError && emailResult === null ? (
+                    <div className="pxd-command__panel-state" role="alert">
+                      <p className="pxd-command__panel-state-title">
+                        {copy.emailError}
+                      </p>
+                      <button
+                        className="pxd-command__button pxd-command__button--primary"
+                        onClick={() => void refresh()}
+                        type="button"
+                      >
+                        {copy.retry}
+                      </button>
+                    </div>
+                  ) : null}
+                  {emailResult !== null ? (
+                    <>
+                      {emailResult.isPartial ? (
+                        <p className="pxd-command__muted">{copy.emailPartial}</p>
+                      ) : null}
+                      {emailResult.candidates.length === 0 ? (
+                        <div className="pxd-command__panel-state">
+                          <p className="pxd-command__panel-state-title">
+                            {copy.emailCandidatesEmpty}
+                          </p>
+                          <p className="pxd-command__muted">
+                            {copy.emailCandidatesEmptyBody}
+                          </p>
+                        </div>
+                      ) : (
+                        <ul className="pxd-command__email-list">
+                          {emailResult.candidates.map((candidate) => (
+                            <EmailCandidateCard
+                              candidate={candidate}
+                              copy={copy}
+                              key={candidate.messageId}
+                              locale={locale}
+                            />
+                          ))}
+                        </ul>
+                      )}
+                    </>
+                  ) : null}
+                </section>
+
+                <section
                   aria-labelledby="pxd-command-unavailable"
                   className="pxd-command__panel pxd-command__panel--unavailable"
                 >
                   <h2 id="pxd-command-unavailable">{copy.unavailableTitle}</h2>
                   <p className="pxd-command__panel-body">{copy.unavailableBody}</p>
                   <dl className="pxd-command__unavailable-list">
-                    <div>
-                      <dt>{copy.emailIntakeLabel}</dt>
-                      <dd>
-                        <strong className="pxd-command__unavailable-state">
-                          {copy.unavailableState}
-                        </strong>
-                        <span className="pxd-command__muted">
-                          {copy.emailUnavailableReason}
-                        </span>
-                      </dd>
-                    </div>
                     <div>
                       <dt>{copy.ocrLabel}</dt>
                       <dd>

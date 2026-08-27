@@ -1,5 +1,6 @@
 import type {
   PashxCommandCentreReasonCode,
+  PashxEmailIntakeTaskType,
   PashxInsightConfidence,
   PashxInsightType,
   PashxOperationalWorkSignal,
@@ -35,7 +36,20 @@ export type CommandCentreCopy = Readonly<{
   unavailableBody: string;
   unavailableState: string;
   emailIntakeLabel: string;
-  emailUnavailableReason: string;
+  emailIntakeDescription: string;
+  emailLoading: string;
+  emailError: string;
+  emailPartial: string;
+  emailCandidatesEmpty: string;
+  emailCandidatesEmptyBody: string;
+  emailReviewStatusLabel: string;
+  emailPendingReview: string;
+  emailTaskLabel: string;
+  emailTaskUnknown: string;
+  emailTaskLabels: Readonly<Record<PashxEmailIntakeTaskType, string>>;
+  emailSenderLabel: string;
+  emailReceivedLabel: string;
+  emailOpenMessage: string;
   ocrLabel: string;
   ocrUnavailableReason: string;
   queueCoverage: (visible: number) => string;
@@ -105,8 +119,28 @@ const english: CommandCentreCopy = {
     'Blocked capabilities appear honestly. Nothing here is simulated or enabled.',
   unavailableState: 'Unavailable',
   emailIntakeLabel: 'Synchronized email',
-  emailUnavailableReason:
-    'Email intake is unavailable until a native synchronized mailbox is connected (OC5).',
+  emailIntakeDescription:
+    'Review-only candidates from synchronized email. Nothing is created, sent, or deleted; a human reviews before any record is created.',
+  emailLoading: 'Loading email candidates…',
+  emailError: 'Email candidates could not be loaded',
+  emailPartial:
+    'The bounded email read reached its limit. Visible candidates are valid, but the list is partial.',
+  emailCandidatesEmpty: 'No email candidates',
+  emailCandidatesEmptyBody:
+    'Candidates appear here when synchronized inbound mail matches a supported task type.',
+  emailReviewStatusLabel: 'Review status',
+  emailPendingReview: 'Pending review',
+  emailTaskLabel: 'Proposed task',
+  emailTaskUnknown: 'Unclassified',
+  emailTaskLabels: {
+    PREPARE_QUOTATION: 'Prepare quotation',
+    CAPTURE_PURCHASE_ORDER: 'Capture purchase order',
+    CAPTURE_DELIVERY_NOTE: 'Capture delivery note',
+    CAPTURE_INVOICE: 'Capture invoice',
+  },
+  emailSenderLabel: 'Sender',
+  emailReceivedLabel: 'Received',
+  emailOpenMessage: 'Open message record',
   ocrLabel: 'Document OCR',
   ocrUnavailableReason:
     'OCR extraction is unavailable until a provider passes the frozen benchmark and is accepted (OC5-OCR).',
@@ -216,8 +250,28 @@ const arabic: CommandCentreCopy = {
   unavailableBody: 'تظهر القدرات المحظورة بصدق. لا شيء هنا مُحاكى أو مُفعّل.',
   unavailableState: 'غير متاحة',
   emailIntakeLabel: 'البريد الإلكتروني المتزامن',
-  emailUnavailableReason:
-    'استلام البريد الإلكتروني غير متاح حتى يتم ربط صندوق بريد متزامن أصلي (OC5).',
+  emailIntakeDescription:
+    'مرشحات للمراجعة فقط من البريد الإلكتروني المتزامن. لا يُنشأ أو يُرسل أو يُحذف أي شيء؛ يراجع الإنسان قبل إنشاء أي سجل.',
+  emailLoading: 'جارٍ تحميل مرشحات البريد الإلكتروني…',
+  emailError: 'تعذر تحميل مرشحات البريد الإلكتروني',
+  emailPartial:
+    'وصلت قراءة البريد المحدودة إلى حدها. المرشحات الظاهرة صحيحة لكن القائمة جزئية.',
+  emailCandidatesEmpty: 'لا توجد مرشحات بريد إلكتروني',
+  emailCandidatesEmptyBody:
+    'تظهر المرشحات هنا عندما يتطابق البريد الوارد المتزامن مع نوع مهمة مدعوم.',
+  emailReviewStatusLabel: 'حالة المراجعة',
+  emailPendingReview: 'بانتظار المراجعة',
+  emailTaskLabel: 'المهمة المقترحة',
+  emailTaskUnknown: 'غير مصنّف',
+  emailTaskLabels: {
+    PREPARE_QUOTATION: 'تحضير عرض سعر',
+    CAPTURE_PURCHASE_ORDER: 'التقاط أمر الشراء',
+    CAPTURE_DELIVERY_NOTE: 'التقاط إشعار التسليم',
+    CAPTURE_INVOICE: 'التقاط الفاتورة',
+  },
+  emailSenderLabel: 'المرسل',
+  emailReceivedLabel: 'تاريخ الاستلام',
+  emailOpenMessage: 'فتح سجل الرسالة',
   ocrLabel: 'التعرف الضوئي على المستندات (OCR)',
   ocrUnavailableReason:
     'استخراج OCR غير متاح حتى يجتاز مزوّد ما المعيار المجمّد ويُعتمد (OC5-OCR).',

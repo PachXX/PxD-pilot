@@ -102,6 +102,16 @@ export const commandCentreStyles = `
   .pxd-command__unavailable-list dt { font-size: 14px; font-weight: 600; }
   .pxd-command__unavailable-list dd { display: flex; flex-direction: column; font-size: 13px; gap: 4px; margin: 6px 0 0; }
   .pxd-command__unavailable-state { color: var(--pxd-amber); font-size: 12px; letter-spacing: .04em; }
+  .pxd-command__email-list { list-style: none; margin: 16px 0 0; padding: 0; }
+  .pxd-command__email-item { border-top: 1px solid var(--pxd-border); padding: 16px 0 0; }
+  .pxd-command__email-item:first-child { border-top: 0; padding-top: 0; }
+  .pxd-command__email-subject { font-size: 14px; font-weight: 600; margin: 8px 0 0; overflow-wrap: anywhere; }
+  .pxd-command__email-meta { margin: 10px 0 0; }
+  .pxd-command__email-meta > div { display: flex; font-size: 12px; gap: 12px; justify-content: space-between; padding: 4px 0; }
+  .pxd-command__email-meta dt { color: var(--pxd-muted); }
+  .pxd-command__email-meta dd { margin: 0; overflow-wrap: anywhere; text-align: end; }
+  .pxd-command__tag--pending_review { color: var(--pxd-amber); }
+  .pxd-command__email-actions { margin: 10px 0 0; }
   .pxd-command__link { align-items: center; color: var(--pxd-green); display: inline-flex; font-weight: 600; min-height: 44px; }
   .pxd-command__empty, .pxd-command__state { background: var(--pxd-surface); border: 1px solid var(--pxd-border); border-radius: 6px; padding: 28px; text-align: center; }
   .pxd-command__empty h2, .pxd-command__state h2 { margin-top: 0; }
