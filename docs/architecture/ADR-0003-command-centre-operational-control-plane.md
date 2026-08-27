@@ -106,7 +106,10 @@ justified.
 3. [x] Build OC2 deterministic next-task/compliance projections and source tests.
 4. [x] Build OC3 approval request object and permission-checked decision commands.
 5. [x] Build OC4 read-only evidence insight agent and task-specific agent role.
-6. [ ] Build OC5 synchronized-email candidate classifier with review-before-create.
+6. [x] Build OC5 synchronized-email candidate classifier with review-before-create.
+       Source landed 2026-08-27 on `codex/mab-workflow-pipeline` (cherry-picked from
+       `codex/pashx-pilot-cx3-cx4`); classifier contract coverage 100/100/100 and loader 6/6 pass;
+       live acceptance pending.
 7. [ ] Build OC5-OCR text-first/OCR-fallback extraction with provenance, confidence, and
        review-before-create. Contract and local smoke benchmark are complete; provider acceptance
        remains blocked on the labeled OC5-OCR-B2 gate.
