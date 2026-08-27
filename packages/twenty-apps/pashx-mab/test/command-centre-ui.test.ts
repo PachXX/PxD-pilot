@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import {
   PASHX_COMMAND_CENTRE_REASON_CODES,
+  PASHX_EMAIL_INTAKE_TASK_TYPES,
   PASHX_INSIGHT_CONFIDENCE_LEVELS,
   PASHX_INSIGHT_TYPES,
   PASHX_OPERATIONAL_WORK_SIGNALS,
@@ -272,6 +273,10 @@ test('English and Arabic copy exhaust every signal, reason, stage, insight type,
       Object.keys(copy.confidenceLabels).sort(),
       [...PASHX_INSIGHT_CONFIDENCE_LEVELS].sort(),
     );
+    assert.deepEqual(
+      Object.keys(copy.proposedTaskTypeLabels).sort(),
+      [...PASHX_EMAIL_INTAKE_TASK_TYPES].sort(),
+    );
     assert.deepEqual(Object.keys(copy.partialSourceLabels), [
       ...COMMAND_CENTRE_PARTIAL_SOURCES,
     ]);
@@ -283,10 +288,23 @@ test('English and Arabic copy exhaust every signal, reason, stage, insight type,
       ...Object.values(copy.insightTypeLabels),
       ...Object.values(copy.confidenceLabels),
       ...Object.values(copy.partialSourceLabels),
+      ...Object.values(copy.proposedTaskTypeLabels),
+      ...Object.values(copy.proposedTaskTypeLabels),
       copy.insightsTitle,
       copy.insightsEmpty,
       copy.unavailableState,
       copy.emailIntakeLabel,
+      copy.emailConnectedState,
+      copy.emailConnectedReason,
+      copy.emailIntakeTitle,
+      copy.emailIntakeDescription,
+      copy.emailCandidatesEmpty,
+      copy.emailCandidatesEmptyBody,
+      copy.emailIntakeError,
+      copy.reviewPendingLabel,
+      copy.senderLabel,
+      copy.receivedLabel,
+      copy.openMessage,
       copy.ocrLabel,
       copy.vendorRiskLabel,
       copy.paymentStatusLabel,
@@ -312,12 +330,30 @@ test('English and Arabic copy exhaust every signal, reason, stage, insight type,
   assert.equal(toCommandCentreLocale('en-GB'), 'en');
 });
 
-test('unavailable states are honest: never simulated email or OCR capabilities', () => {
-  assert.match(commandCentreCopy.en.unavailableState, /Unavailable/);
-  assert.match(commandCentreCopy.ar.unavailableState, /\p{Script=Arabic}/u);
-  assert.doesNotMatch(componentSource, /PashxEmailIntakeCandidate/);
-  assert.doesNotMatch(componentSource, /proposal/i);
+test('email intake is connected and OCR stays an honest unavailable state', () => {
+  assert.match(commandCentreCopy.en.emailConnectedState, /Connected/);
+  assert.match(commandCentreCopy.ar.emailConnectedState, /\p{Script=Arabic}/u);
+  assert.match(commandCentreCopy.en.emailConnectedReason, /OC5/);
+  assert.match(commandCentreCopy.en.ocrLabel, /OCR/);
   assert.doesNotMatch(componentSource, /simulate/i);
+});
+
+test('email candidates render review-only with no decision controls', () => {
+  for (const pattern of [
+    /loadEmailIntake\(/,
+    /emailResult\.candidates\.map/,
+    /getEmailMessageHref\(candidate\)/,
+    /copy\.reviewPendingLabel/,
+    /copy\.proposedTaskTypeLabels\[candidate\.proposedTaskType\]/,
+    /target="_top"/,
+  ]) {
+    assert.match(componentSource, pattern);
+  }
+  assert.doesNotMatch(componentSource, /\bapprove\b|\breject\b|\bcancel\b/i);
+  assert.doesNotMatch(
+    componentSource,
+    /\.(create|update|delete|destroy|mutate|send)\s*\(/,
+  );
 });
 
 test('native page is source-only, evidence-linked, and exposes complete runtime states', () => {

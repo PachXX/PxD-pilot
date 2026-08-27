@@ -1,6 +1,7 @@
 import type {
   PashxCaseDeliveryStatus,
   PashxCommandCentreReasonCode,
+  PashxEmailIntakeTaskType,
   PashxInsightConfidence,
   PashxInsightType,
   PashxOperationalWorkSignal,
@@ -68,6 +69,18 @@ export type CommandCentreCopy = Readonly<{
   capabilityTitle: string;
   capabilityDescription: string;
   emailIntakeLabel: string;
+  emailConnectedState: string;
+  emailConnectedReason: string;
+  emailIntakeTitle: string;
+  emailIntakeDescription: string;
+  emailCandidatesEmpty: string;
+  emailCandidatesEmptyBody: string;
+  emailIntakeError: string;
+  proposedTaskTypeLabels: Readonly<Record<PashxEmailIntakeTaskType, string>>;
+  reviewPendingLabel: string;
+  senderLabel: string;
+  receivedLabel: string;
+  openMessage: string;
   ocrLabel: string;
   vendorRiskLabel: string;
   paymentStatusLabel: string;
@@ -174,6 +187,26 @@ const english: CommandCentreCopy = {
   capabilityDescription:
     'Missing capabilities remain explicit and are never simulated.',
   emailIntakeLabel: 'Synchronized email',
+  emailConnectedState: 'Connected',
+  emailConnectedReason:
+    'Reading synchronized email from the connected mailbox (OC5).',
+  emailIntakeTitle: 'Email intake',
+  emailIntakeDescription:
+    'Read-only candidates from synchronized email. Review only — nothing is created automatically.',
+  emailCandidatesEmpty: 'No email candidates',
+  emailCandidatesEmptyBody:
+    'New synchronized messages matching a supported document type appear here for review.',
+  emailIntakeError: 'Email intake could not be loaded',
+  proposedTaskTypeLabels: {
+    PREPARE_QUOTATION: 'Prepare quotation',
+    CAPTURE_PURCHASE_ORDER: 'Capture purchase order',
+    CAPTURE_DELIVERY_NOTE: 'Capture delivery note',
+    CAPTURE_INVOICE: 'Capture invoice',
+  },
+  reviewPendingLabel: 'Pending review',
+  senderLabel: 'Sender',
+  receivedLabel: 'Received',
+  openMessage: 'Open message',
   ocrLabel: 'Document OCR',
   vendorRiskLabel: 'Vendor risk',
   paymentStatusLabel: 'Payment status',
@@ -327,6 +360,25 @@ const arabic: CommandCentreCopy = {
   capabilityTitle: 'حالة القدرات',
   capabilityDescription: 'تظل القدرات المفقودة واضحة ولا تتم محاكاتها.',
   emailIntakeLabel: 'البريد الإلكتروني المتزامن',
+  emailConnectedState: 'متصل',
+  emailConnectedReason: 'قراءة البريد المتزامن من صندوق البريد المتصل (OC5).',
+  emailIntakeTitle: 'استلام البريد',
+  emailIntakeDescription:
+    'مرشحات للقراءة فقط من البريد المتزامن. للمراجعة فقط — لا يُنشأ أي شيء تلقائيًا.',
+  emailCandidatesEmpty: 'لا توجد مرشحات بريد',
+  emailCandidatesEmptyBody:
+    'ستظهر هنا رسائل متزامنة جديدة تطابق نوع مستند مدعوم للمراجعة.',
+  emailIntakeError: 'تعذر تحميل استلام البريد',
+  proposedTaskTypeLabels: {
+    PREPARE_QUOTATION: 'تجهيز عرض سعر',
+    CAPTURE_PURCHASE_ORDER: 'التقاط أمر شراء',
+    CAPTURE_DELIVERY_NOTE: 'التقاط إذن تسليم',
+    CAPTURE_INVOICE: 'التقاط فاتورة',
+  },
+  reviewPendingLabel: 'بانتظار المراجعة',
+  senderLabel: 'المرسل',
+  receivedLabel: 'الاستلام',
+  openMessage: 'فتح الرسالة',
   ocrLabel: 'التعرف الضوئي على المستندات',
   vendorRiskLabel: 'مخاطر المورّد',
   paymentStatusLabel: 'حالة الدفع',

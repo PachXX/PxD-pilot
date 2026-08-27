@@ -95,6 +95,19 @@ export const commandCentreStyles = `
   .pxd-command__capabilities { margin: 14px 0 0; }
   .pxd-command__capabilities > div { border-block-start: 1px solid var(--pxd-border); display: flex; gap: 12px; justify-content: space-between; padding-block: 11px; }
   .pxd-command__capabilities dd { color: var(--pxd-amber); font-weight: 600; margin: 0; text-align: end; }
+  .pxd-command__email-candidates { list-style: none; margin: 14px 0 0; padding: 0; }
+  .pxd-command__email-candidate { border-block-start: 1px solid var(--pxd-border); display: grid; gap: 5px; padding-block: 14px; }
+  .pxd-command__review-badge { color: var(--pxd-muted); font-size: 11px; font-weight: 600; margin-inline-start: 8px; text-transform: uppercase; }
+  .pxd-command__tag--task-prepare_quotation { color: #185f9d; }
+  .pxd-command__tag--task-capture_purchase_order { color: var(--pxd-green); }
+  .pxd-command__tag--task-capture_delivery_note { color: #8a5700; }
+  .pxd-command__tag--task-capture_invoice { color: #b42318; }
+  .pxd-command__email-subject { font-size: 14px; font-weight: 600; margin: 0; overflow-wrap: anywhere; }
+  .pxd-command__email-meta { margin: 4px 0 0; }
+  .pxd-command__email-meta > div { display: flex; font-size: 12px; gap: 12px; justify-content: space-between; padding-block: 3px; }
+  .pxd-command__email-meta dt { color: var(--pxd-muted); }
+  .pxd-command__email-meta dd { margin: 0; overflow-wrap: anywhere; text-align: end; }
+  .pxd-command__email-candidate .pxd-command__link { font-size: 12px; margin-block-start: 4px; }
   .pxd-command bdi, .pxd-command [dir="ltr"] { unicode-bidi: isolate; }
   @media (prefers-reduced-motion: reduce) {
     .pxd-command *, .pxd-command *::before, .pxd-command *::after { animation: none !important; scroll-behavior: auto !important; transition: none !important; }

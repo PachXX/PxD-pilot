@@ -26,6 +26,8 @@ import {
   isCommandCentrePermissionError,
   loadCommandCentreOverview,
 } from '../command-centre/load-command-centre-overview';
+import { loadEmailIntake, type EmailIntakeResult } from '../email-intake/load-email-intake';
+import { getEmailMessageHref } from '../email-intake/email-intake.model';
 import {
   commandCentreCopy,
   toCommandCentreLocale,
@@ -352,6 +354,51 @@ const CaseRow = ({
   </tr>
 );
 
+const EmailCandidateCard = ({
+  candidate,
+  locale,
+  copy,
+}: {
+  candidate: EmailIntakeResult['candidates'][number];
+  locale: CommandCentreLocale;
+  copy: CommandCentreCopy;
+}) => (
+  <li className="pxd-command__email-candidate">
+    <span
+      className={`pxd-command__tag pxd-command__tag--task-${candidate.proposedTaskType.toLowerCase()}`}
+    >
+      {copy.proposedTaskTypeLabels[candidate.proposedTaskType]}
+    </span>
+    <span className="pxd-command__review-badge">
+      {copy.reviewPendingLabel}
+    </span>
+    <p className="pxd-command__email-subject">{candidate.subject}</p>
+    <dl className="pxd-command__email-meta">
+      <div>
+        <dt>{copy.senderLabel}</dt>
+        <dd>
+          <bdi dir="ltr">{candidate.sender}</bdi>
+        </dd>
+      </div>
+      <div>
+        <dt>{copy.receivedLabel}</dt>
+        <dd>
+          <bdi dir="ltr">
+            {formatCommandCentreDateTime(candidate.receivedAt, locale)}
+          </bdi>
+        </dd>
+      </div>
+    </dl>
+    <a
+      className="pxd-command__link"
+      href={getEmailMessageHref(candidate)}
+      target="_top"
+    >
+      {copy.openMessage}
+    </a>
+  </li>
+);
+
 const CommandCentre = () => {
   const hostLocale = useLocale();
   const colorScheme = useColorScheme();
@@ -361,8 +408,10 @@ const CommandCentre = () => {
     null,
   );
   const [selectedCaseId, setSelectedCaseId] = useState('');
+  const [emailResult, setEmailResult] = useState<EmailIntakeResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [emailError, setEmailError] = useState(false);
   const [noPermission, setNoPermission] = useState(false);
   const requestId = useRef(0);
   const locale = localeOverride ?? toCommandCentreLocale(hostLocale);
@@ -410,6 +459,7 @@ const CommandCentre = () => {
     setLoading(true);
     setError(false);
     setNoPermission(false);
+    setEmailError(false);
     try {
       const nextResult = await loadCommandCentreOverview();
       if (requestId.current === activeRequest) setResult(nextResult);
@@ -420,6 +470,14 @@ const CommandCentre = () => {
         setError(!permissionFailure);
         if (permissionFailure) setResult(null);
       }
+    }
+
+    // Email intake fails independently: the overview stays usable when sync breaks.
+    try {
+      const nextEmailResult = await loadEmailIntake({});
+      if (requestId.current === activeRequest) setEmailResult(nextEmailResult);
+    } catch {
+      if (requestId.current === activeRequest) setEmailError(true);
     } finally {
       if (requestId.current === activeRequest) setLoading(false);
     }
@@ -733,6 +791,50 @@ const CommandCentre = () => {
                   </section>
 
                   <section
+                    className="pxd-command__panel"
+                    aria-labelledby="pxd-email-intake-title"
+                  >
+                    <h2 id="pxd-email-intake-title">{copy.emailIntakeTitle}</h2>
+                    <p>{copy.emailIntakeDescription}</p>
+                    {emailError && emailResult === null ? (
+                      <div className="pxd-command__zero">
+                        <strong>{copy.emailIntakeError}</strong>
+                        <button
+                          className="pxd-command__button pxd-command__button--primary"
+                          onClick={() => void refresh()}
+                          type="button"
+                        >
+                          {copy.retry}
+                        </button>
+                      </div>
+                    ) : emailResult === null ? (
+                      <div className="pxd-command__zero">
+                        <span className="pxd-command__muted">
+                          {copy.loading}
+                        </span>
+                      </div>
+                    ) : emailResult.candidates.length === 0 ? (
+                      <div className="pxd-command__zero">
+                        <strong>{copy.emailCandidatesEmpty}</strong>
+                        <span className="pxd-command__muted">
+                          {copy.emailCandidatesEmptyBody}
+                        </span>
+                      </div>
+                    ) : (
+                      <ul className="pxd-command__email-candidates">
+                        {emailResult.candidates.map((candidate) => (
+                          <EmailCandidateCard
+                            candidate={candidate}
+                            copy={copy}
+                            key={candidate.messageId}
+                            locale={locale}
+                          />
+                        ))}
+                      </ul>
+                    )}
+                  </section>
+
+                  <section
                     className="pxd-command__panel pxd-command__panel--gaps"
                     aria-labelledby="pxd-capability-title"
                   >
@@ -740,7 +842,12 @@ const CommandCentre = () => {
                     <p>{copy.capabilityDescription}</p>
                     <dl className="pxd-command__capabilities">
                       {[
-                        [copy.emailIntakeLabel, copy.unavailableState],
+                        [
+                          copy.emailIntakeLabel,
+                          emailError
+                            ? copy.unavailableState
+                            : copy.emailConnectedState,
+                        ],
                         [copy.ocrLabel, copy.unavailableState],
                         [copy.vendorRiskLabel, copy.unavailableState],
                         [copy.paymentStatusLabel, copy.notRecorded],

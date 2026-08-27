@@ -1,4 +1,5 @@
 import {
+  PASHX_EMAIL_INTAKE_TASK_TYPES,
   classifyEmailIntakeCandidate,
   type PashxEmailIntakeCandidate,
   type PashxEmailIntakeMessage,
@@ -37,8 +38,12 @@ type EmailIntakeQueryData = Readonly<{
   messages?: QueryConnection<MessageNode>;
 }>;
 
+export type EmailIntakeCandidate = PashxEmailIntakeCandidate & {
+  proposedTaskType: (typeof PASHX_EMAIL_INTAKE_TASK_TYPES)[number];
+};
+
 export type EmailIntakeResult = Readonly<{
-  candidates: readonly PashxEmailIntakeCandidate[];
+  candidates: readonly EmailIntakeCandidate[];
   isPartial: boolean;
   asOf: string;
 }>;
@@ -110,14 +115,20 @@ export const loadEmailIntake = async ({
   const asOf = now().toISOString();
   const isPartial = data.messages?.pageInfo?.hasNextPage === true;
 
-  const candidates: PashxEmailIntakeCandidate[] = (
+  const candidates: EmailIntakeCandidate[] = (
     data.messages?.edges ?? []
   )
     .map(({ node }) => node)
     .filter((node) => node.isDraft !== true && node.isDraft !== undefined)
     .map(fromParticipant)
     .map(classifyEmailIntakeCandidate)
-    .filter((candidate) => candidate.proposedTaskType !== null);
+    .filter(
+      (candidate): candidate is EmailIntakeCandidate =>
+        candidate.proposedTaskType !== null &&
+        PASHX_EMAIL_INTAKE_TASK_TYPES.includes(
+          candidate.proposedTaskType as (typeof PASHX_EMAIL_INTAKE_TASK_TYPES)[number],
+        ),
+    );
 
   return { candidates, isPartial, asOf };
 };
