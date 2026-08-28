@@ -9,7 +9,22 @@ import { AppPath } from 'twenty-shared/types';
 import { AnimatedEaseIn } from 'twenty-ui/layout';
 import { ModalContent } from 'twenty-ui/surfaces';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
-import { type PublicWorkspaceData } from '~/generated-metadata/graphql';
+
+// The tenant lockup is 3.5:1, so it cannot use the square Logo slot without
+// being cropped or shrunk to a few pixels tall. The sign-in screen is always
+// pre-auth, so no workspace member theme exists yet and the system scheme is
+// the only signal available for choosing the light or dark artwork.
+const StyledTenantLogo = styled.img`
+  height: auto;
+  margin-top: ${themeCssVariables.spacing[6]};
+  width: 180px;
+
+  content: url('/branding/mab-logo-lockup.png');
+
+  @media (prefers-color-scheme: dark) {
+    content: url('/branding/mab-logo-lockup-white.png');
+  }
+`;
 
 const StyledTitleContainer = styled.div`
   line-height: 1.2;
@@ -27,7 +42,6 @@ const StyledFormContainer = styled.div`
 `;
 
 type SignInUpStandardContentProps = {
-  workspacePublicData: PublicWorkspaceData | null;
   signInUpForm: JSX.Element | null;
   signInUpStep: SignInUpStep;
   title: string;
@@ -35,7 +49,6 @@ type SignInUpStandardContentProps = {
 };
 
 export const SignInUpStandardContent = ({
-  workspacePublicData,
   signInUpForm,
   signInUpStep,
   title,
@@ -44,12 +57,8 @@ export const SignInUpStandardContent = ({
   return (
     <ModalContent isVerticallyCentered isHorizontallyCentered>
       <AnimatedEaseIn>
-        <Logo
-          secondaryLogo={workspacePublicData?.logo}
-          placeholder={workspacePublicData?.displayName}
-          onClick={onClickOnLogo}
-          to={AppPath.SignInUp}
-        />
+        <Logo onClick={onClickOnLogo} to={AppPath.SignInUp} />
+        <StyledTenantLogo alt="MAB Indus Solutions" />
       </AnimatedEaseIn>
       <StyledTitleContainer>
         <Title animate>{title}</Title>

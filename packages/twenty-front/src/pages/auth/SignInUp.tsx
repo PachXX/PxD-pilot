@@ -217,7 +217,6 @@ export const SignInUp = () => {
         </ModalContent>
       ) : (
         <SignInUpStandardContent
-          workspacePublicData={workspacePublicData}
           signInUpForm={signInUpForm}
           signInUpStep={signInUpStep}
           title={title}
