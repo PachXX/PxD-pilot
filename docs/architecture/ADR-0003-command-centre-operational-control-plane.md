@@ -109,11 +109,11 @@ justified.
 6. [x] Build OC5 synchronized-email candidate classifier with review-before-create.
        Source landed 2026-08-27 on `codex/mab-workflow-pipeline` (cherry-picked from
        `codex/pashx-pilot-cx3-cx4`); classifier contract coverage 100/100/100 and loader 6/6 pass;
-       live acceptance pending.
+       live email-panel release completed in app 0.2.18 on 2026-08-28.
 7. [ ] Build OC5-OCR text-first/OCR-fallback extraction with provenance, confidence, and
        review-before-create. Contract and local smoke benchmark are complete; provider acceptance
        remains blocked on the labeled OC5-OCR-B2 gate.
 8. [ ] Integrate OC6 native Command Centre panels matching the approved PxD mockup language.
-       OC6-A core approvals/insights source passed on 2026-08-24; email/OCR integration and live
-       acceptance remain open.
+       OC6-A is accepted and the OC6-B review-only email panel is live in app 0.2.18; OCR remains
+       disabled pending OC5-OCR-B2, and OC6-C integrated acceptance remains open.
 9. [ ] Run OC7 bilingual, accessibility, privacy, agent-evaluation, idempotency, and live QA gates.
