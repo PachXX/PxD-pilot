@@ -55,8 +55,13 @@ export type WorkflowPipelineCopy = Readonly<{
   noFinancialEvidence: string;
   openCase: string;
   openEvidence: string;
-  readOnlyTitle: string;
-  readOnlyBody: string;
+  moving: string;
+  moveToStage: (stage: string) => string;
+  moveSuccess: (stage: string) => string;
+  moveFailed: string;
+  moveTimeout: string;
+  controlledMoveTitle: string;
+  controlledMoveBody: string;
   stages: Readonly<Record<PashxProcurementCaseStage, string>>;
   stageDescriptions: Readonly<Record<PashxProcurementCaseStage, string>>;
   nextActions: Readonly<Record<string, string>>;
@@ -120,9 +125,15 @@ export const workflowPipelineCopy: Readonly<
     noFinancialEvidence: 'No finalized financial evidence',
     openCase: 'Open case',
     openEvidence: 'Open evidence',
-    readOnlyTitle: 'Pipeline visibility, controlled transitions',
-    readOnlyBody:
-      'This board is intentionally read-only. Move a case through the audited workflow command so approvals, evidence, idempotency and version checks cannot be bypassed by drag and drop.',
+    moving: 'Moving…',
+    moveToStage: (stage) => `Move to ${stage}`,
+    moveSuccess: (stage) => `Case moved to ${stage}.`,
+    moveFailed: 'The case could not be moved. Try again.',
+    moveTimeout:
+      'The result is not confirmed. Retry the same move safely or refresh the pipeline.',
+    controlledMoveTitle: 'Audited pipeline movement',
+    controlledMoveBody:
+      'Drag a case to its next stage or use its Move button. PxD checks finalized evidence, human approvals, your role, idempotency and the current record version before changing anything.',
     stages: {
       intake: '1 · RFQ Received',
       sourcing: '2 · Quotation Requested from Vendor',
@@ -224,9 +235,15 @@ export const workflowPipelineCopy: Readonly<
     noFinancialEvidence: 'لا يوجد دليل مالي نهائي',
     openCase: 'فتح الحالة',
     openEvidence: 'فتح الدليل',
-    readOnlyTitle: 'رؤية واضحة وانتقالات منضبطة',
-    readOnlyBody:
-      'هذه اللوحة للقراءة فقط. انقل الحالة عبر أمر سير العمل المدقق حتى لا يتجاوز السحب والإفلات الموافقات والأدلة ومفتاح منع التكرار وفحص الإصدار.',
+    moving: 'جارٍ النقل…',
+    moveToStage: (stage) => `نقل إلى ${stage}`,
+    moveSuccess: (stage) => `تم نقل الحالة إلى ${stage}.`,
+    moveFailed: 'تعذر نقل الحالة. حاول مرة أخرى.',
+    moveTimeout:
+      'لم يتم تأكيد النتيجة. أعد محاولة النقل نفسه بأمان أو حدّث مسار العمل.',
+    controlledMoveTitle: 'نقل مدقق عبر مسار العمل',
+    controlledMoveBody:
+      'اسحب الحالة إلى مرحلتها التالية أو استخدم زر النقل. يتحقق PxD من الأدلة النهائية والموافقات البشرية وصلاحية دورك ومفتاح منع التكرار وإصدار السجل قبل إجراء أي تغيير.',
     stages: {
       intake: '١ · استلام طلب عرض السعر',
       sourcing: '٢ · طلب عرض السعر من المورد',

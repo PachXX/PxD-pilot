@@ -167,3 +167,160 @@ The bounded harness contract and Codex/Claude ownership split are recorded in
 `I approve ADR-0003 and OC0: deterministic tasks/compliance, audited human approvals, read-only
 evidence agents, and review-before-create synchronized email intake. Agents may not approve,
 send/delete email, finalize financial documents, or change compliance state.`
+
+## DeepSeek coordination status — 2026-08-25
+
+Assigned as Command Centre coordinator. Mandate and lane protocol:
+`docs/execution/2026-08-25 - command-centre coordinator brief.md`. Real-data gap matrix:
+`docs/execution/evidence/CC-coordination-real-data-gap-matrix.md` (read-only probes, 2026-08-25).
+
+- **Clean-base check:** branch `codex/pashx-pilot-cx3-cx4`, HEAD `b15b33c4d6`; worktree clean
+  except the incidental app version bump (uncommitted) and the local `.env.test.cl2-backup`.
+- **Live inventory (verified):** 3 cases (stage null — MI never infers), 8 documents, 25
+  companies (7 suppliers + 3 customers with roles), 2 decided approvals (0 pending), 0 insights,
+  0 expenses. Deleted OC3 fixture case `787c8781-…` must never reappear.
+- **Live surface:** Command centre page `/page/cfb3c81e-3acd-47a3-83e9-6f35b358c386` runs the
+  updated app; the Vendors page and supplier-RFQ command are source/sync-verified only and await
+  the release gate.
+- **Next nodes:** Codex lane = honest blocked-data recompute + stage-null rendering decision
+  (data owner: Shahil); Claude lane = live QA after the next release-gated install.
+
+### 2026-08-25 recompute — honest four-signal prediction
+
+`scripts/recompute-command-centre-from-live.ts` ran the UI's own classifier + queue builder
+against the live dump: **Compliance 0 · Approvals 0 · Blocked 3 · Actions 0**, ledger = the three
+real imported cases (CASE_CUSTOMER_MISSING on `3af759e7`, CASE_OWNER_MISSING on `780c98af` and
+`47e1d3ee`). DS6-era "Blocked data 10" is stale and must not be quoted. Full derivation:
+`docs/execution/evidence/CC-coordination-real-data-gap-matrix.md` §6. Case workflow
+surfaces verified the same way (§7): stage-null rails on all three real cases, real quote total
+SAR 127,544.20, delivery NOT_STARTED everywhere, readiness gates derived from finalized
+evidence only (ASHM shows 2 finalized invoices but no finalized CPO → not ready). Vendors page
+verified (§8): exactly 7 role suppliers, DBMS Steel 1 open RFQ + 1 quote, RFQ-eligible cases 0
+(all imported cases stage-null) — the RFQ flow renders its honest unavailable state until
+stages are assigned or a properly-staged case is created.
+
+### Coordinator status roll-up (2026-08-25, rounds 6–8 — full detail in the gap matrix)
+
+- §9 profitability: SAR 153,651.50 revenue / 127,544.20 cost / 26,107.30 profit / 16.99% margin,
+  4 DRAFT exclusions (verified with the frozen aggregate).
+- §10 release-gate QA expectations frozen for the Claude lane (six deterministic checks).
+- §11 stage candidates proposed for Shahil: MAB-PO → vendor-order, SEN-EPO → invoicing,
+  ASHM → invoicing (contradiction: finalized invoices while CPO DRAFT).
+- §12 vendor comparison verified: `no-finalized-quotes` on every case; live page wiring
+  confirmed (`/page/cfb3c81e-…` → Command centre layout + queue tab).
+- Round 6: live-state freshness re-check — predictions identical, WF5 residue absent.
+- Round 7: lane worktrees reconciled to the established convention; in-flight
+  `buildCommandCentreOverview` reviewed PASS.
+- Round 8: executed the lane's uncommitted overview builder against the live dump — stage
+  summary `unrecordedCount: 3`, work queue 3× BLOCKED_DATA, quotation states
+  `AWAITING_FINALIZED_RESPONSES` with the real draft counts, cash `UNAVAILABLE` (capability-
+  gated), 38 native links exact. Lane worktree left pristine.
+
+### 2026-08-25 round-9 lane delta review
+
+Logic deltas reviewed (compliance helper semantics preserved; overview loader wiring correct —
+placeholders in the old loader are inert). Lane app suite 125 pass / 4 fail: the 4 failures are
+stale assertions in the old command-centre UI tests, expected mid-flight; lane updates them
+before landing. Full detail: gap matrix §14.
+
+### 2026-08-25 round-10 release-readiness check
+
+Overview loader field selection verified against the live GraphQL schema: every field
+resolves (delivery/cash/terms/validity), real values confirmed — no schema-side unknown when
+the lane's overview UI lands. Detail: gap matrix §15.
+
+### 2026-08-25 release gate opened — verification result
+
+Gate opened by Shahil. Live verification (evidence:
+`docs/execution/evidence/CC-release-gate-0-2-15.md`): app **0.2.15 already deployed**
+(registry refuses duplicates; shasum `b8d5fda1bf…`, 35 files); full shared-branch surface
+live (incl. Vendors); WF2 endpoints live (transitions/delivery/finalize probed with
+validation-only requests). **Release gap: `supplier-rfqs` endpoint is not on the live host
+server** — app releases do not ship server code; a Claude-lane host redeploy is required
+before the Vendors RFQ flow works live. Data unchanged; §10 predictions still hold.
+
+### 2026-08-25 stage decision applied
+
+Shahil approved the §11 candidates; applied and verified via the standard record API:
+MAB-PO → vendor-order, SEN-EPO → invoicing, ASHM → invoicing (contradiction documented).
+Case-workflow rails now show real current markers; band stays 0/0/3/0; RFQ eligibility
+remains 0. Detail: gap matrix §16.
+
+### 2026-08-25 round-12 stage visibility + QA expectation update
+
+Applied stages confirmed through the live GraphQL UI path (MAB-PO vendor-order, SEN-EPO and
+ASHM invoicing). §10 QA expectation item 2 updated from stage-null to the applied markers.
+Supplier-RFQ host redeploy still pending (Claude lane). Detail: gap matrix §17.
+
+### 2026-08-25 round-13 lane status signal
+
+The Codex lane's app suite now passes **133/133** in its worktree (the four stale UI-test
+failures from round 9 are resolved; the lane updated its tests with the UI rework). The lane
+has its own working dependency install; 15 uncommitted files remain (overview UI in flight).
+Supplier-RFQ host redeploy still pending (Claude lane). No new lane commits landed.
+
+### 2026-08-25 round-14 capability fail-closed verification
+
+Validation-only command probes on the staged live case `3af759e7` (vendor-order) using the
+pilot API key return `PASHX_FORBIDDEN_CAPABILITY` for both `transitions` and `delivery` — the
+capability gate fails closed live for non-operator principals, exactly as designed; no data was
+written. Stage-enforcement logic itself remains verified by the local integration suites
+(11–15, green); operator-session stage probes are part of the §10 QA (Claude lane).
+
+### 2026-08-25 round-15 freshness re-check
+
+State unchanged: no new commits; lane 15 files in flight; supplier-RFQ host redeploy pending;
+live data 3/8/2 (no mutations). Fresh battery on current dumps: band 0/0/3/0 — predictions
+hold. No new coordinator action required.
+
+### 2026-08-25 round-16 overview source verification-ready
+
+Coordinator ran the lane's full battery in `twenty-cc-live-codex`: app tests **133/133**,
+lint **0/0** (94 files), official `dev:build` **26 files** (manifest + typecheck pass). The
+overview UI source is verification-ready — the lane can commit/merge/release (0.2.16) on its
+own schedule. Remaining lane threads: overview release → §10 browser/operator QA (Claude),
+host redeploy for the supplier-RFQ endpoint (Claude, recipe in the release-gate evidence).
+
+### 2026-08-25 round-17 overview UI landed + verified
+
+The Codex lane landed **`6d01d8826d` "make command centre evidence-led"** on
+`deepseek/cc-live-codex` (15 files, +2712/−613: overview builder + loader, reworked
+bilingual UI, new overview tests); worktree clean. Coordinator re-verified the landed source
+in the lane worktree: app tests **133/133**, lint **0/0**, official build **26 files**.
+Next steps: merge the lane branch into `codex/pashx-pilot-cx3-cx4`, bump to 0.2.16, publish/
+install, then §10 browser/operator QA (Claude lane). Host redeploy for the supplier-RFQ
+endpoint remains pending (Claude lane, recipe in the release-gate evidence).
+
+### 2026-08-25 round-18 overview merged into mainline
+
+Coordinator merged `deepseek/cc-live-codex` into `codex/pashx-pilot-cx3-cx4`
+(`7b4c88fd1a` merge(pashx): integrate evidence-led command centre overview into mainline).
+Merge-tree preview was conflict-free; the merge delta is exactly the overview commit
+(+2712/−613), version stays 0.2.15. Post-merge battery on the shared branch: app tests
+**134/134**, lint **0/0**, official build **26 files**, contract **100% coverage**. Next:
+bump to 0.2.16 → publish/install → §10 browser/operator QA (Claude lane); supplier-RFQ host
+redeploy remains pending (Claude lane).
+
+### 2026-08-25 round-19 release 0.2.16 installed
+
+Bumped to 0.2.16 and published (`0e36b1fce3…` shasum); install confirmed the workspace runs
+0.2.16 (parallel lane's release flow landed it concurrently). Live verified: healthz 200, all
+pages present, data intact (3/8/2). Full evidence:
+`docs/execution/evidence/CC-release-0-2-16.md`. Remaining (Claude lane): host redeploy for the
+supplier-RFQ endpoint, §10 browser/operator QA; rollback target 0.2.15.
+
+### 2026-08-25 round-20 status probe
+
+No new commits; the supplier-RFQ host redeploy is still pending (endpoint returns the
+REST-core "Query path invalid" — Claude-lane infra item, acceptance recipe in
+`CC-release-gate-0-2-15.md`); §10 browser/operator QA not yet recorded. Healthz 200; data
+intact (3/8/2). 0.2.16 remains the live version with the evidence-led Command Centre.
+
+### 2026-08-25 round-21 coordinator tooling maintenance check
+
+The deterministic §10 recompute tool (`scripts/recompute-command-centre-from-live.ts`) still
+runs correctly against the merged, released code (the lane changed the classifier/types in the
+overview merge): band **0/0/3/0**, ledger = the three real cases (updatedAt now reflects the
+stage application). The QA foundation remains usable for the Claude lane's §10 checks. Other
+coordinator tools (case-workflow, vendor-directory, profitability, vendor-comparison) touch
+code untouched by the merge. Host redeploy + §10 browser QA remain pending (Claude lane).

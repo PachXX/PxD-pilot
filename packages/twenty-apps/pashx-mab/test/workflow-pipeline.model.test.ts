@@ -5,8 +5,10 @@ import {
   buildWorkflowPipelineCards,
   buildWorkflowPipelineColumns,
   buildWorkflowPipelineSummary,
+  getNextWorkflowPipelineStage,
   getWorkflowPipelineCaseHref,
   getWorkflowPipelineDocumentHref,
+  isAllowedWorkflowPipelineMove,
   selectLatestPipelineEvidence,
 } from '../src/workflow-pipeline/workflow-pipeline.model';
 import type {
@@ -23,6 +25,7 @@ const caseRecord = (
   id: 'case-1',
   name: 'PC-001',
   stage: 'intake',
+  aggregateVersion: 3,
   customerRecordId: 'customer-1',
   projectName: 'Fictional pump package',
   nextActionCode: 'COMPLETE_CASE_DATA',
@@ -107,7 +110,7 @@ test('uses supplier and delivery deadlines for their workflow stages', () => {
   assert.equal(cards[1]?.isOverdue, true);
 });
 
-test('maps customer, document and compliance evidence onto each card', () => {
+test('maps customer and finalized-document evidence without treating pending review as an exception', () => {
   const cards = buildWorkflowPipelineCards(
     result({
       documents: [
@@ -126,7 +129,37 @@ test('maps customer, document and compliance evidence onto each card', () => {
   assert.equal(cards[0]?.customerId, '103');
   assert.equal(cards[0]?.documentCount, 2);
   assert.equal(cards[0]?.finalizedDocumentCount, 1);
-  assert.equal(cards[0]?.complianceExceptionCount, 1);
+  assert.equal(cards[0]?.complianceExceptionCount, 0);
+});
+
+test('does not infer Intake when the authoritative stage is absent', () => {
+  const cards = buildWorkflowPipelineCards(
+    result({
+      cases: [caseRecord({ stage: null })],
+      documents: [],
+    }),
+    NOW,
+  );
+
+  assert.deepEqual(cards, []);
+});
+
+test('counts only rejected and retryable compliance outcomes as exceptions', () => {
+  const cards = buildWorkflowPipelineCards(
+    result({
+      documents: [
+        documentRecord({ id: 'pending', complianceStatus: 'PENDING' }),
+        documentRecord({ id: 'rejected', complianceStatus: 'REJECTED' }),
+        documentRecord({
+          id: 'retryable',
+          complianceStatus: 'RETRYABLE_FAILURE',
+        }),
+      ],
+    }),
+    NOW,
+  );
+
+  assert.equal(cards[0]?.complianceExceptionCount, 2);
 });
 
 test('shows seven active stages by default, filters search and archives closed cases', () => {
@@ -163,6 +196,17 @@ test('shows seven active stages by default, filters search and archives closed c
     allColumns.find((column) => column.stage === 'closed')?.cards[0]?.caseRecord.id,
     'closed',
   );
+});
+
+test('allows only the next audited workflow transition', () => {
+  assert.equal(getNextWorkflowPipelineStage('intake'), 'sourcing');
+  assert.equal(getNextWorkflowPipelineStage('customer-order'), 'vendor-order');
+  assert.equal(getNextWorkflowPipelineStage('invoicing'), 'closed');
+  assert.equal(getNextWorkflowPipelineStage('closed'), null);
+  assert.equal(getNextWorkflowPipelineStage('cancelled'), null);
+  assert.equal(isAllowedWorkflowPipelineMove('intake', 'sourcing'), true);
+  assert.equal(isAllowedWorkflowPipelineMove('intake', 'quoted'), false);
+  assert.equal(isAllowedWorkflowPipelineMove('sourcing', 'intake'), false);
 });
 
 test('sorts overdue and earliest-due cards first within a stage', () => {
