@@ -93,3 +93,47 @@ throughout.
 The **OC6-B Command Centre email panel** (UI rendering of these candidates) was published in
 0.2.18 but not yet visually verified in-browser; that needs an operator session. The read model
 underneath it is verified above.
+
+---
+
+## OC6-B panel — live render check (2026-08-28, app 0.2.18)
+
+Verified in-browser on the Command Centre. The panel **ships, renders, and fails closed
+correctly**.
+
+Rendered under an authenticated session for workspace member `eae3016c-…` (Shahil, standard
+**Admin** role):
+
+```
+Synchronized email
+Review-only candidates from synchronized email. Nothing is created, sent,
+or deleted; a human reviews before any record is created.
+
+Your role does not have permission to review synchronized email candidates.
+```
+
+This is **correct behaviour, not a defect.** The panel is gated on the
+`pashx.email.intake.review` permission flag. Standard `Admin` carries `permissionFlags: []` — the
+pashx capability flags live only on the PashX roles (`PashX MAB Super Admin` holds all 12,
+including this one). The panel refuses rather than leaking candidates, and says so honestly
+instead of showing a misleading empty state.
+
+This is the **same root cause pattern** as the WF4 approval 403: broad admin booleans
+(`canAccessAllTools` etc.) do **not** imply app-specific permission flags. Worth remembering
+before diagnosing any future "permission" symptom on this pilot.
+
+Also confirmed on the same render:
+
+- **Capability status → Document OCR: `Unavailable`** — "OCR extraction is unavailable until a
+  provider passes the frozen benchmark and is accepted (OC5-OCR)." The OCR gate reports honestly
+  and is not simulated.
+- **Blocked data = 5**, itemised as the 3 real MAB cases plus
+  `vpo-qa-20260826-mta7ubbz` and `vpo-qa-20260826-mta9m5kk` — direct on-screen confirmation of the
+  fixture-pollution finding in `CC-QA-0-2-17.md`.
+- Evidence insights renders its honest empty state ("No active insights").
+
+### Still outstanding
+
+Rendering of the **129 candidates themselves** needs a session for a member holding
+`pashx.email.intake.review` (e.g. Mansoor on `PashX MAB Super Admin`). The read model producing
+them is verified above; what is unverified is only the candidate-list presentation.
