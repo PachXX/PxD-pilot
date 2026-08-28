@@ -1,7 +1,7 @@
 # Operational Command Centre graph — insights, approvals, compliance, tasks, agents, email
 
 - Date: 2026-08-21
-- Status: **OC0–OC4 deployed and accepted; OC6-A app 0.2.10 live and fixture-dependent DS6 matrix complete; OC5, OC5-OCR, OC6-B/C and OC7 blocked**
+- Status: **OC0–OC5 deployed; OC6-A/B live; OC7 operator UI slice accepted 2026-08-29; OC5-OCR, OC6-C and full OC7 remain open**
 - Architecture: `docs/architecture/ADR-0003-command-centre-operational-control-plane.md`
 
 ## User outcome
@@ -30,10 +30,10 @@ The approved mockup language remains the visual contract:
 | **OC2** | Codex | OC1 | Deterministic next-task and compliance projections; no AI dependency. | **foundation complete in source 2026-08-21** |
 | **OC3** | Codex + Claude | OC1 | Approval request object, request/approve/reject/cancel commands, idempotency and audit. | **accepted for the single-user pilot 2026-08-23; REJECT and cross-user enforcement deferred to OC7** |
 | **OC4** | Codex | OC1 + OC2 | Read-only evidence analyst and specialist task agents with least-privilege roles. | **accepted 2026-08-24; app 0.2.9 live, agents/role verified in Cloud SQL; model behavior deferred to OC7** |
-| **OC5** | Codex + Claude | OC1 + native mailbox connected | Read-only synchronized-email candidates; review-before-task/approval creation. | blocked |
+| **OC5** | Codex + Claude | OC1 + native mailbox connected | Read-only synchronized-email candidates; review-before-task/approval creation. | **source and live read model pass; app 0.2.18 live; viewer-scoped 10/129 split remains operationally open** |
 | **OC5-OCR** | Codex + Claude | OC1 + accepted OCR benchmark/provider | Text-layer-first document extraction, OCR fallback, page/region provenance, confidence and human review before create. | **contract/corpus inventory complete; local smoke benchmark 24/25 critical fields, provider acceptance blocked pending OC5-OCR-B2** |
-| **OC6** | Codex | OC2 + OC3 + OC4 + OC5 + OC5-OCR | Native bilingual Command Centre panels matching approved mockups. | **OC6-A source accepted 2026-08-24; OC6-B/C remain blocked** |
-| **OC7** | Codex + Claude + Shahil | OC6 | Contract, permission, idempotency, prompt-injection, privacy, RTL, accessibility, and live QA. | blocked |
+| **OC6** | Codex | OC2 + OC3 + OC4 + OC5 + OC5-OCR | Native bilingual Command Centre panels matching approved mockups. | **OC6-A/B live as app 0.2.18; OC6-C remains gated by OCR/full integration** |
+| **OC7** | Codex + Claude + Shahil | OC6 | Contract, permission, idempotency, prompt-injection, privacy, RTL, accessibility, and live QA. | **operator UI slice pass 2026-08-29; model, cross-user, OCR and manual native checks remain open** |
 
 ### OC5-OCR-B2 acceptance split
 
