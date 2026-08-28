@@ -175,3 +175,77 @@ the true 129. This should be pinned down before OC5 is treated as operationally 
 
 Reproduce with: a fresh token for a member holding the flag, then compare
 `messages(first: 200)` counts for that session against the workspace API key (which sees 200/200).
+
+---
+
+## Viewer scoping — SETTLED (mechanism from source + live observation)
+
+### The rule
+
+Message reads on a **user session** pass through
+`ApplyMessagesVisibilityRestrictionsService`
+(`packages/twenty-server/src/modules/messaging/common/query-hooks/message/apply-messages-visibility-restrictions.service.ts`).
+Per message, in order:
+
+1. channel `visibility === SHARE_EVERYTHING` → **visible in full**;
+2. else if the viewer **owns a connected account on that channel** → **visible in full**;
+3. else `SUBJECT` → `text` replaced with `FIELD_RESTRICTED_ADDITIONAL_PERMISSIONS_REQUIRED`;
+4. else `METADATA` → `subject` **and** `text` both replaced with that sentinel;
+5. else → **the message is removed from the result entirely**.
+
+**API keys bypass this**: they carry no user context, so the workspace API key sees all 200
+messages unredacted (verified: 0 of 200 carry the sentinel). That is why the read-model
+verification above legitimately yields 129 — it measures the workspace truth, not any one
+viewer's truth.
+
+### Why Mansoor saw 10, not 129
+
+Mansoor holds `pashx.email.intake.review` but does **not** own the `info@mabindus.com` connected
+account, so rules 1–2 do not apply to him for that channel.
+
+He saw **10 messages with real, unredacted subjects** — not 200 redacted ones. That rules out
+branches 3 and 4 (which would have returned all 200 with sentinel text). The observed behaviour
+therefore matches **branch 5: full removal** — the messages he lost were dropped outright, and the
+10 he kept are ones on channels he does own.
+
+Branch 5 is only reachable when `visibility` matches none of the three enum values — i.e. when the
+channel's **`visibility` is null/unset**, so `groupBy` produces no matching bucket. The
+`MessageChannelVisibility` enum has exactly three members (`METADATA`, `SUBJECT`,
+`SHARE_EVERYTHING`), so an unset value falls through every branch to the `splice`.
+
+**Not directly read:** the channel's current `visibility` value. `myMessageChannels` is the only
+surface exposing it and it rejects API keys ("This endpoint requires a user context"), and the
+Mansoor token expired before it could be queried. The conclusion above is inferred from the
+branch behaviour, which is unambiguous, but the literal value is worth confirming on the next
+user session.
+
+### Safety check — redaction cannot manufacture false candidates
+
+Tested the real classifier against the sentinel directly:
+
+| Input | `proposedTaskType` |
+|---|---|
+| `METADATA` redaction (subject **and** body = sentinel) | `null` → filtered out ✓ |
+| `SUBJECT` redaction (real subject, body = sentinel) | correct type from the real subject ✓ |
+| both empty | `null` → filtered out ✓ |
+
+The sentinel contains none of the task keywords, so redacted mail can never produce a spurious
+candidate. Redaction degrades **recall**, never **precision**.
+
+### Operational consequence and the fix
+
+OC5's list is **per-viewer**, and today the two roles are split the wrong way:
+
+- **Shahil** owns the mailbox (would see all 129) but is on standard `Admin`, whose
+  `permissionFlags` are `[]` — so the panel refuses him.
+- **Mansoor** holds the review flag but owns nothing on that channel — so he sees a fraction.
+
+Neither sees the real 129. Two ways to close it, both Shahil's call:
+
+- **(a)** set the `info@mabindus.com` message channel `visibility` to `SHARE_EVERYTHING` — any
+  flag-holder then sees the full set. Widens who can read the mailbox's contents.
+- **(b)** grant `pashx.email.intake.review` to the mailbox owner (Shahil). Keeps mail visibility
+  as-is; the reviewer is the owner. **Recommended** — narrower blast radius.
+
+Until one is done, OC5 should not be treated as operationally complete: the panel is correct and
+safe, but no single human can see the whole queue.
