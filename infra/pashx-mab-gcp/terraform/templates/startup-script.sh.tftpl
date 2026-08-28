@@ -142,6 +142,11 @@ done
   # Turns on Twenty's Prometheus exporter on :9464. The otel-collector container scrapes it and
   # writes to Google Managed Prometheus, which is what the p95 rollback detector alerts on.
   echo "METER_DRIVER=prometheus"
+  # Defaults to DISABLED outside NODE_ENV=development, which is why workflow logic-function steps
+  # (e.g. the customer/vendor ID sequence generator) were failing with "Logic function execution
+  # is disabled". LOCAL runs functions in-process on this VM; LAMBDA needs an AWS account we don't
+  # have here.
+  echo "LOGIC_FUNCTION_TYPE=LOCAL"
 } >> "$ENV_FILE"
 
 log "secret and configuration env file written to tmpfs ($(wc -l < "$ENV_FILE") entries)"
