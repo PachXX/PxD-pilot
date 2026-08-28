@@ -137,3 +137,41 @@ Also confirmed on the same render:
 Rendering of the **129 candidates themselves** needs a session for a member holding
 `pashx.email.intake.review` (e.g. Mansoor on `PashX MAB Super Admin`). The read model producing
 them is verified above; what is unverified is only the candidate-list presentation.
+
+### Candidate list render — verified on a `pashx.email.intake.review` session
+
+Re-checked under Mansoor (`ffac33c1-…`, `PashX MAB Super Admin`). The permission gate **opens**
+and the candidate list renders. Confirmed on screen:
+
+- **Partial notice renders honestly**: *"The bounded email read reached its limit. Visible
+  candidates are valid, but the list is partial."* — this is the `isPartial` flag verified in the
+  read model above, correctly surfaced in the UI rather than silently truncating.
+- **Candidate cards** carry subject, `Proposed task`, `Sender`, `Received`, `Review status`, and an
+  `Open message record` drill-through (10 cards, 10 links — every card has evidence linkage).
+- **Review status is `Pending review` on every card** — nothing auto-accepted.
+- **No body leakage in the rendered DOM.** Card text carries subject/sender/date only; no message
+  body prose is present.
+- Real business mail classified sensibly, e.g. *"RE: PO-009414-1 Supply of Busbar Plates …"* →
+  `Capture purchase order`.
+
+### Open question: 10 rendered vs 129 from the workspace-wide read
+
+The render loop applies **no display cap** — it maps `emailResult.candidates` in full, and
+`loadEmailIntake({})` uses the 200-message default. Yet Mansoor's session rendered **10**
+candidates (5 `Capture purchase order`, 5 `Capture delivery note`) where the workspace-scoped read
+model yields **129** across all four types.
+
+So the difference is upstream of the panel, in **which `message` rows the viewing session can
+read** — not a rendering defect. The likely mechanism is per-workspace-member message visibility
+(the mailbox is a connected account owned by another member, so Mansoor sees only the subset
+associated with him), but that was **not confirmed**: the comparison query failed because the
+token expired mid-check, and `connectedAccounts` is not exposed on either the REST or GraphQL
+surface under that name.
+
+**Practical consequence, and the reason this matters:** the OC5 panel is **viewer-dependent**.
+The member who owns the mailbox may lack `pashx.email.intake.review` (standard `Admin` does), while
+a member who holds the flag may see only a fraction of the mail. Neither viewer necessarily sees
+the true 129. This should be pinned down before OC5 is treated as operationally complete.
+
+Reproduce with: a fresh token for a member holding the flag, then compare
+`messages(first: 200)` counts for that session against the workspace API key (which sees 200/200).
