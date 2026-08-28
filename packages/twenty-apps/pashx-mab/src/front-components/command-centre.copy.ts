@@ -39,6 +39,7 @@ export type CommandCentreCopy = Readonly<{
   emailIntakeDescription: string;
   emailLoading: string;
   emailError: string;
+  emailPermissionDenied: string;
   emailPartial: string;
   emailCandidatesEmpty: string;
   emailCandidatesEmptyBody: string;
@@ -123,6 +124,8 @@ const english: CommandCentreCopy = {
     'Review-only candidates from synchronized email. Nothing is created, sent, or deleted; a human reviews before any record is created.',
   emailLoading: 'Loading email candidates…',
   emailError: 'Email candidates could not be loaded',
+  emailPermissionDenied:
+    'Your role does not have permission to review synchronized email candidates.',
   emailPartial:
     'The bounded email read reached its limit. Visible candidates are valid, but the list is partial.',
   emailCandidatesEmpty: 'No email candidates',
@@ -254,6 +257,8 @@ const arabic: CommandCentreCopy = {
     'مرشحات للمراجعة فقط من البريد الإلكتروني المتزامن. لا يُنشأ أو يُرسل أو يُحذف أي شيء؛ يراجع الإنسان قبل إنشاء أي سجل.',
   emailLoading: 'جارٍ تحميل مرشحات البريد الإلكتروني…',
   emailError: 'تعذر تحميل مرشحات البريد الإلكتروني',
+  emailPermissionDenied:
+    'لا يملك دورك صلاحية مراجعة مرشحات البريد الإلكتروني المتزامن.',
   emailPartial:
     'وصلت قراءة البريد المحدودة إلى حدها. المرشحات الظاهرة صحيحة لكن القائمة جزئية.',
   emailCandidatesEmpty: 'لا توجد مرشحات بريد إلكتروني',

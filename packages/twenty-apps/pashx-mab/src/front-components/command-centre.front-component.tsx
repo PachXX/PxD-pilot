@@ -21,7 +21,11 @@ import {
   resolveEmailTaskTypeLabel,
   resolveInsightSourceLinks,
 } from '../command-centre/command-centre.model';
-import { loadEmailIntake, type EmailIntakeResult } from '../email-intake/load-email-intake';
+import {
+  canReviewEmailIntake,
+  loadEmailIntake,
+  type EmailIntakeResult,
+} from '../email-intake/load-email-intake';
 import {
   commandCentreCopy,
   toCommandCentreLocale,
@@ -293,6 +297,7 @@ const CommandCentre = () => {
   const [emailResult, setEmailResult] = useState<EmailIntakeResult | null>(null);
   const [emailLoading, setEmailLoading] = useState(true);
   const [emailError, setEmailError] = useState(false);
+  const [emailAuthorized, setEmailAuthorized] = useState<boolean | null>(null);
   const requestId = useRef(0);
 
   // The frozen precedence lives in buildOperationalWorkQueue; JSX never re-sorts.
@@ -333,8 +338,11 @@ const CommandCentre = () => {
 
     // The queue and the email panel fail independently: a mailbox problem
     // never hides the deterministic queue, and vice versa.
+    const commandCentrePromise = loadCommandCentre({});
+    const emailCapabilityPromise = canReviewEmailIntake();
+
     try {
-      const nextResult = await loadCommandCentre({});
+      const nextResult = await commandCentrePromise;
       if (requestId.current === activeRequest) setResult(nextResult);
     } catch {
       if (requestId.current === activeRequest) setError(true);
@@ -343,6 +351,13 @@ const CommandCentre = () => {
     }
 
     try {
+      const isAuthorized = await emailCapabilityPromise;
+      if (requestId.current !== activeRequest) return;
+      setEmailAuthorized(isAuthorized);
+      if (!isAuthorized) {
+        setEmailResult(null);
+        return;
+      }
       const nextEmail = await loadEmailIntake({});
       if (requestId.current === activeRequest) setEmailResult(nextEmail);
     } catch {
@@ -560,14 +575,21 @@ const CommandCentre = () => {
                   <p className="pxd-command__panel-body">
                     {copy.emailIntakeDescription}
                   </p>
-                  {emailLoading && emailResult === null ? (
+                  {emailAuthorized === false ? (
+                    <div className="pxd-command__panel-state" role="status">
+                      <p className="pxd-command__panel-state-title">
+                        {copy.emailPermissionDenied}
+                      </p>
+                    </div>
+                  ) : null}
+                  {emailLoading && emailResult === null && emailAuthorized !== false ? (
                     <div className="pxd-command__panel-state" role="status">
                       <p className="pxd-command__panel-state-title">
                         {copy.emailLoading}
                       </p>
                     </div>
                   ) : null}
-                  {emailError && emailResult === null ? (
+                  {emailError && emailAuthorized !== false ? (
                     <div className="pxd-command__panel-state" role="alert">
                       <p className="pxd-command__panel-state-title">
                         {copy.emailError}

@@ -1,13 +1,18 @@
 import {
   classifyEmailIntakeCandidate,
+  PASHX_MAB_CAPABILITIES,
   type PashxEmailIntakeCandidate,
   type PashxEmailIntakeMessage,
 } from 'pashx-mab-contract';
 import { CoreApiClient } from 'twenty-client-sdk/core';
+import { MetadataApiClient } from 'twenty-client-sdk/metadata';
 
-const DEFAULT_QUERY_LIMIT = 200;
+const DEFAULT_QUERY_LIMIT = 50;
 const MAX_QUERY_LIMIT = 500;
 const FROM_ROLE = 'FROM';
+const TO_ROLE = 'TO';
+const INCOMING_DIRECTION = 'INCOMING';
+const APPROVED_MAILBOX = 'info@mabindus.com';
 
 type QueryClient = Readonly<{
   query: (selection: Record<string, unknown>) => Promise<unknown>;
@@ -24,6 +29,10 @@ type ParticipantNode = Readonly<{
   displayName?: string | null;
 }>;
 
+type MessageChannelAssociationNode = Readonly<{
+  direction?: string | null;
+}>;
+
 type MessageNode = Readonly<{
   id: string;
   subject?: string | null;
@@ -31,6 +40,7 @@ type MessageNode = Readonly<{
   receivedAt?: string | null;
   isDraft?: boolean | null;
   messageParticipants?: QueryConnection<ParticipantNode>;
+  messageChannelMessageAssociations?: QueryConnection<MessageChannelAssociationNode>;
 }>;
 
 type EmailIntakeQueryData = Readonly<{
@@ -42,6 +52,47 @@ export type EmailIntakeResult = Readonly<{
   isPartial: boolean;
   asOf: string;
 }>;
+
+export const canReviewEmailIntake = async (
+  client = new MetadataApiClient() as QueryClient,
+): Promise<boolean> => {
+  const identity = (await client.query({
+    currentUser: {
+      workspaceMember: {
+        roles: { permissionFlags: { flag: true } },
+      },
+    },
+  })) as {
+    currentUser?: {
+      workspaceMember?: {
+        roles?: readonly {
+          permissionFlags?: readonly { flag?: string | null }[];
+        }[];
+      } | null;
+    };
+  };
+
+  return (
+    identity.currentUser?.workspaceMember?.roles?.some((role) =>
+      role.permissionFlags?.some(
+        ({ flag }) => flag === PASHX_MAB_CAPABILITIES.emailIntakeReview,
+      ),
+    ) === true
+  );
+};
+
+const isApprovedInboundMessage = (node: MessageNode): boolean => {
+  const isIncoming = node.messageChannelMessageAssociations?.edges?.some(
+    ({ node: association }) => association.direction === INCOMING_DIRECTION,
+  );
+  const targetsApprovedMailbox = node.messageParticipants?.edges?.some(
+    ({ node: participant }) =>
+      participant.role === TO_ROLE &&
+      participant.handle?.trim().toLowerCase() === APPROVED_MAILBOX,
+  );
+
+  return isIncoming === true && targetsApprovedMailbox === true;
+};
 
 const fromParticipant = (node: MessageNode): PashxEmailIntakeMessage => {
   const sender =
@@ -84,7 +135,13 @@ export const loadEmailIntake = async ({
 
   const data = (await client.query({
     messages: {
-      __args: { first: limit },
+      __args: {
+        first: limit,
+        orderBy: [
+          { receivedAt: 'DescNullsLast' },
+          { id: 'DescNullsLast' },
+        ],
+      },
       pageInfo: { hasNextPage: true },
       edges: {
         node: {
@@ -102,6 +159,9 @@ export const loadEmailIntake = async ({
               },
             },
           },
+          messageChannelMessageAssociations: {
+            edges: { node: { direction: true } },
+          },
         },
       },
     },
@@ -114,7 +174,10 @@ export const loadEmailIntake = async ({
     data.messages?.edges ?? []
   )
     .map(({ node }) => node)
-    .filter((node) => node.isDraft !== true && node.isDraft !== undefined)
+    .filter(
+      (node) =>
+        node.isDraft === false && isApprovedInboundMessage(node),
+    )
     .map(fromParticipant)
     .map(classifyEmailIntakeCandidate)
     .filter((candidate) => candidate.proposedTaskType !== null);

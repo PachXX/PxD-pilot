@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { loadEmailIntake } from '../src/email-intake/load-email-intake';
+import {
+  canReviewEmailIntake,
+  loadEmailIntake,
+} from '../src/email-intake/load-email-intake';
 
 const messageNode = (
   overrides: Readonly<Record<string, unknown>> = {},
@@ -22,6 +25,9 @@ const messageNode = (
       },
       { node: { role: 'TO', handle: 'info@mabindus.com', displayName: null } },
     ],
+  },
+  messageChannelMessageAssociations: {
+    edges: [{ node: { direction: 'INCOMING' } }],
   },
   ...overrides,
 });
@@ -82,8 +88,72 @@ test('surfaces review-only candidates from inbound synchronized email', async ()
   assert.equal(result.asOf, '2026-08-24T10:00:00.000Z');
   assert.deepEqual(
     (selection?.messages as { __args: unknown }).__args,
-    { first: 25 },
+    {
+      first: 25,
+      orderBy: [
+        { receivedAt: 'DescNullsLast' },
+        { id: 'DescNullsLast' },
+      ],
+    },
   );
+});
+
+test('excludes outgoing and non-approved-mailbox messages', async () => {
+  const { result } = await loadWith({
+    messages: {
+      pageInfo: { hasNextPage: false },
+      edges: [
+        {
+          node: messageNode({
+            id: 'outgoing',
+            subject: 'Invoice INV-9',
+            messageChannelMessageAssociations: {
+              edges: [{ node: { direction: 'OUTGOING' } }],
+            },
+          }),
+        },
+        {
+          node: messageNode({
+            id: 'other-mailbox',
+            subject: 'RFQ 99',
+            messageParticipants: {
+              edges: [
+                { node: { role: 'FROM', handle: 'client@example.com' } },
+                { node: { role: 'TO', handle: 'personal@example.com' } },
+              ],
+            },
+          }),
+        },
+      ],
+    },
+  });
+
+  assert.deepEqual(result.candidates, []);
+});
+
+test('requires the dedicated email-intake review capability', async () => {
+  const withCapability = await canReviewEmailIntake({
+    query: () =>
+      Promise.resolve({
+        currentUser: {
+          workspaceMember: {
+            roles: [
+              {
+                permissionFlags: [
+                  { flag: 'pashx.email.intake.review' },
+                ],
+              },
+            ],
+          },
+        },
+      }),
+  });
+  const withoutCapability = await canReviewEmailIntake({
+    query: () => Promise.resolve({ currentUser: { workspaceMember: { roles: [] } } }),
+  });
+
+  assert.equal(withCapability, true);
+  assert.equal(withoutCapability, false);
 });
 
 test('excludes drafts and unrelated mail that produces no task proposal', async () => {
