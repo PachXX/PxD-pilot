@@ -49,3 +49,71 @@ Fix location: `packages/twenty-server/test/integration/pashx-mab/wf5/wf5-live-ac
 
 Shahil to decide: close WF5 on this evidence, or request a follow-up pass with a fresh operator
 token to cover the remaining matrix rows and the visual-parity checklist.
+
+---
+
+# WF5 — re-verification against 0.2.17 (2026-08-28)
+
+- Executed by: Claude lane, after WF4 closed
+- Live host: `https://mab.pashx.com` · app `0.2.17` · host digest `sha256:4b249692…`
+- Companion evidence: `docs/execution/evidence/CC-QA-0-2-17.md` (Claude lane execution pack run)
+
+## Why re-run
+
+The 2026-08-25 pass above ran against app `0.2.13` on the now-dead `nip.io` host. WF4 closed on
+2026-08-28 after a fundamental harness bug was found and fixed (see below), so rows 1 and 13 were
+re-established against the current build.
+
+## Row 1 — chain walk: **PASS** (re-verified on 0.2.17)
+
+Fixture prefix `WF4-QA-1787828327`. Full chain: intake → sourcing → quoted → customer-order →
+vendor-order → delivery → invoicing → **closed at `aggregateVersion 8`**; 8 documents finalized;
+all 3 approval gates requested *and decided*; delivery recorded.
+
+**Harness defect found and fixed to get here.** The harness drove every call — including the
+approval decision — from a single `WF5_BEARER`. The frozen contract predicate
+`isPurchaseOrderApprovalDecisionAuthorized`
+(`packages/pashx-mab-contract/src/approval-commands.ts:127`) enforces separation of duties:
+
+```ts
+if (requesterRecordId === actorRecordId) return false;
+```
+
+so a requester can never decide their own request. The approval step was therefore
+**structurally unpassable for any account or role** — it had been misdiagnosed twice as a
+role/capability gap. Fixed by adding `WF5_DECIDER_BEARER`, a second bearer from a different
+workspace member used only for the decision call, defaulting to `WF5_BEARER` so existing
+invocations are unchanged. Commit `5b12b6d610`.
+
+## Row 13 — cleanup verification: **PASS**
+
+Harness self-cleanup ran and reported 404 on every disposable id. Independently confirmed on the
+Command Centre: zero occurrences of `WF4-QA` / `WF5-QA` / `disposable` in the rendered page.
+
+Two `vpo-qa-20260826-*` fixtures **from another lane** remain live and inflate the blocked-data
+signal from 3 to 5 — detailed in `CC-QA-0-2-17.md` finding 1. Not this lane's fixtures; not
+deleted.
+
+## Rows 3–9, 12 — re-verified on 0.2.17
+
+Rail (`delivery` current, `aria-current="step"`), documents ledger, price comparison
+(SAR 127,544.20 DRAFT, deterministic-ranking note), delivery + readiness honest "Missing" states,
+Arabic/RTL (`<div lang="ar" dir="rtl">`, computed RTL, meaning-matched translation, shell stays
+English/LTR), one `<h1>`, 2 native `<table>` elements, and no horizontal overflow at 720px.
+Full table in `CC-QA-0-2-17.md`.
+
+## Rows that did NOT pass or could not be verified
+
+| Row | Status | Detail |
+|---|---|---|
+| 9 (partial) | **FAIL** | 9 of 14 in-content interactive targets are 21–24px, below the 44px criterion — source-side, Codex lane. `CC-QA-0-2-17.md` finding 4 |
+| 10 | **PARTIAL** | Refresh advances observed time (`00:10` → `00:17`); transient disabled state not observable at 150ms sampling. Empty/loading/partial/error states not exercised |
+| 11 | **UNVERIFIED** | Browser console tool returned byte-identical output across a forced reload, including stale entries from earlier expired-token navigations — not trustworthy as evidence. Not claimed as pass |
+| 14 | **MANUAL RESIDUAL** | Physical-Mac VoiceOver / native Tab order — per the harness spec's own precedent, needs a human |
+
+## Exit status
+
+Rows 1, 3–8, 12, 13 pass. Row 9 carries one real source defect (touch-target size). Rows 10, 11
+are partially/not verified and are explicitly **not** claimed as passes. Row 14 remains the
+declared manual residual. WF5 is therefore **not fully closed** — it needs the 44px fix, a
+trustworthy console-health check, and the human residual.
